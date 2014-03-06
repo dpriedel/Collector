@@ -1,0 +1,12 @@
+# anything generated here
+/Debug*
+/Release*
+
+#	python compiled files
+*pyc
+
+#	our test executable(w)
+
+CollectEDGARData
+
+
