@@ -151,8 +151,8 @@ void CollectEDGARApp::Do_Run_TickerFileLookup (void)
 
 void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
-	FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	//FTP_Server a_server{"ftp.sec.gov", "anonymous", "aaa@bbb.net"};
+	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
+	FTP_Server a_server{"ftp.sec.gov", "anonymous", login_ID_};
 	DailyIndexFileRetriever idxFileRet{a_server};
 
 	Do_TickerMap_Setup();
@@ -211,7 +211,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 	Do_TickerMap_Setup();
 
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	FTP_Server a_server{"ftp.sec.gov", "anonymous", "aaa@bbb.net"};
+	FTP_Server a_server{"ftp.sec.gov", "anonymous", login_ID_};
 	QuarterlyIndexFileRetriever idxFileRet{a_server};
 
 	if (begin_date_ == end_date_)
@@ -289,7 +289,7 @@ void CollectEDGARApp::Do_SetupProgramOptions (void)
 	mNewOptions.add_options()
 		("help,h",								"produce help message")
 		("mode", 		po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only'")
-		("begin-date",	po::value<bg::date>(&this->begin_date_), "retrieve files with dates greater than or equal to")
+		("begin-date",	po::value<bg::date>(&this->begin_date_)->default_value(bg::day_clock::local_day()), "retrieve files with dates greater than or equal to")
 		("end-date",	po::value<bg::date>(&this->end_date_), "retrieve files with dates less than or equal to")
 		("form",	po::value<std::string>(&this->form_)->default_value("10-Q"),	"name of form type[s] we are downloading")
 		("ticker",	po::value<std::string>(&this->ticker_),	"ticker to lookup and filter form downloads")
@@ -309,6 +309,7 @@ void CollectEDGARApp::Do_SetupProgramOptions (void)
 		("replace-form-files",		po::value<bool>(&this->replace_form_files_)->implicit_value(true),	"over write local form files if specified")
 		("index-only",		po::value<bool>(&this->index_only_)->implicit_value(true),	"do not download form files.")
 		("pause,p", 		po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
+		("login", 		po::value<std::string>(&this->login_ID_)->required(), "email address to use for anonymous login to EDGAR")
 		;
 
 }		// -----  end of method CollectEDGARApp::Do_SetupProgramOptions  -----

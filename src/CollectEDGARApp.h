@@ -104,6 +104,7 @@ class CollectEDGARApp : public CApplication
 	std::string mode_;
 	std::string form_;
 	std::string ticker_;
+	std::string login_ID_;
 
 	std::vector<std::string> form_list_;
 	std::vector<std::string> ticker_list_;
