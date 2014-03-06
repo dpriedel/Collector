@@ -1,0 +1,23 @@
+To build this application you need the following:
+- compiler which supports c++11.  I used gcc 4.8.2.  Clang 3.4 should work too.
+- Boost libraries (www.boost.org).  I used Boost 1.55
+- Poco libraries (pocoproject.org).  I used 1.4.6.2
+- my app_framework project which needs to be installed in a directory which is a peer to this directory.
+
+Since I have multiple versions of compilers and boost on my system and they are located in
+non-standard places, there are some makefile variables which need to be set to point to
+the versions being used.
+
+BOOSTDIR needs to point to the root of your Boost installation.  A likely value is /usr where the Boost 
+libraries are in /usr/lib and includes are in /usr/include/boost
+
+GCCDIR needs to point to the root of your gcc installation. Again, a likly valuu is /usr where
+g++ is in /usr/bin and headers are in /usr/include.
+
+To build a release version do:
+ make CFG=Release
+
+To build a debug version do:
+ make  (this defaults CFG to Debug)
+
+

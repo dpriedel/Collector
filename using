@@ -1,0 +1,52 @@
+
+OK, once you have the CollectEDGARData program built, how do you run it?
+
+./CollectEDGARData -h will show you the help message below:
+
+  -h [ --help ]                    produce help message
+  --mode arg (=daily)              'daily' or 'quarterly' for index files, 
+                                   'ticker-only'
+  --begin-date arg (=2014-Mar-06)  retrieve files with dates greater than or 
+                                   equal to
+  --end-date arg                   retrieve files with dates less than or equal
+                                   to
+  --form arg (=10-Q)               name of form type[s] we are downloading
+  --ticker arg                     ticker to lookup and filter form downloads
+  --index-dir arg                  directory index files are downloaded to
+  --form-dir arg                   directory form files are downloaded to
+  --log-path arg                   path name for log file
+  --ticker-cache arg               path name for ticker-to-CIK cache file
+  --ticker-file arg                path name for file with list of ticker 
+                                   symbols to convert to CIKs
+  --replace-index-files [=arg(=1)] over write local index files if specified
+  --replace-form-files [=arg(=1)]  over write local form files if specified
+  --index-only [=arg(=1)]          do not download form files.
+  -p [ --pause ] arg (=1)          how long to wait between downloads. Default:
+                                   1 second.
+  --login arg                      email address to use for anonymous login to 
+                                   EDGAR
+
+./CollectEDGARData --login "aaa@xxx.com" --index-dir ./EDGAR-index --form-dir ./EDGAR-forms
+
+will log into the EDGAR system, find the 10-Qs listed in the most recent daily index and download them
+
+./CollectEDGARData --login "aaa@xxx.com" --ticker-file ./ticker-list --ticker-cache ./EDGAR-CIKs --mode ticker-only
+
+will do a ticker-to-CIK lookup and store the results in ./EDGAR-CIKs file.  Passing this file into the
+program on the next run via --ticker-cache ./EDGAR-CIKs will used the saved results for anything you have
+already done a lookup on.
+
+./CollectEDGARData --login "aaa@xxx.com" --begin-date 2010-Jan-01 --end-date 2013-Dec-31 --ticker AAPL,GOOG \
+	--form 10-K,10-Q --form-dir ./EDGAR-forms --index-dir ./EDGAR-index will download all 10-K and 10-Q forms for
+	Apple and Googe from the indicated time period and save them in the supplied directories.
+
+Both --form and --ticker can take either single elements or comma-separated lists.
+
+The program will check to see if the files you are looking for have been previously downloaded and will not
+download them again unless you do --replace.
+
+
+The point of doing all these downloads is to extract useful information from the forms.  That will be the focus
+of the upcoming ExtractEDGARData project.
+
+
