@@ -30,7 +30,7 @@
 	/* You should have received a copy of the GNU General Public License */
 	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
 
-
+#include <iostream>
 #include <algorithm>
 #include <fstream>
 #include <iterator>
@@ -73,6 +73,8 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	//	the list of forms to search for needs to be sorted as well to match
 	//	the sequence of forms in the index file.
 	
+	std::clog << "F: Searching index file: " << local_index_file_name << '\n';
+
 	std::vector<std::string> forms_list{the_forms};
 	std::sort(forms_list.begin(), forms_list.end());
 
@@ -109,6 +111,19 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	std::istream_iterator<aLine> itor{form_file};
 	std::istream_iterator<aLine> itor_end;
 
+	//	let's skip over the header lines in the file
+	
+	for ( ; itor != itor_end; ++itor)
+	{
+		if (boost::algorithm::starts_with(itor->lineData, "----------"))
+		{
+			++itor;
+			break;
+		}
+	}
+
+	dfail_if_(itor == itor_end, "Unable to find start of index entries in file: ", local_index_file_name.string());
+
 	for (auto& the_form : forms_list)
 	{
 		the_form += ' ';
@@ -117,6 +132,9 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 		
 		for ( ; itor != itor_end; ++itor)
 		{
+			if (itor->lineData < the_form)
+				continue;
+
 			if (boost::algorithm::starts_with(itor->lineData, the_form))
 			{
 				if (! cik_list.empty())
@@ -133,13 +151,16 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				found_files.push_back(itor->lineData.substr(pos));
 				boost::algorithm::trim_right(found_files.back());
 			}
-			else if (found_a_form)
+			else
 			{
-				//	we've moved beyond our set of forms in the file so we can stop
-				
-				std::clog << "F: Found " << found_a_form << " files for form: " << the_form << '\n';
-				the_form.pop_back();		//	remove trailing space we added at top of loop
-				results[the_form] = found_files;
+				if (found_a_form)
+				{
+					//	we've moved beyond our set of forms in the file so we can stop
+					
+					std::clog << "F: Found " << found_a_form << " files for form: " << the_form << '\n';
+					the_form.pop_back();		//	remove trailing space we added at top of loop
+					results[the_form] = found_files;
+				}
 				break;
 			}
 		}
@@ -179,7 +200,8 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	for (const auto& elem : results)
 		grand_total += elem.second.size();
 
-	std::clog << "F: Found a grand total of " << grand_total << " files for specified forms in " << local_index_file_list.size() << "files.\n";
+	std::clog << "F: Found a grand total of " << grand_total << " files for specified forms in "
+		<< local_index_file_list.size() << " files.\n";
 
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForm  -----
