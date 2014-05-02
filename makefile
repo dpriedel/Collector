@@ -19,8 +19,8 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.55_gcc-4.8
-GCCDIR := /extra/gcc/gcc-4.8
+BOOSTDIR := /extra/boost/boost-1.55_gcc-4.9
+GCCDIR := /extra/gcc/gcc-4.9
 CPP := $(GCCDIR)/bin/g++
 
 # If no configuration is specified, "Debug" will be used
@@ -33,7 +33,7 @@ endif
 OUTFILE := CollectEDGARData
 
 CFG_INC := -I../app_framework/include/ -I./src \
-		-idirafter $(BOOSTDIR)
+		-I$(GCCDIR)/include/libiberty -idirafter $(BOOSTDIR)
 
 RPATH_LIB := -Xlinker -rpath -Xlinker $(GCCDIR)/lib64 -Xlinker -rpath -Xlinker $(BOOSTDIR)/lib
 
@@ -70,7 +70,7 @@ OBJS3=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS3)))))
 OBJS=$(OBJS1) $(OBJS2) $(OBJS3)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++11 -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++1y -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -93,7 +93,7 @@ OBJS3=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS3)))))
 OBJS=$(OBJS1) $(OBJS2) $(OBJS3)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++11 -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++1y -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
