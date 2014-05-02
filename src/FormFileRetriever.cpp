@@ -80,7 +80,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 
 	//	just in case there are duplicates in the forms list
 
-	auto pos = std::unique(forms_list.begin(), forms_list.end());
+	decltype(auto) pos = std::unique(forms_list.begin(), forms_list.end());
 	if (pos != forms_list.end())
 		forms_list.erase(pos);
 
@@ -139,14 +139,14 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 			{
 				if (! cik_list.empty())
 				{
-					auto pos1 = itor->lineData.find(' ', k_index_CIK_offset);
-					auto cik_from_index_file = itor->lineData.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
-					auto pos = cik_list.find(cik_from_index_file);
+					decltype(auto) pos1 = itor->lineData.find(' ', k_index_CIK_offset);
+					decltype(auto) cik_from_index_file = itor->lineData.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
+					decltype(auto) pos = cik_list.find(cik_from_index_file);
 					if (pos == cik_list.end())
 						continue;
 				}
 				found_a_form += 1;
-				auto pos = itor->lineData.find("edgar/data");
+				decltype(auto) pos = itor->lineData.find("edgar/data");
 				dthrow_if_(pos == std::string::npos, "Badly formed index file record.");
 				found_files.push_back(itor->lineData.substr(pos));
 				boost::algorithm::trim_right(found_files.back());
@@ -184,11 +184,11 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 		fs::path local_index_file_name{local_index_file_dir};
 		local_index_file_name /= index_file;
 		
-		auto single_file_results = FindFilesForForms(the_forms, local_index_file_name, ticker_map);
+		decltype(auto) single_file_results = FindFilesForForms(the_forms, local_index_file_name, ticker_map);
 
 		for (const auto& elem : single_file_results)
 		{
-			auto pos = results.find(elem.first);
+			decltype(auto) pos = results.find(elem.first);
 			if (pos != results.end())
 				std::move(elem.second.begin(), elem.second.end(), std::back_inserter(results[pos->first]));
 			else

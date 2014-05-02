@@ -95,7 +95,7 @@ std::vector<std::string> FTP_Server::ListWorkingDirectoryContents (void)
 	
 	std::vector<std::string> results;
 	
-	auto& listing = session_->beginList();
+	decltype(auto) listing = session_->beginList();
 
 	std::istream_iterator<aLine> itor{listing};
 	std::istream_iterator<aLine> itor_end;
@@ -120,7 +120,7 @@ void FTP_Server::DownloadFile (const std::string& remote_file_name, const fs::pa
 	std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
 	std::ostream_iterator<aLine> otor{local_file, "\n"};
 
-	auto& remote_file = session_->beginDownload(remote_file_name);
+	decltype(auto) remote_file = session_->beginDownload(remote_file_name);
 
 	std::istream_iterator<aLine> itor{remote_file};
 	std::istream_iterator<aLine> itor_end;
@@ -140,7 +140,7 @@ void FTP_Server::DownloadBinaryFile (const std::string& remote_file_name, const 
 	session_->setFileType(Poco::Net::FTPClientSession::TYPE_BINARY);
 	std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
 
-	auto& remote_file = session_->beginDownload(remote_file_name);
+	decltype(auto) remote_file = session_->beginDownload(remote_file_name);
 	local_file << remote_file.rdbuf();
 	session_->endDownload();
 

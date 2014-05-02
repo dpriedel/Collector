@@ -171,7 +171,7 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 
 	for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
 	{
-		auto local_quarterly_index_file_name_zip = local_quarterly_index_file_directory_;
+		decltype(auto) local_quarterly_index_file_name_zip = local_quarterly_index_file_directory_;
 		local_quarterly_index_file_name_zip /= remote_file;
 
 		fs::create_directories(local_quarterly_index_file_name_zip.parent_path());

@@ -84,11 +84,11 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 
 	std::clog << "D: Looking for Daily Index File nearest date: " << aDate << '\n';
 
-	auto directory_list = this->GetRemoteIndexList();
+	decltype(auto) directory_list = this->GetRemoteIndexList();
 
-	auto looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
+	decltype(auto) looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
 
-	auto pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
+	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
 			std::bind(std::less_equal<std::string>(), std::placeholders::_1, looking_for));
 	dthrow_if_(pos == directory_list.rend(), "Can't find daily index file for date: ", bg::to_simple_string(input_date_).c_str());
 
@@ -108,10 +108,10 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 
 	std::clog << "D: Looking for Daily Index Files in date range from: " << start_date_  << " to: " << end_date_ << '\n';
 
-	auto directory_list = this->GetRemoteIndexList();
+	decltype(auto) directory_list = this->GetRemoteIndexList();
 
-	auto looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
-	auto looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
+	decltype(auto) looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
+	decltype(auto) looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
 
 	remote_daily_index_file_name_list_.clear();
 	std::copy_if(directory_list.crbegin(), directory_list.crend(), std::back_inserter(remote_daily_index_file_name_list_),
@@ -135,13 +135,13 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (void)
 	ftp_server_.OpenFTPConnection();
 	ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
 
-	auto directory_list = ftp_server_.ListWorkingDirectoryContents();
+	decltype(auto) directory_list = ftp_server_.ListWorkingDirectoryContents();
 
 	ftp_server_.CloseFTPConnection();
 
 	//	we need to do some cleanup of the directory listing to simplify our searches.
 
-	auto not_form = std::partition(directory_list.begin(), directory_list.end(),
+	decltype(auto) not_form = std::partition(directory_list.begin(), directory_list.end(),
 			[](std::string& x) {return boost::algorithm::starts_with(x, "form");});
 	directory_list.erase(not_form, directory_list.end());
 
@@ -185,7 +185,7 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 
 	for (const auto& remote_file : remote_daily_index_file_name_list_)
 	{
-		auto local_file_name = local_daily_index_file_directory_;
+		decltype(auto) local_file_name = local_daily_index_file_directory_;
 		local_file_name /= remote_file;
 		if (replace_files || ! fs::exists(local_file_name))
 		{

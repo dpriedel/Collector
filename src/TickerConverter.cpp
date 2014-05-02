@@ -68,14 +68,14 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 	
 	std::clog << "T: Doing CIK lookup for ticker: " << ticker << '\n';
 
-	auto pos = ticker_to_CIK_.find(ticker);
+	decltype(auto) pos = ticker_to_CIK_.find(ticker);
 	if (pos != ticker_to_CIK_.end())
 	{
 		std::clog << "T: Found CIK: " << pos->second << " in cache.\n";
 		return pos->second;
 	}
 
-	auto cik = EDGAR_CIK_Lookup(ticker, pause);
+	decltype(auto) cik = EDGAR_CIK_Lookup(ticker, pause);
 	if (cik.empty())
 		cik = NotFound;
 	ticker_to_CIK_[ticker] = cik;
@@ -135,7 +135,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 
 		pn::HTTPResponse res;
 
-		auto& response = session.receiveResponse(res);
+		decltype(auto) response = session.receiveResponse(res);
 
 		the_html.assign(std::istreambuf_iterator<char>(response), std::istreambuf_iterator<char>());
 	}
