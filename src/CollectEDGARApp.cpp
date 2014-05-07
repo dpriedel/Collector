@@ -164,9 +164,9 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			auto local_daily_index_file_name = idxFileRet.GetLocalIndexFilePath();
+			decltype(auto) local_daily_index_file_name = idxFileRet.GetLocalIndexFilePath();
 			FormFileRetriever form_file_getter{a_server, pause_};
-			auto form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 			
 			//	JUST FOR INITIAL DEVELOPMENT
 			/* for (auto& elem : form_file_list) */
@@ -187,9 +187,9 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			auto index_file_list = idxFileRet.GetfRemoteIndexFileNamesForDateRange();
+			decltype(auto) index_file_list = idxFileRet.GetfRemoteIndexFileNamesForDateRange();
 			FormFileRetriever form_file_getter{a_server, pause_};
-			auto form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
 			
 			//	JUST FOR INITIAL DEVELOPMENT
@@ -221,9 +221,9 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			auto local_quarterly_index_file_name = idxFileRet.GetLocalIndexFilePath();
+			decltype(auto) local_quarterly_index_file_name = idxFileRet.GetLocalIndexFilePath();
 			FormFileRetriever form_file_getter{a_server, pause_};
-			auto form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
 			//	JUST FOR INITIAL DEVELOPMENT
 			/* for (auto& elem : form_file_list) */
@@ -244,9 +244,9 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			auto index_file_list = idxFileRet.GetLocalIndexFileNamesForDateRange();
+			decltype(auto) index_file_list = idxFileRet.GetLocalIndexFileNamesForDateRange();
 			FormFileRetriever form_file_getter{a_server, pause_};
-			auto form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
 
 			//	JUST FOR INITIAL DEVELOPMENT
