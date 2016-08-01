@@ -1,0 +1,9 @@
+-I/extra/gcc/gcc-6/
+-I/extra/gcc/gcc-6/include/c++/6.1.0/
+-I/extra/gcc/decNumber/
+-I/extra/boost/boost-1.61_gcc-6/
+-I/usr/include/pqxx/
+-I/home/dpriedel/projects/github/app_framework/include/
+-I/home/dpriedel/projects/github/app_framework/src/
+-I/usr/local/include/
+-I/home/dpriedel/projects/github/CollectEDGARData/src/
