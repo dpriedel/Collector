@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  QuarterlyIndexFileRetriever.cpp
-// 
+//
 //    Description:  Implements a class which knows how to retrieve EDGAR quarterly index files
-// 
+//
 //        Version:  1.0
 //        Created:  01/30/2014 11:23:18 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -54,7 +54,7 @@ bg::date QuarterlyIndexFileRetriever::UseDate (const bg::date& day_in_quarter)
 	input_date_ = bg::date();		//	don't know of a better way to clear date field.
 
 	//	we can only work with past data.
-	
+
 	bg::date today{bg::day_clock::local_day()};
 	dthrow_if_range(day_in_quarter > today, "Date must be less than ", bg::to_simple_string(today));
 
@@ -76,7 +76,7 @@ std::string QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::dat
 
 void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
-	dthrow_if_(remote_quarterly_index_file_name_.empty(), "Must generate remote index file before attempting download.");
+	dthrow_if_(remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
 
 	local_quarterly_index_file_directory_ = local_directory_name;
 	this->MakeLocalIndexFilePath();
@@ -89,7 +89,7 @@ void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& loc
 	ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
 
 	ftp_server_.DownloadBinaryFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_zip_);
-	
+
 	ftp_server_.CloseFTPConnection();
 
 	UnzipLocalIndexFile(local_quarterly_index_file_name_zip_);
@@ -129,11 +129,11 @@ const std::vector<std::string>& QuarterlyIndexFileRetriever::FindIndexFileNamesF
 	remote_quarterly_index_zip_file_name_list_ = this->GetRemoteIndexList();
 
 	//	we need to keep a copy of these file names for the unzipped files which will end up locally.
-	
+
 	local_quarterly_index_file_name_list_.clear();
 
 	//	NOTE: elem is passed by value since the replace algorith modifies in place
-	
+
 	std::transform(remote_quarterly_index_zip_file_name_list_.cbegin(), remote_quarterly_index_zip_file_name_list_.cend(),
 			std::back_inserter(local_quarterly_index_file_name_list_),
 				[](std::string elem) { boost::algorithm::replace_last(elem, ".zip", ".idx"); return elem; });
@@ -163,7 +163,7 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 	dthrow_if_(remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
 	//	Remember...we are working with compressed directory files on the EDGAR server
-	
+
 	local_quarterly_index_file_directory_ = local_directory_name;
 
 	ftp_server_.OpenFTPConnection();
@@ -188,7 +188,7 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 			std::clog << "Q: Retrieved remote quarterly index file: " << remote_file << " to: " << local_file_name << '\n';
 		}
 	}
-	
+
 	ftp_server_.CloseFTPConnection();
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
@@ -199,7 +199,7 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-//	NOTE:	The range validity edits on greg_year and greg_month don't allow you to use 
+//	NOTE:	The range validity edits on greg_year and greg_month don't allow you to use
 //			meaningful default values.
 
 QuarterlyIndexFileRetriever::PathNameGenerator::PathNameGenerator (void)
@@ -236,7 +236,7 @@ void QuarterlyIndexFileRetriever::PathNameGenerator::increment (void)
 	if (active_date_ > end_date_)
 	{
 		//	we need to become equal to and 'end' iterator
-		
+
 		active_year_ = start_year_;
 		active_month_ = start_month_;
 		path_.clear();
@@ -253,4 +253,3 @@ void QuarterlyIndexFileRetriever::PathNameGenerator::increment (void)
 		path_ = EDGAR_path.string();
 	}
 }		// -----  end of method PathNameGenerator::increment  -----
-

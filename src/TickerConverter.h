@@ -1,19 +1,19 @@
 // =====================================================================================
-// 
+//
 //       Filename:  TickerConverter.h
-// 
+//
 //    Description:  Header file for class which does file or web based lookup to convert
 //    				a ticker ticker to an EDGAR CIK.
-// 
+//
 //        Version:  1.0
 //        Created:  02/06/2014 01:54:27 PM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 #ifndef TICKERCONVERTER_H_
@@ -45,7 +45,7 @@ namespace fs = boost::filesystem;
 
 // =====================================================================================
 //        Class:  TickerConverter
-//  Description:  
+//  Description:
 // =====================================================================================
 class TickerConverter
 {
@@ -56,10 +56,10 @@ class TickerConverter
 		// ====================  ACCESSORS     =======================================
 
 		// ====================  MUTATORS      =======================================
-		
+
 		void UseCacheFile(const fs::path& cache_file_name);
-		std::string ConvertTickerToCIK(const std::string& ticker, int pause={1});
-		int ConvertTickerFileToCIKs(const fs::path& ticker_file_name, int pause={1});
+		std::string ConvertTickerToCIK(const std::string& ticker, int pause=1);
+		int ConvertTickerFileToCIKs(const fs::path& ticker_file_name, int pause=1);
 		void SaveCIKDataToFile(void);
 
 		static constexpr char NotFound[] = "**no_CIK_found**";
@@ -67,16 +67,16 @@ class TickerConverter
 		// ====================  OPERATORS     =======================================
 
 	protected:
-		
+
 		//	NOTE: make this function virtual to run Google MOCK tests for it.
-		
-		std::string EDGAR_CIK_Lookup(const std::string& ticker, int pause={1});
+
+		std::string EDGAR_CIK_Lookup(const std::string& ticker, int pause=1);
 
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
 		// ====================  DATA MEMBERS  =======================================
-		
+
 		std::map<std::string, std::string> ticker_to_CIK_;
 
 		fs::path cache_file_name_;

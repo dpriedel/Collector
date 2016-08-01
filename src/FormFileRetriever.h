@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  FormFileRetriever.h
-// 
+//
 //    Description:  Header for class which finds entries for specified form type.
-// 
+//
 //        Version:  1.0
 //        Created:  01/13/2014 10:10:18 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -48,17 +48,17 @@ namespace fs = boost::filesystem;
 
 // =====================================================================================
 //        Class:  FormFileRetriever
-//  Description:  
+//  Description:
 // =====================================================================================
 class FormFileRetriever
 {
 	public:
-		
+
 		using FormsList = std::map<std::string, std::vector<std::string>>;
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (const FTP_Server& ftp_server, int pause={1});                   // constructor
+		FormFileRetriever (const FTP_Server& ftp_server, int pause=1);                   // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -74,25 +74,25 @@ class FormFileRetriever
 
 		// NOTE: the retrieved files will be placed in a directory hierarchy as follows:
 		// <form_directory>/<the_form>/<CIK number>/<file name>
-		
+
 		void RetrieveSpecifiedFiles(const FormsList& form_list,
-				const fs::path& local_form_directory, bool replace_files=false); 
+				const fs::path& local_form_directory, bool replace_files=false);
 
 	protected:
 
 		void RetrieveSpecifiedFiles(const std::vector<std::string>& form_file_list, const std::string& the_form,
-				const fs::path& local_form_directory, bool replace_files=false); 
+				const fs::path& local_form_directory, bool replace_files=false);
 
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
 		// ====================  DATA MEMBERS  =======================================
-		
+
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
 		FTP_Server ftp_server_;
 		fs::path local_form_directory_name_;
-		
+
 		std::chrono::seconds pause_;
 
 

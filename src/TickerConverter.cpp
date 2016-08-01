@@ -40,7 +40,7 @@
 //#include <regex>
 #include <boost/regex.hpp>
 
-#include <Poco/Net/HTTPClientSession.h>
+#include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
 
@@ -116,7 +116,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 {
 	std::chrono::seconds pause_time{pause};
 
-	pn::HTTPClientSession session{"www.sec.gov"};
+	pn::HTTPSClientSession session{"www.sec.gov"};
 	
 	pn::HTTPRequest req{pn::HTTPMessage::HTTP_1_1};
 	req.setMethod(pn::HTTPRequest::HTTP_GET);
