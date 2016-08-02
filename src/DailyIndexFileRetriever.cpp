@@ -1,19 +1,19 @@
 // =====================================================================================
-// 
+//
 //       Filename:  DailyIndexFileRetriever.cpp
-// 
+//
 //    Description:  module to retrieve EDGAR daily index file for date
 //    				nearest specified date
-// 
+//
 //        Version:  1.0
 //        Created:  01/06/2014 10:25:52 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -70,7 +70,7 @@ bg::date DailyIndexFileRetriever::UseDate (const bg::date& aDate)
 	input_date_ = bg::date();		//	don't know of a better way to clear date field.
 
 	//	we can only work with past data.
-	
+
 	bg::date today{bg::day_clock::local_day()};
 	dthrow_if_range(aDate > today, "Date must be less than ", bg::to_simple_string(today));
 
@@ -86,10 +86,10 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 
 	decltype(auto) directory_list = this->GetRemoteIndexList();
 
-	decltype(auto) looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
+	std::string looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
 
 	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
-			std::bind(std::less_equal<std::string>(), std::placeholders::_1, looking_for));
+        [&looking_for](const auto& x) {return x <= looking_for;});
 	dthrow_if_(pos == directory_list.rend(), "Can't find daily index file for date: ", bg::to_simple_string(input_date_).c_str());
 
 	remote_daily_index_file_name_ = *pos;
@@ -120,7 +120,7 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 
 	dthrow_if_range(remote_daily_index_file_name_list_.empty(), "Can't find daily index files for date range: ",
 		   	bg::to_simple_string(start_date_), bg::to_simple_string(end_date_));
-	
+
 	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().substr(5, 8));
 	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().substr(5, 8));
 
@@ -165,7 +165,7 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 	ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
 
 	ftp_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
-	
+
 	ftp_server_.CloseFTPConnection();
 
 	std::clog << "D: Retrieved remote daily index file: " << remote_daily_index_file_name_ << " to: " << local_daily_index_file_name_ << '\n';
@@ -193,7 +193,7 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 			std::clog << "D: Retrieved remote daily index file: " << remote_file << " to: " << local_file_name << '\n';
 		}
 	}
-	
+
 	ftp_server_.CloseFTPConnection();
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
@@ -204,6 +204,3 @@ void DailyIndexFileRetriever::MakeLocalIndexFilePath (void)
 
 
 }		// -----  end of method DailyIndexFileRetriever::MakeLocalIndexFileName  -----
-
-
-

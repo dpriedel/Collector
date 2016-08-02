@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  CollectEDGARApp.h
-// 
+//
 //    Description:  main application
-// 
+//
 //        Version:  1.0
 //        Created:  01/17/2014 11:13:53 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -33,7 +33,7 @@
 
 // =====================================================================================
 //        Class:  CollectEDGARApp
-//  Description:  
+//  Description:
 // =====================================================================================
 
 #ifndef COLLECTEDGARAPP_H_
@@ -84,18 +84,18 @@ class CollectEDGARApp : public CApplication
 
 	private:
 		// ====================  DATA MEMBERS  =======================================
-	
+
 	struct comma_list_parser
 	{
 		std::vector<std::string>& destination_;
 		std::string seperator_;
-		
+
 		comma_list_parser(std::vector<std::string>& destination, const std::string& seperator)
 			: destination_(destination), seperator_{seperator} {}
-		
+
 		void parse_string(const std::string& comma_list);
 	};
-		
+
 	TickerConverter ticker_converter_;
 
 	bg::date begin_date_;
@@ -105,6 +105,7 @@ class CollectEDGARApp : public CApplication
 	std::string form_;
 	std::string ticker_;
 	std::string login_ID_;
+    std::string FTP_host_;
 
 	std::vector<std::string> form_list_;
 	std::vector<std::string> ticker_list_;
@@ -121,6 +122,7 @@ class CollectEDGARApp : public CApplication
 	std::streambuf* saved_from_clog_;
 
 	int pause_;
+    int max_forms_to_download_;     // mainly for testing
 
 	bool replace_index_files_;
 	bool replace_form_files_;

@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  CollectEDGARApp.cpp
-// 
+//
 //    Description:  main application
-// 
+//
 //        Version:  1.0
 //        Created:  01/17/2014 11:18:10 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -60,7 +60,7 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[], const std::vector<std::string>& tokens)
 	: CApplication{argc, argv, tokens}, saved_from_clog_{nullptr}, replace_index_files_{false}, replace_form_files_{false},
 	index_only_{false}
-	
+
 {
 
 }
@@ -80,11 +80,11 @@ void CollectEDGARApp::Do_CheckArgs (void)
 		saved_from_clog_ = std::clog.rdbuf();
 		std::clog.rdbuf(log_file_.rdbuf());
 
-		std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n"; 
+		std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n";
 	}
 
 	dthrow_if_(mode_ != "daily" && mode_ != "quarterly" && mode_ != "ticker-only", "Mode must be either 'daily','quarterly' or 'ticker-only' ==> ", mode_);
-	
+
 	//	the user may specify multiple stock tickers in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
 
@@ -92,14 +92,14 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	{
 		comma_list_parser x(ticker_list_, ",");
 		x.parse_string(ticker_);
-	}	
+	}
 
 	if (! ticker_list_file_name_.empty())
 		dthrow_if_(ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
 
 	if (mode_ == "ticker-only")
 		return;
-	
+
 	dthrow_if_(begin_date_ == bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
 
 	if (end_date_ == bg::date())
@@ -115,7 +115,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	{
 		comma_list_parser x(form_list_, ",");
 		x.parse_string(form_);
-	}	
+	}
 
 }		// -----  end of method CollectEDGARApp::Do_CheckArgs  -----
 
@@ -152,7 +152,7 @@ void CollectEDGARApp::Do_Run_TickerFileLookup (void)
 void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	FTP_Server a_server{"ftp.sec.gov", "anonymous", login_ID_};
+	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
 	DailyIndexFileRetriever idxFileRet{a_server};
 
 	Do_TickerMap_Setup();
@@ -167,15 +167,19 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 			decltype(auto) local_daily_index_file_name = idxFileRet.GetLocalIndexFilePath();
 			FormFileRetriever form_file_getter{a_server, pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
-			
-			//	JUST FOR INITIAL DEVELOPMENT
-			/* for (auto& elem : form_file_list) */
-			/* { */
-			/* 	std::default_random_engine dre; */
-			/* 	std::shuffle(elem.second.begin(), elem.second.end(), dre); */
-			/* 	if (elem.second.size() > 10) */
-			/* 		elem.second.resize(10); */
-			/* } */
+
+            if (max_forms_to_download_ > -1)
+            {
+    			for (auto& elem : form_file_list)
+    			{
+        			if (elem.second.size() > max_forms_to_download_)
+                    {
+            			std::default_random_engine dre;
+            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
+        				elem.second.resize(max_forms_to_download_);
+                    }
+    			}
+            }
 			form_file_getter.RetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_,
 					replace_form_files_);
 		}
@@ -191,15 +195,19 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 			FormFileRetriever form_file_getter{a_server, pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
-			
-			//	JUST FOR INITIAL DEVELOPMENT
-			/* for (auto& elem : form_file_list) */
-			/* { */
-			/* 	std::default_random_engine dre; */
-			/* 	std::shuffle(elem.second.begin(), elem.second.end(), dre); */
-			/* 	if (elem.second.size() > 10) */
-			/* 		elem.second.resize(10); */
-			/* } */
+
+            if (max_forms_to_download_ > -1)
+            {
+    			for (auto& elem : form_file_list)
+    			{
+        			if (elem.second.size() > max_forms_to_download_)
+                    {
+            			std::default_random_engine dre;
+            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
+        				elem.second.resize(max_forms_to_download_);
+                    }
+    			}
+            }
 			form_file_getter.RetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, replace_form_files_);
 		}
 	}
@@ -210,8 +218,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 {
 	Do_TickerMap_Setup();
 
-	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	FTP_Server a_server{"ftp.sec.gov", "anonymous", login_ID_};
+	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
 	QuarterlyIndexFileRetriever idxFileRet{a_server};
 
 	if (begin_date_ == end_date_)
@@ -225,14 +232,18 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 			FormFileRetriever form_file_getter{a_server, pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
-			//	JUST FOR INITIAL DEVELOPMENT
-			/* for (auto& elem : form_file_list) */
-			/* { */
-			/* 	std::default_random_engine dre; */
-			/* 	std::shuffle(elem.second.begin(), elem.second.end(), dre); */
-			/* 	if (elem.second.size() > 10) */
-			/* 		elem.second.resize(10); */
-			/* } */
+            if (max_forms_to_download_ > -1)
+            {
+    			for (auto& elem : form_file_list)
+    			{
+        			if (elem.second.size() > max_forms_to_download_)
+                    {
+            			std::default_random_engine dre;
+            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
+        				elem.second.resize(max_forms_to_download_);
+                    }
+    			}
+            }
 			form_file_getter.RetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_,
 					replace_form_files_);
 		}
@@ -249,14 +260,18 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
 
-			//	JUST FOR INITIAL DEVELOPMENT
-			/* for (auto& elem : form_file_list) */
-			/* { */
-			/* 	std::default_random_engine dre; */
-			/* 	std::shuffle(elem.second.begin(), elem.second.end(), dre); */
-			/* 	if (elem.second.size() > 10) */
-			/* 		elem.second.resize(10); */
-			/* } */
+            if (max_forms_to_download_ > -1)
+            {
+    			for (auto& elem : form_file_list)
+    			{
+        			if (elem.second.size() > max_forms_to_download_)
+                    {
+            			std::default_random_engine dre;
+            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
+        				elem.second.resize(max_forms_to_download_);
+                    }
+    			}
+            }
 			form_file_getter.RetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, replace_form_files_);
 		}
 	}
@@ -277,7 +292,7 @@ void CollectEDGARApp::Do_Quit (void)
 
 	if (! log_file_path_name_.empty())
 	{
-		std::clog << "*** End run " << boost::posix_time::second_clock::local_time() << " ***\n"; 
+		std::clog << "*** End run " << boost::posix_time::second_clock::local_time() << " ***\n";
 		log_file_.close();
 
 		std::clog.rdbuf(saved_from_clog_);
@@ -310,6 +325,8 @@ void CollectEDGARApp::Do_SetupProgramOptions (void)
 		("index-only",		po::value<bool>(&this->index_only_)->implicit_value(true),	"do not download form files.")
 		("pause,p", 		po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
 		("login", 		po::value<std::string>(&this->login_ID_)->required(), "email address to use for anonymous login to EDGAR")
+		("host", 		po::value<std::string>(&this->FTP_host_)->default_value("ftp.sec.gov"), "FTP address to use for EDGAR")
+		("max", 		po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing.")
 		;
 
 }		// -----  end of method CollectEDGARApp::Do_SetupProgramOptions  -----
@@ -324,4 +341,3 @@ void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_
 
 	return ;
 }		// -----  end of method comma_list_parser::parse_string  -----
-
