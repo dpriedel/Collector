@@ -48,30 +48,54 @@
 namespace bg = boost::gregorian;
 namespace fs = boost::filesystem;
 
-#include "CApplication.h"
+#include "Poco/Util/Application.h"
+#include "Poco/Util/Option.h"
+#include "Poco/Util/OptionSet.h"
+#include "Poco/Util/HelpFormatter.h"
+#include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/AutoPtr.h"
+
+#include "ErrorHandler.h"
 #include "TickerConverter.h"
 
-class CollectEDGARApp : public CApplication
+class CollectEDGARApp : public Poco::Util::Application
 {
-	public:
-		// ====================  LIFECYCLE     =======================================
-		CollectEDGARApp (int argc, char* argv[]);                             // constructor
-		CollectEDGARApp(int argc, char* argv[], const std::vector<std::string>& tokens);
 
-		// ====================  ACCESSORS     =======================================
+public:
 
-		// ====================  MUTATORS      =======================================
+	CollectEDGARApp(int argc, char* argv[]);
+	CollectEDGARApp(const CollectEDGARApp& rhs) { };
+    CollectEDGARApp();
 
-		// ====================  OPERATORS     =======================================
+protected:
 
-	protected:
+	void initialize(Application& self) override;
+	void uninitialize() override;
+	void reinitialize(Application& self) override;
 
-	virtual void	Do_StartUp (void);
-	virtual void	Do_CheckArgs (void);
-	virtual void	Do_Run (void);
-	virtual void	Do_Quit (void);
-	virtual	void	Do_SetupProgramOptions(void);
-	virtual	void	Do_ParseProgramOptions(po::parsed_options& options);
+	void defineOptions(Poco::Util::OptionSet& options) override;
+
+	void handleHelp(const std::string& name, const std::string& value);
+
+	void handleDefine(const std::string& name, const std::string& value);
+
+	void handleConfig(const std::string& name, const std::string& value);
+
+	void displayHelp();
+
+	void defineProperty(const std::string& def);
+
+	int main(const ArgVec& args) override;
+
+	void printProperties(const std::string& base);
+
+	void	Do_Main (void);
+	void	Do_StartUp (void);
+	void	Do_CheckArgs (void);
+	void	Do_Run (void);
+	void	Do_Quit (void);
+	// virtual	void	Do_SetupProgramOptions(void);
+	// virtual	void	Do_ParseProgramOptions(po::parsed_options& options);
 
 	void Do_Run_DailyIndexFiles(void);
 	void Do_Run_QuarterlyIndexFiles(void);
@@ -81,9 +105,14 @@ class CollectEDGARApp : public CApplication
 	void Do_TickerMap_Setup(void);
 
 		// ====================  DATA MEMBERS  =======================================
+public:
 
-	private:
-		// ====================  DATA MEMBERS  =======================================
+	static CollectEDGARApp*	sTheApplication;
+	static CErrorHandler*	sCErrorHandler;
+
+private:
+
+	CErrorHandler	mMyError;				//	code to display error messages
 
 	struct comma_list_parser
 	{
@@ -95,6 +124,19 @@ class CollectEDGARApp : public CApplication
 
 		void parse_string(const std::string& comma_list);
 	};
+
+    // a set of functions to be used to capture values from the command line.
+    // called from the options handling code.
+    // there should be a better way to do this but this works for now.
+
+    void inline store_begin_date(const std::string& name, const std::string& value) { begin_date_ = bg::from_string(value); }
+    void inline store_end_date(const std::string& name, const std::string& value) { end_date_ = bg::from_string(value); }
+    void inline store_index_dir(const std::string& name, const std::string& value) { local_index_file_directory_ = value; }
+    void inline store_form_dir(const std::string& name, const std::string& value) { local_form_file_directory_ = value; }
+    void inline store_FTP_host(const std::string& name, const std::string& value) { FTP_host_ = value; }
+    void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
+
+		// ====================  DATA MEMBERS  =======================================
 
 	TickerConverter ticker_converter_;
 
@@ -127,6 +169,7 @@ class CollectEDGARApp : public CApplication
 	bool replace_index_files_;
 	bool replace_form_files_;
 	bool index_only_;			//	do no download any form files
+	bool help_requested_;
 
 }; // -----  end of class CollectEDGARApp  -----
 

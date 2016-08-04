@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  FTP_Connection.cpp
-// 
+//
 //    Description:  Implements FTP server read-only access
-// 
+//
 //        Version:  1.0
 //        Created:  01/14/2014 10:23:57 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -62,18 +62,18 @@ FTP_Server::~FTP_Server (void)
 void FTP_Server::OpenFTPConnection (void)
 {
 	if (! session_)
-	{	
+	{
 		session_ = new Poco::Net::FTPClientSession{server_name_};
 		session_->login(user_name_, pswd_);
 		session_->setPassive(true);
 	}
-	
+
 }		// -----  end of method FTP_Server::MakeFTPConnection  -----
 
 void FTP_Server::CloseFTPConnection (void)
 {
-	if (session_)
-		session_->close();
+	// if (session_)
+	// 	session_->close();
 	delete session_;
 	session_ = nullptr;
 }		// -----  end of method FTP_Server::CloseFTPConnection  -----
@@ -92,20 +92,20 @@ std::vector<std::string> FTP_Server::ListWorkingDirectoryContents (void)
 	dthrow_if_(! session_, "Must open session before doing 'dir'.");
 
 	//	we read and store our results so we can end the active connection quickly.
-	
+
 	std::vector<std::string> results;
-	
+
 	decltype(auto) listing = session_->beginList();
 
 	std::istream_iterator<aLine> itor{listing};
 	std::istream_iterator<aLine> itor_end;
 
 	std::move(itor, itor_end, std::back_inserter(results));
-	
+
 	session_->endList();
-	
+
 	//	one last thing...let's make sure there's no junk at end of each entry.
-	
+
 	for (auto& x : results)
 		boost::algorithm::trim_right(x);
 
@@ -134,7 +134,7 @@ void FTP_Server::DownloadFile (const std::string& remote_file_name, const fs::pa
 void FTP_Server::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)
 {
 	//	found this approach at insanecoding.blogspot.com
-	
+
 	dthrow_if_(! session_, "Must open session before doing 'download'.");
 
 	session_->setFileType(Poco::Net::FTPClientSession::TYPE_BINARY);
