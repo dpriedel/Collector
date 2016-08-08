@@ -136,6 +136,18 @@ private:
     void inline store_FTP_host(const std::string& name, const std::string& value) { FTP_host_ = value; }
     void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
 
+    void inline store_mode(const std::string& name, const std::string& value) { mode_ = value; }
+    void inline store_form(const std::string& name, const std::string& value) { form_ = value; }
+    void inline store_ticker(const std::string& name, const std::string& value) { ticker_ = value; }
+    void inline store_log_path(const std::string& name, const std::string& value) { log_file_path_name_ = value; }
+    void inline store_ticker_cache(const std::string& name, const std::string& value) { ticker_cache_file_name_ = value; }
+    void inline store_ticker_file(const std::string& name, const std::string& value) { ticker_list_file_name_ = value; }
+    void inline store_replace_index_files(const std::string& name, const std::string& value) { replace_index_files_ = true; }
+    void inline store_replace_form_files(const std::string& name, const std::string& value) { replace_form_files_ = true; }
+    void inline store_index_only(const std::string& name, const std::string& value) { index_only_ = true; }
+    void inline store_pause(const std::string& name, const std::string& value) { pause_ = std::stoi(value); }
+    void inline store_max(const std::string& name, const std::string& value) { max_forms_to_download_ = std::stoi(value); }
+
 		// ====================  DATA MEMBERS  =======================================
 
 	TickerConverter ticker_converter_;

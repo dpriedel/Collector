@@ -80,20 +80,6 @@ ChangeWorkingDirectoryTo	/home/dpriedel/projects/github/CollectEDGARData/src/FTP
 ListWorkingDirectoryContents	/home/dpriedel/projects/github/CollectEDGARData/src/FTP_Connection.cpp	/^std::vector<std::string> FTP_Server::ListWorkingDirectoryContents (void)$/;"	function	line:90	class:FTP_Server	signature:(void)
 DownloadFile	/home/dpriedel/projects/github/CollectEDGARData/src/FTP_Connection.cpp	/^void FTP_Server::DownloadFile (const std::string& remote_file_name, const fs::path& local_file_name)$/;"	function	line:116	class:FTP_Server	signature:(const std::string& remote_file_name, const fs::path& local_file_name)
 DownloadBinaryFile	/home/dpriedel/projects/github/CollectEDGARData/src/FTP_Connection.cpp	/^void FTP_Server::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)$/;"	function	line:134	class:FTP_Server	signature:(const std::string& remote_file_name, const fs::path& local_file_name)
-CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])$/;"	function	line:54	class:CollectEDGARApp	signature:(int argc, char* argv[])
-CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^CollectEDGARApp::CollectEDGARApp (int argc, char* argv[], const std::vector<std::string>& tokens)$/;"	function	line:60	class:CollectEDGARApp	signature:(int argc, char* argv[], const std::vector<std::string>& tokens)
-Do_StartUp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_StartUp (void)$/;"	function	line:68	class:CollectEDGARApp	signature:(void)
-Do_CheckArgs	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_CheckArgs (void)$/;"	function	line:73	class:CollectEDGARApp	signature:(void)
-Do_Run	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run (void)$/;"	function	line:122	class:CollectEDGARApp	signature:(void)
-Do_Run_TickerLookup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_TickerLookup (void)$/;"	function	line:139	class:CollectEDGARApp	signature:(void)
-Do_Run_TickerFileLookup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_TickerFileLookup (void)$/;"	function	line:146	class:CollectEDGARApp	signature:(void)
-Do_Run_DailyIndexFiles	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_DailyIndexFiles (void)$/;"	function	line:152	class:CollectEDGARApp	signature:(void)
-Do_Run_QuarterlyIndexFiles	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)$/;"	function	line:209	class:CollectEDGARApp	signature:(void)
-Do_TickerMap_Setup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_TickerMap_Setup (void)$/;"	function	line:266	class:CollectEDGARApp	signature:(void)
-Do_Quit	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Quit (void)$/;"	function	line:273	class:CollectEDGARApp	signature:(void)
-Do_SetupProgramOptions	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_SetupProgramOptions (void)$/;"	function	line:287	class:CollectEDGARApp	signature:(void)
-Do_ParseProgramOptions	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_ParseProgramOptions (po::parsed_options&)$/;"	function	line:317	class:CollectEDGARApp	signature:(po::parsed_options&)
-parse_string	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_list)$/;"	function	line:321	class:CollectEDGARApp::comma_list_parser	signature:(const std::string& comma_list)
 QuarterlyIndexFileRetriever	/home/dpriedel/projects/github/CollectEDGARData/src/QuarterlyIndexFileRetriever.cpp	/^QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const FTP_Server& ftp_server)$/;"	function	line:46	class:QuarterlyIndexFileRetriever	signature:(const FTP_Server& ftp_server)
 UseDate	/home/dpriedel/projects/github/CollectEDGARData/src/QuarterlyIndexFileRetriever.cpp	/^bg::date QuarterlyIndexFileRetriever::UseDate (const bg::date& day_in_quarter)$/;"	function	line:52	class:QuarterlyIndexFileRetriever	signature:(const bg::date& day_in_quarter)
 MakeQuarterIndexPathName	/home/dpriedel/projects/github/CollectEDGARData/src/QuarterlyIndexFileRetriever.cpp	/^std::string QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& day_in_quarter)$/;"	function	line:64	class:QuarterlyIndexFileRetriever	signature:(const bg::date& day_in_quarter)
@@ -122,33 +108,6 @@ ConvertTickerFileToCIKs	/home/dpriedel/projects/github/CollectEDGARData/src/Tick
 EDGAR_CIK_Lookup	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.cpp	/^std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pause)$/;"	function	line:115	class:TickerConverter	signature:(const std::string& ticker, int pause)
 UseCacheFile	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.cpp	/^void TickerConverter::UseCacheFile (const fs::path& cache_file_name)$/;"	function	line:160	class:TickerConverter	signature:(const fs::path& cache_file_name)
 SaveCIKDataToFile	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.cpp	/^void TickerConverter::SaveCIKDataToFile (void)$/;"	function	line:185	class:TickerConverter	signature:(void)
-COLLECTEDGARAPP_H_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^#define COLLECTEDGARAPP_H_$/;"	macro	line:40
-CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^class CollectEDGARApp : public CApplication$/;"	class	line:54
-comma_list_parser	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	struct comma_list_parser$/;"	struct	line:88	class:CollectEDGARApp
-destination_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		std::vector<std::string>& destination_;$/;"	member	line:90	struct:CollectEDGARApp::comma_list_parser
-seperator_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		std::string seperator_;$/;"	member	line:91	struct:CollectEDGARApp::comma_list_parser
-comma_list_parser	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		comma_list_parser(std::vector<std::string>& destination, const std::string& seperator)$/;"	function	line:93	struct:CollectEDGARApp::comma_list_parser	signature:(std::vector<std::string>& destination, const std::string& seperator)
-ticker_converter_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	TickerConverter ticker_converter_;$/;"	member	line:99	class:CollectEDGARApp
-begin_date_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bg::date begin_date_;$/;"	member	line:101	class:CollectEDGARApp
-end_date_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bg::date end_date_;$/;"	member	line:102	class:CollectEDGARApp
-mode_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string mode_;$/;"	member	line:104	class:CollectEDGARApp
-form_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string form_;$/;"	member	line:105	class:CollectEDGARApp
-ticker_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string ticker_;$/;"	member	line:106	class:CollectEDGARApp
-login_ID_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string login_ID_;$/;"	member	line:107	class:CollectEDGARApp
-form_list_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::vector<std::string> form_list_;$/;"	member	line:109	class:CollectEDGARApp
-ticker_list_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::vector<std::string> ticker_list_;$/;"	member	line:110	class:CollectEDGARApp
-ticker_map_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::map<std::string, std::string> ticker_map_;$/;"	member	line:112	class:CollectEDGARApp
-log_file_path_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path log_file_path_name_;$/;"	member	line:114	class:CollectEDGARApp
-local_index_file_directory_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path local_index_file_directory_;$/;"	member	line:115	class:CollectEDGARApp
-local_form_file_directory_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path local_form_file_directory_;$/;"	member	line:116	class:CollectEDGARApp
-ticker_cache_file_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path ticker_cache_file_name_;$/;"	member	line:117	class:CollectEDGARApp
-ticker_list_file_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path ticker_list_file_name_;$/;"	member	line:118	class:CollectEDGARApp
-log_file_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::ofstream log_file_;$/;"	member	line:120	class:CollectEDGARApp
-saved_from_clog_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::streambuf* saved_from_clog_;$/;"	member	line:121	class:CollectEDGARApp
-pause_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	int pause_;$/;"	member	line:123	class:CollectEDGARApp
-replace_index_files_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool replace_index_files_;$/;"	member	line:125	class:CollectEDGARApp
-replace_form_files_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool replace_form_files_;$/;"	member	line:126	class:CollectEDGARApp
-index_only_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool index_only_;			\/\/	do no download any form files$/;"	member	line:127	class:CollectEDGARApp
 TICKERCONVERTER_H_	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.h	/^#define TICKERCONVERTER_H_$/;"	macro	line:20
 TickerConverter	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.h	/^class TickerConverter$/;"	class	line:50
 NotFound	/home/dpriedel/projects/github/CollectEDGARData/src/TickerConverter.h	/^		static constexpr char NotFound[] = "**no_CIK_found**";$/;"	member	line:65	class:TickerConverter
@@ -201,3 +160,46 @@ OBJS	/home/dpriedel/projects/github/CollectEDGARData/makefile	/^OBJS=$(OBJS1) $(
 DEPS	/home/dpriedel/projects/github/CollectEDGARData/makefile	/^DEPS=$(OBJS:.o=.d)$/;"	macro	line:94
 COMPILE	/home/dpriedel/projects/github/CollectEDGARData/makefile	/^COMPILE=$(CPP) -c  -x c++  -O3  -std=c++1y -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP$/;"	macro	line:96
 LINK	/home/dpriedel/projects/github/CollectEDGARData/makefile	/^LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)$/;"	macro	line:97
+COLLECTEDGARAPP_H_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^#define COLLECTEDGARAPP_H_$/;"	macro	line:40
+CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^class CollectEDGARApp : public CApplication$/;"	class	line:54
+comma_list_parser	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	struct comma_list_parser$/;"	struct	line:88	class:CollectEDGARApp
+destination_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		std::vector<std::string>& destination_;$/;"	member	line:90	struct:CollectEDGARApp::comma_list_parser
+seperator_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		std::string seperator_;$/;"	member	line:91	struct:CollectEDGARApp::comma_list_parser
+comma_list_parser	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^		comma_list_parser(std::vector<std::string>& destination, const std::string& seperator)$/;"	function	line:93	struct:CollectEDGARApp::comma_list_parser	signature:(std::vector<std::string>& destination, const std::string& seperator)
+ticker_converter_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	TickerConverter ticker_converter_;$/;"	member	line:99	class:CollectEDGARApp
+begin_date_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bg::date begin_date_;$/;"	member	line:101	class:CollectEDGARApp
+end_date_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bg::date end_date_;$/;"	member	line:102	class:CollectEDGARApp
+mode_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string mode_;$/;"	member	line:104	class:CollectEDGARApp
+form_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string form_;$/;"	member	line:105	class:CollectEDGARApp
+ticker_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string ticker_;$/;"	member	line:106	class:CollectEDGARApp
+login_ID_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::string login_ID_;$/;"	member	line:107	class:CollectEDGARApp
+FTP_host_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^    std::string FTP_host_;$/;"	member	line:108	class:CollectEDGARApp
+form_list_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::vector<std::string> form_list_;$/;"	member	line:110	class:CollectEDGARApp
+ticker_list_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::vector<std::string> ticker_list_;$/;"	member	line:111	class:CollectEDGARApp
+ticker_map_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::map<std::string, std::string> ticker_map_;$/;"	member	line:113	class:CollectEDGARApp
+log_file_path_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path log_file_path_name_;$/;"	member	line:115	class:CollectEDGARApp
+local_index_file_directory_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path local_index_file_directory_;$/;"	member	line:116	class:CollectEDGARApp
+local_form_file_directory_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path local_form_file_directory_;$/;"	member	line:117	class:CollectEDGARApp
+ticker_cache_file_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path ticker_cache_file_name_;$/;"	member	line:118	class:CollectEDGARApp
+ticker_list_file_name_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	fs::path ticker_list_file_name_;$/;"	member	line:119	class:CollectEDGARApp
+log_file_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::ofstream log_file_;$/;"	member	line:121	class:CollectEDGARApp
+saved_from_clog_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	std::streambuf* saved_from_clog_;$/;"	member	line:122	class:CollectEDGARApp
+pause_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	int pause_;$/;"	member	line:124	class:CollectEDGARApp
+max_forms_to_download_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^    int max_forms_to_download_;     \/\/ mainly for testing$/;"	member	line:125	class:CollectEDGARApp
+replace_index_files_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool replace_index_files_;$/;"	member	line:127	class:CollectEDGARApp
+replace_form_files_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool replace_form_files_;$/;"	member	line:128	class:CollectEDGARApp
+index_only_	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.h	/^	bool index_only_;			\/\/	do no download any form files$/;"	member	line:129	class:CollectEDGARApp
+CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])$/;"	function	line:54	class:CollectEDGARApp	signature:(int argc, char* argv[])
+CollectEDGARApp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^CollectEDGARApp::CollectEDGARApp (int argc, char* argv[], const std::vector<std::string>& tokens)$/;"	function	line:60	class:CollectEDGARApp	signature:(int argc, char* argv[], const std::vector<std::string>& tokens)
+Do_StartUp	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_StartUp (void)$/;"	function	line:68	class:CollectEDGARApp	signature:(void)
+Do_CheckArgs	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_CheckArgs (void)$/;"	function	line:73	class:CollectEDGARApp	signature:(void)
+Do_Run	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run (void)$/;"	function	line:122	class:CollectEDGARApp	signature:(void)
+Do_Run_TickerLookup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_TickerLookup (void)$/;"	function	line:139	class:CollectEDGARApp	signature:(void)
+Do_Run_TickerFileLookup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_TickerFileLookup (void)$/;"	function	line:146	class:CollectEDGARApp	signature:(void)
+Do_Run_DailyIndexFiles	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_DailyIndexFiles (void)$/;"	function	line:152	class:CollectEDGARApp	signature:(void)
+Do_Run_QuarterlyIndexFiles	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)$/;"	function	line:217	class:CollectEDGARApp	signature:(void)
+Do_TickerMap_Setup	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_TickerMap_Setup (void)$/;"	function	line:281	class:CollectEDGARApp	signature:(void)
+Do_Quit	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_Quit (void)$/;"	function	line:288	class:CollectEDGARApp	signature:(void)
+Do_SetupProgramOptions	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_SetupProgramOptions (void)$/;"	function	line:302	class:CollectEDGARApp	signature:(void)
+Do_ParseProgramOptions	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::Do_ParseProgramOptions (po::parsed_options&)$/;"	function	line:334	class:CollectEDGARApp	signature:(po::parsed_options&)
+parse_string	/home/dpriedel/projects/github/CollectEDGARData/src/CollectEDGARApp.cpp	/^void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_list)$/;"	function	line:338	class:CollectEDGARApp::comma_list_parser	signature:(const std::string& comma_list)

@@ -58,8 +58,19 @@ CollectEDGARApp* CollectEDGARApp::sTheApplication = nullptr;
 CErrorHandler* CollectEDGARApp::sCErrorHandler = nullptr;
 
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
-	: Poco::Util::Application(argc, argv), saved_from_clog_{nullptr}, replace_index_files_{false}, replace_form_files_{false},
-	index_only_{false}, help_requested_{false}
+	: Poco::Util::Application(argc, argv),
+    begin_date_{bg::day_clock::local_day()},
+    mode_{"daily"},
+    form_{"10-Q"},
+    FTP_host_{"ftp.sec.gov"},
+    saved_from_clog_{nullptr},
+    pause_{1},
+    max_forms_to_download_{-1},
+    replace_index_files_{false},
+    replace_form_files_{false},
+	index_only_{false},
+    help_requested_{false}
+
 {
 }  // -----  end of method CollectEDGARApp::CollectEDGARApp  (constructor)  -----
 
@@ -70,9 +81,12 @@ CollectEDGARApp::CollectEDGARApp (void)
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
     saved_from_clog_{nullptr},
+    pause_{1},
     max_forms_to_download_{-1},
-    replace_index_files_{false}, replace_form_files_{false},
-	index_only_{false}, help_requested_{false}
+    replace_index_files_{false},
+    replace_form_files_{false},
+	index_only_{false},
+    help_requested_{false}
 
 {
 }
@@ -168,6 +182,83 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 			.repeatable(false)
 			.argument("value")
 			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_login_ID)));
+
+	options.addOption(
+		Poco::Util::Option("mode", "", "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_mode)));
+
+	options.addOption(
+		Poco::Util::Option("form", "", "name of form type[s] we are downloading. Default is '10-Q'.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_form)));
+
+	options.addOption(
+		Poco::Util::Option("ticker", "", "ticker[s] to lookup and filter form downloads.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker)));
+
+	options.addOption(
+		Poco::Util::Option("log-path", "", "path name for log file.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_log_path)));
+
+	options.addOption(
+		Poco::Util::Option("ticker-cache", "", "path name for ticker-to-CIK cache file.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker_cache)));
+
+	options.addOption(
+		Poco::Util::Option("ticker-file", "", "path name for file with list of ticker symbols to convert to CIKs.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker_file)));
+
+	options.addOption(
+		Poco::Util::Option("replace-index-files", "", "over write local index files if specified. Default is 'false'")
+			.required(false)
+			.repeatable(false)
+			.noArgument()
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_replace_index_files)));
+
+	options.addOption(
+		Poco::Util::Option("replace-form-files", "", "over write local form files if specified. Default is 'false'")
+			.required(false)
+			.repeatable(false)
+			.noArgument()
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_replace_form_files)));
+
+	options.addOption(
+		Poco::Util::Option("index-only", "", "do not download form files.. Default is 'false'")
+			.required(false)
+			.repeatable(false)
+			.noArgument()
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_index_only)));
+
+	options.addOption(
+		Poco::Util::Option("pause", "", "how many seconds to wait between downloads. Default: 1 second.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_pause)));
+
+	options.addOption(
+		Poco::Util::Option("max", "", "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_max)));
 
 
 	/* options.addOption( */
