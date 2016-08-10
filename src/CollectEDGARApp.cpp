@@ -422,7 +422,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	}
 
 	if (! ticker_list_file_name_.empty())
-		poco_assert_msg(ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
+		poco_assert_msg(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
 
 	if (mode_ == "ticker-only")
 		return;
@@ -433,7 +433,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
 		end_date_ = begin_date_;
 
 	poco_assert_msg(! local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
-	poco_assert_msg(! index_only_ && ! local_form_file_directory_.empty(), "Must specify 'form-dir' when not using 'index-only' option.");
+	poco_assert_msg(! (! index_only_ && local_form_file_directory_.empty()), "Must specify 'form-dir' when not using 'index-only' option.");
 
 	//	the user may specify multiple form types in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
