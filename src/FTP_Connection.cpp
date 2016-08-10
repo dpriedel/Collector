@@ -35,10 +35,11 @@
 #include <iterator>
 
 #include <boost/algorithm/string/trim.hpp>
+#include "Poco/Bugcheck.h"
 
 #include "FTP_Connection.h"
 #include "aLine.h"
-#include "TException.h"
+// #include "TException.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  FTP_Server
@@ -81,7 +82,7 @@ void FTP_Server::CloseFTPConnection (void)
 
 void FTP_Server::ChangeWorkingDirectoryTo (const std::string& directory_name)
 {
-	dthrow_if_(! session_, "Must open session before doing 'cwd'.");
+	poco_assert_msg(session_, "Must open session before doing 'cwd'.");
 	cwd_.clear();
 	session_->setWorkingDirectory(directory_name);
 	cwd_ = directory_name;
@@ -89,7 +90,7 @@ void FTP_Server::ChangeWorkingDirectoryTo (const std::string& directory_name)
 
 std::vector<std::string> FTP_Server::ListWorkingDirectoryContents (void)
 {
-	dthrow_if_(! session_, "Must open session before doing 'dir'.");
+	poco_assert_msg(session_, "Must open session before doing 'dir'.");
 
 	//	we read and store our results so we can end the active connection quickly.
 
@@ -115,7 +116,7 @@ std::vector<std::string> FTP_Server::ListWorkingDirectoryContents (void)
 
 void FTP_Server::DownloadFile (const std::string& remote_file_name, const fs::path& local_file_name)
 {
-	dthrow_if_(! session_, "Must open session before doing 'download'.");
+	poco_assert_msg(session_, "Must open session before doing 'download'.");
 
 	std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
 	std::ostream_iterator<aLine> otor{local_file, "\n"};
@@ -135,7 +136,7 @@ void FTP_Server::DownloadBinaryFile (const std::string& remote_file_name, const 
 {
 	//	found this approach at insanecoding.blogspot.com
 
-	dthrow_if_(! session_, "Must open session before doing 'download'.");
+	poco_assert_msg(session_, "Must open session before doing 'download'.");
 
 	session_->setFileType(Poco::Net::FTPClientSession::TYPE_BINARY);
 	std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};

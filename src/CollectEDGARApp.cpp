@@ -48,27 +48,18 @@
 #include "Poco/LogStream.h"
 
 #include "CollectEDGARApp.h"
-#include "TException.h"
 
 #include "FTP_Connection.h"
 #include "DailyIndexFileRetriever.h"
 #include "FormFileRetriever.h"
 #include "QuarterlyIndexFileRetriever.h"
 
-// === Static Globals ===
-
-
-CollectEDGARApp* CollectEDGARApp::sTheApplication = nullptr;
-CErrorHandler* CollectEDGARApp::sCErrorHandler = nullptr;
 
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 	: Poco::Util::Application(argc, argv),
-    the_logger_ {nullptr},
-    begin_date_{bg::day_clock::local_day()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
-    // saved_from_clog_{nullptr},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -81,12 +72,9 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 
 CollectEDGARApp::CollectEDGARApp (void)
 	: Poco::Util::Application(),
-    the_logger_ {nullptr},
-    begin_date_{bg::day_clock::local_day()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
-    // saved_from_clog_{nullptr},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -103,11 +91,6 @@ void CollectEDGARApp::initialize(Application& self)
 	Application::initialize(self);
 	// add your own initialization code here
 
-	//	let's make public the error handler class
-
-    CollectEDGARApp::sTheApplication = this;
-	CollectEDGARApp::sCErrorHandler = &this->mMyError;
-
 	if (! log_file_path_name_.empty())
 	{
         logger_file_ = new Poco::SimpleFileChannel;
@@ -119,12 +102,12 @@ void CollectEDGARApp::initialize(Application& self)
         logger_file_ = new Poco::ConsoleChannel;
     }
 
-    the_logger_ = &Poco::Logger::root();
-    the_logger_->setChannel(logger_file_);
+    decltype(auto) the_logger = Poco::Logger::root();
+    the_logger.setChannel(logger_file_);
 
-	mMyError.SetErrorStream(&std::cerr);
+	the_logger.information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 
-	the_logger_->information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
+    setLogger(the_logger);
     // set log level here since options will have been parsed before we get here.
 }
 
@@ -139,17 +122,23 @@ void  CollectEDGARApp::reinitialize(Application& self)
 	Application::reinitialize(self);
 	// add your own reinitialization code here
 
-	//	let's make public the error handler class
+	if (! log_file_path_name_.empty())
+	{
+        logger_file_ = new Poco::SimpleFileChannel;
+        logger_file_->setProperty("path", log_file_path_name_.string());
+        logger_file_->setProperty("rotation", "2 M");
+	}
+    else
+    {
+        logger_file_ = new Poco::ConsoleChannel;
+    }
 
-    CollectEDGARApp::sTheApplication = this;
-	CollectEDGARApp::sCErrorHandler = &this->mMyError;
-	mMyError.SetErrorStream(&std::cerr);
+    decltype(auto) the_logger = Poco::Logger::root();
+    the_logger.setChannel(logger_file_);
 
-    logger_file_ = new Poco::SimpleFileChannel;
-    logger_file_->setProperty("path", "sample.log");
-    logger_file_->setProperty("rotation", "2 M");
-    the_logger_ = &Poco::Logger::root();
-    the_logger_->setChannel(logger_file_);
+	the_logger.information("\n\n*** Restarting run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
+
+    setLogger(the_logger);
 }
 
 void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
@@ -430,7 +419,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	// 	std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n";
 	// }
 
-	dthrow_if_(mode_ != "daily" && mode_ != "quarterly" && mode_ != "ticker-only", "Mode must be either 'daily','quarterly' or 'ticker-only' ==> ", mode_);
+	poco_assert_msg(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", ("Mode must be either 'daily','quarterly' or 'ticker-only' ==> " + mode_).c_str());
 
 	//	the user may specify multiple stock tickers in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
@@ -442,18 +431,18 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	}
 
 	if (! ticker_list_file_name_.empty())
-		dthrow_if_(ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
+		poco_assert_msg(ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
 
 	if (mode_ == "ticker-only")
 		return;
 
-	dthrow_if_(begin_date_ == bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
+	poco_assert_msg(begin_date_ != bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
 
 	if (end_date_ == bg::date())
 		end_date_ = begin_date_;
 
-	dthrow_if_(local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
-	dthrow_if_(! index_only_ && local_form_file_directory_.empty(), "Must specify 'form-dir' when not using 'index-only' option.");
+	poco_assert_msg(! local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
+	poco_assert_msg(! index_only_ && ! local_form_file_directory_.empty(), "Must specify 'form-dir' when not using 'index-only' option.");
 
 	//	the user may specify multiple form types in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
@@ -637,13 +626,6 @@ void CollectEDGARApp::Do_Quit (void)
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.SaveCIKDataToFile();
 
-	// if (! log_file_path_name_.empty())
-	// {
-	// 	std::clog << "*** End run " << boost::posix_time::second_clock::local_time() << " ***\n";
-	// 	log_file_.close();
-    //
-	// 	std::clog.rdbuf(saved_from_clog_);
-	// }
 }		// -----  end of method CollectEDGARApp::Do_Quit  -----
 
 // void CollectEDGARApp::Do_SetupProgramOptions (void)

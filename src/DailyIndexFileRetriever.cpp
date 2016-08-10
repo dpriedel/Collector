@@ -43,7 +43,6 @@
 //namespace bgpt = boost::posix_time;
 
 
-#include "TException.h"
 #include "DailyIndexFileRetriever.h"
 
 //--------------------------------------------------------------------------------------
@@ -72,7 +71,7 @@ bg::date DailyIndexFileRetriever::UseDate (const bg::date& aDate)
 	//	we can only work with past data.
 
 	bg::date today{bg::day_clock::local_day()};
-	dthrow_if_range(aDate > today, "Date must be less than ", bg::to_simple_string(today));
+	poco_assert_msg(aDate <= today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
 
 	return aDate;
 }		// -----  end of method DailyIndexFileRetriever::UseDate  -----
@@ -90,7 +89,7 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 
 	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
         [&looking_for](const auto& x) {return x <= looking_for;});
-	dthrow_if_(pos == directory_list.rend(), "Can't find daily index file for date: ", bg::to_simple_string(input_date_).c_str());
+	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
 
 	remote_daily_index_file_name_ = *pos;
 	actual_file_date_ = bg::from_undelimited_string(remote_daily_index_file_name_.substr(5, 8));
@@ -118,8 +117,8 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 			[&looking_for_start, &looking_for_end](const std::string& elem)
 			{ return (elem <= looking_for_end && elem >= looking_for_start); });
 
-	dthrow_if_range(remote_daily_index_file_name_list_.empty(), "Can't find daily index files for date range: ",
-		   	bg::to_simple_string(start_date_), bg::to_simple_string(end_date_));
+	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
+		   	+ bg::to_simple_string(start_date_) + bg::to_simple_string(end_date_)).c_str());
 
 	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().substr(5, 8));
 	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().substr(5, 8));
@@ -152,7 +151,7 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (void)
 
 void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
-	dthrow_if_(remote_daily_index_file_name_.empty(), "Must locate remote index file before attempting download.");
+	poco_assert_msg(! remote_daily_index_file_name_.empty(), "Must locate remote index file before attempting download.");
 
 	fs::create_directories(local_directory_name);
 	local_daily_index_file_directory_ = local_directory_name;
@@ -175,7 +174,7 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 
 void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
 {
-	dthrow_if_(remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
+	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
 	fs::create_directories(local_directory_name);
 	local_daily_index_file_directory_ = local_directory_name;

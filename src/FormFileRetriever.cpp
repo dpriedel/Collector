@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  FormFileRetriever.cpp
-// 
+//
 //    Description:  Implements parsing out requested entries from index file.
-// 
+//
 //        Version:  1.0
 //        Created:  01/13/2014 10:34:25 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -44,7 +44,6 @@
 
 #include "FormFileRetriever.h"
 #include "aLine.h"
-#include "TException.h"
 #include "TickerConverter.h"
 
 //--------------------------------------------------------------------------------------
@@ -65,14 +64,14 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	//	Form types can have '/A' suffix to indicate ammended forms.
 	//	For now, assume there is space in the file after form name such that I can
 	//	safely add a trailing space to the form name while doing matching.
-	
+
 	//	The form index file is sorted by form type in ascending sequence.
 	//	The form type is at the beginning of each line.
 	//	The last field of each line is the path to the associated data file.
-	
+
 	//	the list of forms to search for needs to be sorted as well to match
 	//	the sequence of forms in the index file.
-	
+
 	std::clog << "F: Searching index file: " << local_index_file_name << '\n';
 
 	std::vector<std::string> forms_list{the_forms};
@@ -85,14 +84,14 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 		forms_list.erase(pos);
 
 	FormsList results;
-	
+
 	//	CIKs can have leading zeroes but the leading zeroes are not in the CIK field
 	//	in the index file.
 	//	Also, to avoid matching a substring, append a space to the CIK used in matching.
 	//
 	//	NOTE: we use a set below because the list of symbols(CIKs) that we are matching against
 	//	is potentially large.  As such, search through a set will be faster than searching a vector.
-	
+
 	std::set<std::string> cik_list;
 	if (! ticker_map.empty())
 	{
@@ -112,7 +111,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	std::istream_iterator<aLine> itor_end;
 
 	//	let's skip over the header lines in the file
-	
+
 	for ( ; itor != itor_end; ++itor)
 	{
 		if (boost::algorithm::starts_with(itor->lineData, "----------"))
@@ -122,14 +121,14 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 		}
 	}
 
-	dfail_if_(itor == itor_end, "Unable to find start of index entries in file: ", local_index_file_name.string());
+	poco_assert_msg(itor != itor_end, ("Unable to find start of index entries in file: " + local_index_file_name.string()).c_str());
 
 	for (auto& the_form : forms_list)
 	{
 		the_form += ' ';
 		int found_a_form{0};
 		std::vector<std::string> found_files;
-		
+
 		for ( ; itor != itor_end; ++itor)
 		{
 			if (itor->lineData < the_form)
@@ -147,7 +146,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				}
 				found_a_form += 1;
 				decltype(auto) pos = itor->lineData.find("edgar/data");
-				dthrow_if_(pos == std::string::npos, "Badly formed index file record.");
+				poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
 				found_files.push_back(itor->lineData.substr(pos));
 				boost::algorithm::trim_right(found_files.back());
 			}
@@ -156,7 +155,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				if (found_a_form)
 				{
 					//	we've moved beyond our set of forms in the file so we can stop
-					
+
 					std::clog << "F: Found " << found_a_form << " files for form: " << the_form << '\n';
 					the_form.pop_back();		//	remove trailing space we added at top of loop
 					results[the_form] = found_files;
@@ -183,7 +182,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	{
 		fs::path local_index_file_name{local_index_file_dir};
 		local_index_file_name /= index_file;
-		
+
 		decltype(auto) single_file_results = FindFilesForForms(the_forms, local_index_file_name, ticker_map);
 
 		for (const auto& elem : single_file_results)
@@ -195,7 +194,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				results[elem.first] = elem.second;
 		}
 	}
-	
+
 	int grand_total{0};
 	for (const auto& elem : results)
 		grand_total += elem.second.size();
@@ -206,7 +205,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForm  -----
 
-void FormFileRetriever::RetrieveSpecifiedFiles (const FormsList& form_list, 
+void FormFileRetriever::RetrieveSpecifiedFiles (const FormsList& form_list,
 	const fs::path& local_form_directory, bool replace_files)
 {
 	for (const auto& elem : form_list)
@@ -240,7 +239,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 			{
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
-				
+
 				std::clog << "F: !! Problem retrieving remote form file: " << remote_file_name
 					<< " to: " << local_file_name << " !!\n" << e.displayText() << '\n';
 			}
@@ -250,4 +249,3 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 	ftp_server_.CloseFTPConnection();
 
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
-

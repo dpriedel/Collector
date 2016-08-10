@@ -36,7 +36,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <Poco/Zip/Decompress.h>
 #include "QuarterlyIndexFileRetriever.h"
-#include "TException.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  QuarterlyIndexFileRetriever
@@ -56,7 +55,7 @@ bg::date QuarterlyIndexFileRetriever::UseDate (const bg::date& day_in_quarter)
 	//	we can only work with past data.
 
 	bg::date today{bg::day_clock::local_day()};
-	dthrow_if_range(day_in_quarter > today, "Date must be less than ", bg::to_simple_string(today));
+	poco_assert_msg(day_in_quarter < today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
 
 	return day_in_quarter;
 }		// -----  end of method QuarterlyIndexFileRetriever::UseDate  -----
@@ -76,7 +75,7 @@ std::string QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::dat
 
 void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
-	dthrow_if_(remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
+	poco_assert_msg(! remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
 
 	local_quarterly_index_file_directory_ = local_directory_name;
 	this->MakeLocalIndexFilePath();
@@ -160,7 +159,7 @@ std::vector<std::string> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 
 void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
 {
-	dthrow_if_(remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
+	poco_assert_msg(! remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
 	//	Remember...we are working with compressed directory files on the EDGAR server
 

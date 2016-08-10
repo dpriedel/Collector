@@ -58,7 +58,6 @@ namespace fs = boost::filesystem;
 #include "Poco/Logger.h"
 #include "Poco/Channel.h"
 
-#include "ErrorHandler.h"
 #include "TickerConverter.h"
 
 class CollectEDGARApp : public Poco::Util::Application
@@ -108,14 +107,8 @@ protected:
 	void Do_TickerMap_Setup(void);
 
 		// ====================  DATA MEMBERS  =======================================
-public:
-
-	static CollectEDGARApp*	sTheApplication;
-	static CErrorHandler*	sCErrorHandler;
 
 private:
-
-	CErrorHandler	mMyError;				//	code to display error messages
 
 	struct comma_list_parser
 	{
@@ -156,7 +149,6 @@ private:
 	TickerConverter ticker_converter_;
 
     Poco::AutoPtr<Poco::Channel> logger_file_;
-    Poco::Logger* the_logger_;
 
 	bg::date begin_date_;
 	bg::date end_date_;

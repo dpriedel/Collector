@@ -1,19 +1,19 @@
 // =====================================================================================
-// 
+//
 //       Filename:  TickerConverter.cpp
-// 
+//
 //    Description:  Implementation file for class which does a file or web lookup to
 //    				convert a ticker ticker to an EDGAR CIK.
-// 
+//
 //        Version:  1.0
 //        Created:  02/06/2014 01:57:16 PM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -47,7 +47,6 @@
 namespace pn = Poco::Net;
 
 #include "TickerConverter.h"
-#include "TException.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  TickerConverter
@@ -65,7 +64,7 @@ TickerConverter::TickerConverter ()
 std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int pause)
 {
 	//	we have a cache of our already looked up tickers so let's check that first
-	
+
 	std::clog << "T: Doing CIK lookup for ticker: " << ticker << '\n';
 
 	decltype(auto) pos = ticker_to_CIK_.find(ticker);
@@ -90,7 +89,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	std::clog << "T: Doing CIK lookup for tickers in file: " << ticker_file_name << '\n';
 
 	std::ifstream tickers_file{ticker_file_name.string()};
-	dfail_if_(! tickers_file.is_open(), "Unable to open tickers file: ", ticker_file_name.string());
+	poco_assert_msg(tickers_file.is_open(), ("Unable to open tickers file: " + ticker_file_name.string()).c_str());
 
 	int result{0};
 
@@ -117,7 +116,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 	std::chrono::seconds pause_time{pause};
 
 	pn::HTTPSClientSession session{"www.sec.gov"};
-	
+
 	pn::HTTPRequest req{pn::HTTPMessage::HTTP_1_1};
 	req.setMethod(pn::HTTPRequest::HTTP_GET);
 
@@ -148,7 +147,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 
 	boost::smatch cik;
 	bool found = boost::regex_search(the_html, cik, ex);
-	
+
 	std::this_thread::sleep_for(pause_time);
 
 	if (found)
@@ -190,10 +189,9 @@ void TickerConverter::SaveCIKDataToFile (void)
 		return;
 
 	std::ofstream ticker_cache_file{cache_file_name_.string()};
-	
+
 	for (const auto& x : ticker_to_CIK_)
 		ticker_cache_file << x.first << '\t' << x.second << '\n';
 
 	std::clog << "T: Saved " << ticker_to_CIK_.size() << " tickers to file: " << cache_file_name_ << '\n';
 }		// -----  end of method TickerConverter::SaveCIKToFile  -----
-
