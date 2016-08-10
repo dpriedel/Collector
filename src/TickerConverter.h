@@ -40,6 +40,7 @@
 #include <vector>
 
 #include <boost/filesystem.hpp>
+#include "Poco/Logger.h"
 
 namespace fs = boost::filesystem;
 
@@ -51,7 +52,7 @@ class TickerConverter
 {
 	public:
 		// ====================  LIFECYCLE     =======================================
-		TickerConverter ();                             // constructor
+		TickerConverter (Poco::Logger& the_logger);                             // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -82,6 +83,8 @@ class TickerConverter
 		fs::path cache_file_name_;
 		fs::path ticker_file_name_;
 
+        Poco::Logger& the_logger_;
+        
 		std::size_t ticker_count_start_ = 0;
 		std::size_t ticker_count_end_ = 0;
 

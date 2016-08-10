@@ -66,7 +66,7 @@ class CollectEDGARApp : public Poco::Util::Application
 public:
 
 	CollectEDGARApp(int argc, char* argv[]);
-	CollectEDGARApp(const CollectEDGARApp& rhs) { };
+	CollectEDGARApp(const CollectEDGARApp& rhs) = delete;
     CollectEDGARApp();
 
 protected:

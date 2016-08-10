@@ -51,8 +51,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-DailyIndexFileRetriever::DailyIndexFileRetriever(const FTP_Server& ftp_server)
-	: ftp_server_{ftp_server}
+DailyIndexFileRetriever::DailyIndexFileRetriever(const FTP_Server& ftp_server, Poco::Logger& the_logger)
+	: ftp_server_{ftp_server}, the_logger_{the_logger}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
@@ -81,7 +81,7 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 {
 	input_date_ = this->UseDate(aDate);
 
-	std::clog << "D: Looking for Daily Index File nearest date: " << aDate << '\n';
+	poco_information(the_logger_, "D: Looking for Daily Index File nearest date: " + bg::to_simple_string(aDate));
 
 	decltype(auto) directory_list = this->GetRemoteIndexList();
 
@@ -94,7 +94,7 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 	remote_daily_index_file_name_ = *pos;
 	actual_file_date_ = bg::from_undelimited_string(remote_daily_index_file_name_.substr(5, 8));
 
-	std::clog << "D: Found Daily Index File for date: " << actual_file_date_ << '\n';
+	poco_information(the_logger_, "D: Found Daily Index File for date: " + bg::to_simple_string(actual_file_date_));
 
 	return remote_daily_index_file_name_;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
@@ -105,7 +105,7 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 	start_date_ = this->UseDate(begin_date);
 	end_date_ = this->UseDate(end_date);
 
-	std::clog << "D: Looking for Daily Index Files in date range from: " << start_date_  << " to: " << end_date_ << '\n';
+	poco_information(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: " + bg::to_simple_string(end_date_));
 
 	decltype(auto) directory_list = this->GetRemoteIndexList();
 
@@ -123,7 +123,7 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().substr(5, 8));
 	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().substr(5, 8));
 
-	std::clog << "D: Found " << remote_daily_index_file_name_list_.size() << " files for date range.\n";
+	poco_information(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list_.size()) + " files for date range.");
 
 	return remote_daily_index_file_name_list_;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
@@ -167,7 +167,7 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 
 	ftp_server_.CloseFTPConnection();
 
-	std::clog << "D: Retrieved remote daily index file: " << remote_daily_index_file_name_ << " to: " << local_daily_index_file_name_ << '\n';
+	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_ + " to: " + local_daily_index_file_name_.string());
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
@@ -189,7 +189,7 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 		if (replace_files || ! fs::exists(local_file_name))
 		{
 			ftp_server_.DownloadFile(remote_file, local_file_name);
-			std::clog << "D: Retrieved remote daily index file: " << remote_file << " to: " << local_file_name << '\n';
+			poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_file + " to: " + local_file_name.string());
 		}
 	}
 

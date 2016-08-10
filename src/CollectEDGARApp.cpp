@@ -57,6 +57,7 @@
 
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 	: Poco::Util::Application(argc, argv),
+    ticker_converter_{logger()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
@@ -72,6 +73,7 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 
 CollectEDGARApp::CollectEDGARApp (void)
 	: Poco::Util::Application(),
+    ticker_converter_{logger()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
@@ -408,17 +410,6 @@ void CollectEDGARApp::Do_StartUp (void)
 
 void CollectEDGARApp::Do_CheckArgs (void)
 {
-	// if (! log_file_path_name_.empty())
-	// {
-	// 	log_file_.open(log_file_path_name_.string(), std::ios_base::app);
-	// 	dfail_if_(! log_file_.is_open(), "Unable to open log file: ", log_file_path_name_.string());
-    //
-	// 	saved_from_clog_ = std::clog.rdbuf();
-	// 	std::clog.rdbuf(log_file_.rdbuf());
-    //
-	// 	std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n";
-	// }
-
 	poco_assert_msg(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", ("Mode must be either 'daily','quarterly' or 'ticker-only' ==> " + mode_).c_str());
 
 	//	the user may specify multiple stock tickers in a comma delimited list. We need to parse the entries out
@@ -489,7 +480,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
 	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
-	DailyIndexFileRetriever idxFileRet{a_server};
+	DailyIndexFileRetriever idxFileRet{a_server, logger()};
 
 	Do_TickerMap_Setup();
 
@@ -501,7 +492,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 		if (! index_only_)
 		{
 			decltype(auto) local_daily_index_file_name = idxFileRet.GetLocalIndexFilePath();
-			FormFileRetriever form_file_getter{a_server, pause_};
+			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -528,7 +519,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 		if (! index_only_)
 		{
 			decltype(auto) index_file_list = idxFileRet.GetfRemoteIndexFileNamesForDateRange();
-			FormFileRetriever form_file_getter{a_server, pause_};
+			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
 
@@ -555,7 +546,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 	Do_TickerMap_Setup();
 
 	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
-	QuarterlyIndexFileRetriever idxFileRet{a_server};
+	QuarterlyIndexFileRetriever idxFileRet{a_server, logger()};
 
 	if (begin_date_ == end_date_)
 	{
@@ -565,7 +556,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 		if (! index_only_)
 		{
 			decltype(auto) local_quarterly_index_file_name = idxFileRet.GetLocalIndexFilePath();
-			FormFileRetriever form_file_getter{a_server, pause_};
+			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -592,7 +583,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 		if (! index_only_)
 		{
 			decltype(auto) index_file_list = idxFileRet.GetLocalIndexFileNamesForDateRange();
-			FormFileRetriever form_file_getter{a_server, pause_};
+			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
 					ticker_map_);
 

@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  QuarterlyIndexFileRetriever.h
-// 
+//
 //    Description:  Header for class which knows how to retrieve EDGAR quarterly index files
-// 
+//
 //        Version:  1.0
 //        Created:  01/30/2014 11:14:10 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 #ifndef QUARTERLYINDEXFILERETRIEVER_H_
@@ -38,6 +38,7 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
 
@@ -45,14 +46,14 @@ namespace bg = boost::gregorian;
 
 // =====================================================================================
 //        Class:  QuarterlyIndexFileRetriever
-//  Description:  
+//  Description:
 // =====================================================================================
 class QuarterlyIndexFileRetriever
 {
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (const FTP_Server& ftp_server);                // constructor
+		QuarterlyIndexFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger);                // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -63,12 +64,12 @@ class QuarterlyIndexFileRetriever
 		const std::vector<std::string>& GetLocalIndexFileNamesForDateRange(void) const { return local_quarterly_index_file_name_list_; }
 
 		// ====================  MUTATORS      =======================================
-		
+
 		std::string MakeQuarterIndexPathName(const bg::date& day_in_quarter);
 		void RetrieveRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
-		
+
 		const std::vector<std::string>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 		void RetrieveIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
 
@@ -80,14 +81,14 @@ class QuarterlyIndexFileRetriever
 		void MakeLocalIndexFilePath(void);
 		void UnzipLocalIndexFile(const fs::path& local_zip_file_name);
 		std::vector<std::string> GetRemoteIndexList(void);
-		
+
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
-		
+
 		//	a Quarterly Index path name generator
 		//	we use an iterator but we are actually acting as a generator.
-		
+
 		class PathNameGenerator : public boost::iterator_facade
 		<
 			PathNameGenerator,
@@ -139,6 +140,7 @@ class QuarterlyIndexFileRetriever
 		bg::date input_date_;
 		bg::date start_date_;
 		bg::date end_date_;
+        Poco::Logger& the_logger_;
 
 }; // -----  end of class QuarterlyIndexFileRetriever  -----
 

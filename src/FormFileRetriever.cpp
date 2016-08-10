@@ -30,7 +30,6 @@
 	/* You should have received a copy of the GNU General Public License */
 	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <iostream>
 #include <algorithm>
 #include <fstream>
 #include <iterator>
@@ -52,8 +51,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (const FTP_Server& ftp_server, int pause)
-	: ftp_server_{ftp_server}, pause_{pause}
+FormFileRetriever::FormFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger, int pause)
+	: ftp_server_{ftp_server}, the_logger_{the_logger}, pause_{pause}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
@@ -72,7 +71,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	//	the list of forms to search for needs to be sorted as well to match
 	//	the sequence of forms in the index file.
 
-	std::clog << "F: Searching index file: " << local_index_file_name << '\n';
+    poco_information(the_logger_, "F: Searching index file: " + local_index_file_name.string());
 
 	std::vector<std::string> forms_list{the_forms};
 	std::sort(forms_list.begin(), forms_list.end());
@@ -156,7 +155,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				{
 					//	we've moved beyond our set of forms in the file so we can stop
 
-					std::clog << "F: Found " << found_a_form << " files for form: " << the_form << '\n';
+					poco_information(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
 					the_form.pop_back();		//	remove trailing space we added at top of loop
 					results[the_form] = found_files;
 				}
@@ -169,7 +168,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	for (const auto& elem : results)
 		grand_total += elem.second.size();
 
-	std::clog << "F: Found a total of " << grand_total << " files for specified forms.\n";
+	poco_information(the_logger_, "F: Found a total of " + std::to_string(grand_total) + " files for specified forms.");
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForms  -----
 
@@ -199,8 +198,8 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	for (const auto& elem : results)
 		grand_total += elem.second.size();
 
-	std::clog << "F: Found a grand total of " << grand_total << " files for specified forms in "
-		<< local_index_file_list.size() << " files.\n";
+	poco_information(the_logger_, "F: Found a grand total of " + std::to_string(grand_total) + " files for specified forms in "
+		+ std::to_string(local_index_file_list.size()) + " files.");
 
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForm  -----
@@ -232,7 +231,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 			try
 			{
 				ftp_server_.DownloadFile(remote_file_name, local_file_name);
-				std::clog << "F: Retrieved remote form file: " << remote_file_name << " to: " << local_file_name << '\n';
+				poco_information(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
 				std::this_thread::sleep_for(pause_);
 			}
 			catch(Poco::Net::FTPException& e)
@@ -240,8 +239,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
 
-				std::clog << "F: !! Problem retrieving remote form file: " << remote_file_name
-					<< " to: " << local_file_name << " !!\n" << e.displayText() << '\n';
+				poco_information(the_logger_, "F: !! Problem retrieving remote form file: " + remote_file_name
+					+ " to: " + local_file_name.string() + " !!\n" + e.displayText());
 			}
 		}
 	}

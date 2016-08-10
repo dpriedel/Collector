@@ -39,7 +39,6 @@
 
 #include "FTP_Connection.h"
 #include "aLine.h"
-// #include "TException.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  FTP_Server

@@ -1,19 +1,19 @@
 // =====================================================================================
-// 
+//
 //       Filename:  DailyIndexFileRetriever.h
-// 
+//
 //    Description:  module to retrieve EDGAR daily index file for date
 //    				nearest specified date
-// 
+//
 //        Version:  1.0
 //        Created:  01/03/2014 10:25:52 AM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -40,6 +40,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
 namespace fs = boost::filesystem;
@@ -48,7 +49,7 @@ namespace fs = boost::filesystem;
 
 // =====================================================================================
 //        Class:  DailyIndexFileRetriever
-//  Description:  
+//  Description:
 // =====================================================================================
 
 class DailyIndexFileRetriever
@@ -56,12 +57,12 @@ class DailyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		DailyIndexFileRetriever(void) = delete;
-		DailyIndexFileRetriever (const FTP_Server& ftp_server);
-		
+		DailyIndexFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger);
+
 		~DailyIndexFileRetriever(void);
 
 		// ====================  ACCESSORS     =======================================
-		
+
 		const std::string& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
 		const fs::path& GetLocalIndexFilePath(void) const { return local_daily_index_file_name_; }
 		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
@@ -70,14 +71,14 @@ class DailyIndexFileRetriever
 
 		// ====================  MUTATORS      =======================================
 
-		//	If there is no file for the specified date, this function will return the 
+		//	If there is no file for the specified date, this function will return the
 		//	immediately prior file.
-	
+
 		std::string FindIndexFileNameNearestDate(const bg::date& aDate);
 		void RetrieveRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
-		
+
 		//	This method treats the date range as a closed interval.
-		
+
 		const std::vector<std::string>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 		void RetrieveIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
 
@@ -93,7 +94,7 @@ class DailyIndexFileRetriever
 
 	private:
 		// ====================  DATA MEMBERS  =======================================
-	
+
 		FTP_Server ftp_server_;
 		std::string remote_daily_index_file_name_;
 		std::vector<std::string> remote_daily_index_file_name_list_;
@@ -105,6 +106,8 @@ class DailyIndexFileRetriever
 		bg::date end_date_;
 		bg::date actual_start_date_;
 		bg::date actual_end_date_;
+
+        Poco::Logger& the_logger_;
 
 }; // -----  end of class DailyIndexFileRetriever  -----
 

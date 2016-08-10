@@ -42,8 +42,8 @@
 //      Method:  QuarterlyIndexFileRetriever
 // Description:  constructor
 //--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const FTP_Server& ftp_server)
-	: ftp_server_{ftp_server}
+QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger)
+	: ftp_server_{ftp_server}, the_logger_{the_logger}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
@@ -95,8 +95,8 @@ void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& loc
 
 	fs::remove(local_quarterly_index_file_name_zip_);
 
-	std::clog << "Q: Retrieved remote quarterly index file: " << remote_quarterly_index_file_name_ <<
-		" to: " << local_quarterly_index_file_name_ << '\n';
+	poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_ +
+		" to: " + local_quarterly_index_file_name_.string());
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo  -----
 
 
@@ -137,7 +137,7 @@ const std::vector<std::string>& QuarterlyIndexFileRetriever::FindIndexFileNamesF
 			std::back_inserter(local_quarterly_index_file_name_list_),
 				[](std::string elem) { boost::algorithm::replace_last(elem, ".zip", ".idx"); return elem; });
 
-	std::clog << "Q: Found " << remote_quarterly_index_zip_file_name_list_.size() << " files for date range.\n";
+	poco_information(the_logger_, "Q: Found " + std::to_string(remote_quarterly_index_zip_file_name_list_.size()) + " files for date range.");
 
 	return remote_quarterly_index_zip_file_name_list_;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
@@ -184,7 +184,7 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 			UnzipLocalIndexFile(local_quarterly_index_file_name_zip);
 			fs::remove(local_quarterly_index_file_name_zip);
 
-			std::clog << "Q: Retrieved remote quarterly index file: " << remote_file << " to: " << local_file_name << '\n';
+			poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file + " to: " + local_file_name.string());
 		}
 	}
 

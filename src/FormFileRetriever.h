@@ -40,6 +40,7 @@
 #include <vector>
 
 #include <boost/filesystem.hpp>
+#include "Poco/Logger.h"
 
 namespace fs = boost::filesystem;
 
@@ -58,7 +59,7 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (const FTP_Server& ftp_server, int pause=1);                   // constructor
+		FormFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger, int pause=1);                   // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -93,6 +94,7 @@ class FormFileRetriever
 		FTP_Server ftp_server_;
 		fs::path local_form_directory_name_;
 
+        Poco::Logger& the_logger_;
 		std::chrono::seconds pause_;
 
 

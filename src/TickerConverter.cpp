@@ -33,7 +33,6 @@
 
 
 #include <chrono>
-#include <iostream>
 #include <fstream>
 #include <thread>
 
@@ -56,7 +55,8 @@ namespace pn = Poco::Net;
 
 constexpr char TickerConverter::NotFound[];
 
-TickerConverter::TickerConverter ()
+TickerConverter::TickerConverter (Poco::Logger& the_logger)
+    : the_logger_{the_logger}
 {
 }  // -----  end of method TickerConverter::TickerConverter  (constructor)  -----
 
@@ -65,12 +65,12 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 {
 	//	we have a cache of our already looked up tickers so let's check that first
 
-	std::clog << "T: Doing CIK lookup for ticker: " << ticker << '\n';
+	poco_information(the_logger_, "T: Doing CIK lookup for ticker: " + ticker);
 
 	decltype(auto) pos = ticker_to_CIK_.find(ticker);
 	if (pos != ticker_to_CIK_.end())
 	{
-		std::clog << "T: Found CIK: " << pos->second << " in cache.\n";
+		poco_information(the_logger_, "T: Found CIK: " + pos->second + " in cache.");
 		return pos->second;
 	}
 
@@ -79,14 +79,14 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 		cik = NotFound;
 	ticker_to_CIK_[ticker] = cik;
 
-	std::clog << "T: Found CIK: " << cik << " via EDGAR query.\n";
+	poco_information(the_logger_, "T: Found CIK: " + cik + " via EDGAR query.");
 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
 int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, int pause)
 {
-	std::clog << "T: Doing CIK lookup for tickers in file: " << ticker_file_name << '\n';
+	poco_information(the_logger_, "T: Doing CIK lookup for tickers in file: " + ticker_file_name.string());
 
 	std::ifstream tickers_file{ticker_file_name.string()};
 	poco_assert_msg(tickers_file.is_open(), ("Unable to open tickers file: " + ticker_file_name.string()).c_str());
@@ -106,7 +106,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 
 	tickers_file.close();
 
-	std::clog << "T: Did Ticker lookup for: " << result << " ticker symbols." << '\n';
+	poco_information(the_logger_, "T: Did Ticker lookup for: " + std::to_string(result) + " ticker symbols.");
 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
@@ -140,7 +140,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "Unable to do ticker-to-CIK conversion for ticker: " << ticker << '\n' << e.what() << '\n';
+		poco_error(the_logger_, "Unable to do ticker-to-CIK conversion for ticker: " + ticker + "\n" + e.what());
 		return "";
 	}
 	boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
@@ -177,7 +177,7 @@ void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 	}
 
 	ticker_count_start_ = ticker_to_CIK_.size();
-	std::clog << "T: Loaded " << ticker_count_start_ << " tickers from file: " << cache_file_name << '\n';
+	poco_information(the_logger_, "T: Loaded " + std::to_string(ticker_count_start_) + " tickers from file: " + cache_file_name.string());
 
 }		// -----  end of method TickerConverter::UseTickerFile  -----
 
@@ -193,5 +193,5 @@ void TickerConverter::SaveCIKDataToFile (void)
 	for (const auto& x : ticker_to_CIK_)
 		ticker_cache_file << x.first << '\t' << x.second << '\n';
 
-	std::clog << "T: Saved " << ticker_to_CIK_.size() << " tickers to file: " << cache_file_name_ << '\n';
+	poco_information(the_logger_, "T: Saved " + std::to_string(ticker_to_CIK_.size()) + " tickers to file: " + cache_file_name_.string());
 }		// -----  end of method TickerConverter::SaveCIKToFile  -----
