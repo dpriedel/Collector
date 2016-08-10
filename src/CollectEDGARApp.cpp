@@ -43,6 +43,10 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "Poco/ConsoleChannel.h"
+#include "Poco/SimpleFileChannel.h"
+#include "Poco/LogStream.h"
+
 #include "CollectEDGARApp.h"
 #include "TException.h"
 
@@ -59,11 +63,12 @@ CErrorHandler* CollectEDGARApp::sCErrorHandler = nullptr;
 
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 	: Poco::Util::Application(argc, argv),
+    the_logger_ {nullptr},
     begin_date_{bg::day_clock::local_day()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
-    saved_from_clog_{nullptr},
+    // saved_from_clog_{nullptr},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -76,11 +81,12 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 
 CollectEDGARApp::CollectEDGARApp (void)
 	: Poco::Util::Application(),
+    the_logger_ {nullptr},
     begin_date_{bg::day_clock::local_day()},
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
-    saved_from_clog_{nullptr},
+    // saved_from_clog_{nullptr},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -101,8 +107,25 @@ void CollectEDGARApp::initialize(Application& self)
 
     CollectEDGARApp::sTheApplication = this;
 	CollectEDGARApp::sCErrorHandler = &this->mMyError;
+
+	if (! log_file_path_name_.empty())
+	{
+        logger_file_ = new Poco::SimpleFileChannel;
+        logger_file_->setProperty("path", log_file_path_name_.string());
+        logger_file_->setProperty("rotation", "2 M");
+	}
+    else
+    {
+        logger_file_ = new Poco::ConsoleChannel;
+    }
+
+    the_logger_ = &Poco::Logger::root();
+    the_logger_->setChannel(logger_file_);
+
 	mMyError.SetErrorStream(&std::cerr);
 
+	the_logger_->information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
+    // set log level here since options will have been parsed before we get here.
 }
 
 void  CollectEDGARApp::uninitialize()
@@ -122,6 +145,11 @@ void  CollectEDGARApp::reinitialize(Application& self)
 	CollectEDGARApp::sCErrorHandler = &this->mMyError;
 	mMyError.SetErrorStream(&std::cerr);
 
+    logger_file_ = new Poco::SimpleFileChannel;
+    logger_file_->setProperty("path", "sample.log");
+    logger_file_->setProperty("rotation", "2 M");
+    the_logger_ = &Poco::Logger::root();
+    the_logger_->setChannel(logger_file_);
 }
 
 void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
@@ -391,16 +419,16 @@ void CollectEDGARApp::Do_StartUp (void)
 
 void CollectEDGARApp::Do_CheckArgs (void)
 {
-	if (! log_file_path_name_.empty())
-	{
-		log_file_.open(log_file_path_name_.string(), std::ios_base::app);
-		dfail_if_(! log_file_.is_open(), "Unable to open log file: ", log_file_path_name_.string());
-
-		saved_from_clog_ = std::clog.rdbuf();
-		std::clog.rdbuf(log_file_.rdbuf());
-
-		std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n";
-	}
+	// if (! log_file_path_name_.empty())
+	// {
+	// 	log_file_.open(log_file_path_name_.string(), std::ios_base::app);
+	// 	dfail_if_(! log_file_.is_open(), "Unable to open log file: ", log_file_path_name_.string());
+    //
+	// 	saved_from_clog_ = std::clog.rdbuf();
+	// 	std::clog.rdbuf(log_file_.rdbuf());
+    //
+	// 	std::clog << "\n\n*** Begin run " << boost::posix_time::second_clock::local_time() << " ***\n";
+	// }
 
 	dthrow_if_(mode_ != "daily" && mode_ != "quarterly" && mode_ != "ticker-only", "Mode must be either 'daily','quarterly' or 'ticker-only' ==> ", mode_);
 
@@ -609,13 +637,13 @@ void CollectEDGARApp::Do_Quit (void)
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.SaveCIKDataToFile();
 
-	if (! log_file_path_name_.empty())
-	{
-		std::clog << "*** End run " << boost::posix_time::second_clock::local_time() << " ***\n";
-		log_file_.close();
-
-		std::clog.rdbuf(saved_from_clog_);
-	}
+	// if (! log_file_path_name_.empty())
+	// {
+	// 	std::clog << "*** End run " << boost::posix_time::second_clock::local_time() << " ***\n";
+	// 	log_file_.close();
+    //
+	// 	std::clog.rdbuf(saved_from_clog_);
+	// }
 }		// -----  end of method CollectEDGARApp::Do_Quit  -----
 
 // void CollectEDGARApp::Do_SetupProgramOptions (void)

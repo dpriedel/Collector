@@ -55,6 +55,9 @@ namespace fs = boost::filesystem;
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/AutoPtr.h"
 
+#include "Poco/Logger.h"
+#include "Poco/Channel.h"
+
 #include "ErrorHandler.h"
 #include "TickerConverter.h"
 
@@ -152,6 +155,9 @@ private:
 
 	TickerConverter ticker_converter_;
 
+    Poco::AutoPtr<Poco::Channel> logger_file_;
+    Poco::Logger* the_logger_;
+
 	bg::date begin_date_;
 	bg::date end_date_;
 
@@ -173,7 +179,7 @@ private:
 	fs::path ticker_list_file_name_;
 
 	std::ofstream log_file_;
-	std::streambuf* saved_from_clog_;
+	// std::streambuf* saved_from_clog_;
 
 	int pause_;
     int max_forms_to_download_;     // mainly for testing
