@@ -54,6 +54,7 @@ namespace fs = boost::filesystem;
 #include "Poco/Util/HelpFormatter.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/AutoPtr.h"
+#include "Poco/Util/Validator.h"
 
 #include "Poco/Logger.h"
 #include "Poco/Channel.h"
@@ -120,6 +121,12 @@ private:
 
 		void parse_string(const std::string& comma_list);
 	};
+    class LogLevelValidator : public Poco::Util::Validator
+    {
+        LogLevelValidator(void) : Validator() {}
+
+        virtual void Validate(const Poco::Util::Option& option, const std::string& value);
+    };
 
     // a set of functions to be used to capture values from the command line.
     // called from the options handling code.

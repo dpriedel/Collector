@@ -46,6 +46,7 @@
 #include "Poco/ConsoleChannel.h"
 #include "Poco/SimpleFileChannel.h"
 #include "Poco/LogStream.h"
+#include "Poco/Util/OptionException.h"
 
 #include "CollectEDGARApp.h"
 
@@ -61,6 +62,7 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
+    logging_level_{"information"},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -77,6 +79,7 @@ CollectEDGARApp::CollectEDGARApp (void)
     mode_{"daily"},
     form_{"10-Q"},
     FTP_host_{"ftp.sec.gov"},
+    logging_level_{"information"},
     pause_{1},
     max_forms_to_download_{-1},
     replace_index_files_{false},
@@ -430,8 +433,10 @@ void CollectEDGARApp::Do_CheckArgs (void)
 	}
 
 	if (! ticker_list_file_name_.empty())
+    {
 		poco_assert_msg(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
-
+    }
+    
 	if (mode_ == "ticker-only")
 		return;
 
@@ -669,3 +674,9 @@ void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_
 
 	return ;
 }		// -----  end of method comma_list_parser::parse_string  -----
+
+void CollectEDGARApp::LogLevelValidator::Validate(const Poco::Util::Option& option, const std::string& value)
+{
+    if (value != "error" && value != "none" && value != "information" && value != "debug")
+        throw Poco::Util::OptionException("Log level must be: 'none|error|information|debug'");
+}
