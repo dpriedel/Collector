@@ -106,6 +106,7 @@ void CollectEDGARApp::initialize(Application& self)
 
     decltype(auto) the_logger = Poco::Logger::root();
     the_logger.setChannel(logger_file_);
+    the_logger.setLevel(logging_level_);
 
 	the_logger.information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 
@@ -278,6 +279,13 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 			.repeatable(false)
 			.argument("value")
 			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_max)));
+
+	options.addOption(
+		Poco::Util::Option("log-level", "l", "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_log_level)));
 
 
 	/* options.addOption( */

@@ -132,6 +132,7 @@ private:
     void inline store_FTP_host(const std::string& name, const std::string& value) { FTP_host_ = value; }
     void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
 
+    void inline store_log_level(const std::string& name, const std::string& value) { logging_level_ = value; }
     void inline store_mode(const std::string& name, const std::string& value) { mode_ = value; }
     void inline store_form(const std::string& name, const std::string& value) { form_ = value; }
     void inline store_ticker(const std::string& name, const std::string& value) { ticker_ = value; }
@@ -158,6 +159,7 @@ private:
 	std::string ticker_;
 	std::string login_ID_;
     std::string FTP_host_;
+    std::string logging_level_;
 
 	std::vector<std::string> form_list_;
 	std::vector<std::string> ticker_list_;
