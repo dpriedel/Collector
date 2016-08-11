@@ -1,18 +1,18 @@
 // =====================================================================================
-// 
+//
 //       Filename:  Main.cpp
-// 
+//
 //    Description:  Driver program for application
-// 
+//
 //        Version:  1.0
 //        Created:  02/28/2014 03:04:02 PM
 //       Revision:  none
 //       Compiler:  g++
-// 
+//
 //         Author:  David P. Riedel (dpr), driedel@cox.net
 //        License:  GNU General Public License v3
-//        Company:  
-// 
+//        Company:
+//
 // =====================================================================================
 
 	/* This file is part of CollectEDGARData. */
@@ -38,27 +38,26 @@
 int main(int argc, char** argv)
 {
 	//	help to optimize c++ stream I/O (may screw up threaded I/O though)
-	
+
 	std::ios_base::sync_with_stdio(false);
 
 	int result = 0;
 	try
 	{
 		CollectEDGARApp myApp{argc, argv};
-		myApp.StartUp();
-		myApp.Run();
-		myApp.Quit();
+		myApp.run();
 	}
-	
-	catch (std::exception& theProblem)
+
+	catch (const std::exception& theProblem)
 	{
-		CApplication::sCErrorHandler->HandleException(theProblem);
-		result = 3;
+		// poco_fatal(myApp->logger(), theProblem.what());
+		std::clog << "Something fundamental went wrong: " << theProblem.what();
+		throw;	//	so test framework will get it too.
 	}
 	catch (...)
 	{		// handle exception: unspecified
-		std::cerr << "Something completely unexpected happended.  Processing stopped.\n";
-		result = 6;
+        std::clog << "Something totally unexpected happened." << std::endl;
+		throw;
 	}
 
 	return result;

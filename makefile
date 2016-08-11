@@ -19,8 +19,8 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.55_gcc-4.9
-GCCDIR := /extra/gcc/gcc-4.9
+BOOSTDIR := /extra/boost/boost-1.61_gcc-6
+GCCDIR := /extra/gcc/gcc-6
 CPP := $(GCCDIR)/bin/g++
 
 # If no configuration is specified, "Debug" will be used
@@ -33,9 +33,9 @@ endif
 OUTFILE := CollectEDGARData
 
 CFG_INC := -I../app_framework/include/ -I./src \
-		-I$(GCCDIR)/include/libiberty -idirafter $(BOOSTDIR)
+		-I$(BOOSTDIR)
 
-RPATH_LIB := -Xlinker -rpath -Xlinker $(GCCDIR)/lib64 -Xlinker -rpath -Xlinker $(BOOSTDIR)/lib
+RPATH_LIB := -Wl,-rpath,$(GCCDIR)/lib64 -Wl,-rpath,$(BOOSTDIR)/lib -Wl,-rpath,/usr/local/lib
 
 SDIR1 := .
 SRCS1 := $(SDIR1)/Main.cpp
@@ -47,11 +47,11 @@ SRCS2 := $(SDIR2)/FTP_Connection.cpp $(SDIR2)/DailyIndexFileRetriever.cpp \
 
 SDIR3h := ../app_framework/include
 SDIR3 := ../app_framework/src
-SRCS3 := $(SDIR3)/TException.cpp $(SDIR3)/ErrorHandler.cpp $(SDIR3)/CApplication.cpp
+#SRCS3 := $(SDIR3)/TException.cpp $(SDIR3)/ErrorHandler.cpp $(SDIR3)/CApplication.cpp
 
-SRCS := $(SRCS1) $(SRCS2) $(SRCS3)
+SRCS := $(SRCS1) $(SRCS2)
 
-VPATH := $(SDIR1):$(SDIR2):$(SDIR3):$(SDIR3h)
+VPATH := $(SDIR1):$(SDIR2):$(SDIR3h)
 
 #
 # Configuration: DEBUG
@@ -61,16 +61,16 @@ ifeq "$(CFG)" "Debug"
 OUTDIR=Debug
 
 CFG_LIB := -liberty -lpthread -L$(BOOSTDIR)/lib -lboost_system-d -lboost_filesystem-d -lboost_program_options-d \
-		-lboost_date_time-d -lboost_regex-d -L/usr/lib/Poco -lPocoNet -lPocoFoundation -lPocoZip
+		-lboost_date_time-d -lboost_regex-d \
+		-L/usr/local/lib -lPocoFoundationd -lPocoUtild -lPocoNetSSLd -lPocoNetd -lPocoZipd
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
-OBJS3=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS3)))))
 
-OBJS=$(OBJS1) $(OBJS2) $(OBJS3)
+OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++1y -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++14 -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -84,16 +84,16 @@ ifeq "$(CFG)" "Release"
 OUTDIR=Release
 
 CFG_LIB := -liberty -lpthread -L$(BOOSTDIR)/lib -lboost_system -lboost_filesystem -lboost_program_options \
-		-lboost_date_time -lboost_regex -L/usr/lib/Poco -lPocoNet -lPocoFoundation -lPocoZip
+		-lboost_date_time -lboost_regex \
+		-L/usr/local/lib -lPocoFoundation -lPocoUtil -lPocoNetSSL -lPocoNet -lPocoZip
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
-OBJS3=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS3)))))
 
-OBJS=$(OBJS1) $(OBJS2) $(OBJS3)
+OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++1y -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++14 -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
@@ -124,4 +124,3 @@ clean:
 
 # Clean this project and all dependencies
 cleanall: clean
-
