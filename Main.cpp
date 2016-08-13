@@ -45,19 +45,19 @@ int main(int argc, char** argv)
 	try
 	{
 		CollectEDGARApp myApp{argc, argv};
-		myApp.run();
+		result = myApp.run();
 	}
 
 	catch (const std::exception& theProblem)
 	{
 		// poco_fatal(myApp->logger(), theProblem.what());
 		std::clog << "Something fundamental went wrong: " << theProblem.what();
-		throw;	//	so test framework will get it too.
+		result = 7
 	}
 	catch (...)
 	{		// handle exception: unspecified
         std::clog << "Something totally unexpected happened." << std::endl;
-		throw;
+		result = 9
 	}
 
 	return result;

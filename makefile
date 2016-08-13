@@ -60,7 +60,7 @@ ifeq "$(CFG)" "Debug"
 
 OUTDIR=Debug
 
-CFG_LIB := -liberty -lpthread -L$(BOOSTDIR)/lib -lboost_system-d -lboost_filesystem-d -lboost_program_options-d \
+CFG_LIB := -lpthread -L$(BOOSTDIR)/lib -lboost_system-d -lboost_filesystem-d -lboost_program_options-d \
 		-lboost_date_time-d -lboost_regex-d \
 		-L/usr/local/lib -lPocoFoundationd -lPocoUtild -lPocoNetSSLd -lPocoNetd -lPocoZipd
 
@@ -70,7 +70,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++14 -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++14 -D_DEBUG -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -83,7 +83,7 @@ ifeq "$(CFG)" "Release"
 
 OUTDIR=Release
 
-CFG_LIB := -liberty -lpthread -L$(BOOSTDIR)/lib -lboost_system -lboost_filesystem -lboost_program_options \
+CFG_LIB := -lpthread -L$(BOOSTDIR)/lib -lboost_system -lboost_filesystem -lboost_program_options \
 		-lboost_date_time -lboost_regex \
 		-L/usr/local/lib -lPocoFoundation -lPocoUtil -lPocoNetSSL -lPocoNet -lPocoZip
 
