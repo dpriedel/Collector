@@ -1,0 +1,157 @@
+providers: [
+  {
+    key: "bt"
+    config:
+      commands: [
+        {
+          project: "/home/dpriedel/projects/github/CollectEDGARData"
+          source: "/home/dpriedel/projects/github/CollectEDGARData/.build-tools.cson"
+          name: "debug-clean"
+          command: "make -f makefile clean"
+          wd: "."
+          env: {}
+          modifier:
+            shell:
+              command: "bash -c"
+          environment:
+            name: "child_process"
+            config:
+              stdoe: "both"
+          stdout:
+            pipeline: []
+          stderr:
+            pipeline: []
+          output:
+            console:
+              close_success: true
+              queue_in_buffer: true
+              colors: false
+              stdin: false
+            linter:
+              no_trace: false
+              immediate: false
+          version: 2
+        }
+        {
+          project: "/home/dpriedel/projects/github/CollectEDGARData"
+          source: "/home/dpriedel/projects/github/CollectEDGARData/.build-tools.cson"
+          name: "debug-make"
+          command: "make -f makefile -j4"
+          wd: "."
+          env: {}
+          modifier:
+            shell:
+              command: "bash -c"
+          environment:
+            name: "child_process"
+            config:
+              stdoe: "both"
+          stdout:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          stderr:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          output:
+            console:
+              close_success: true
+              queue_in_buffer: true
+              colors: false
+              stdin: false
+            linter:
+              no_trace: false
+              immediate: false
+          version: 2
+        }
+        {
+          project: "/home/dpriedel/projects/github/CollectEDGARData"
+          source: "/home/dpriedel/projects/github/CollectEDGARData/.build-tools.cson"
+          name: "release-make"
+          command: "make -f makefile CFG=Release -j4"
+          wd: "."
+          env: {}
+          modifier:
+            shell:
+              command: "bash -c"
+          environment:
+            name: "child_process"
+            config:
+              stdoe: "both"
+          stdout:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          stderr:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          output:
+            console:
+              close_success: true
+              queue_in_buffer: true
+              colors: false
+              stdin: false
+            linter:
+              no_trace: false
+              immediate: false
+          version: 2
+        }
+        {
+          project: "/home/dpriedel/projects/github/CollectEDGARData"
+          source: "/home/dpriedel/projects/github/CollectEDGARData/.build-tools.cson"
+          name: "release-clean"
+          command: "make -f makefile CFG=Release clean"
+          wd: "."
+          env: {}
+          modifier:
+            shell:
+              command: "bash -c"
+          environment:
+            name: "child_process"
+            config:
+              stdoe: "both"
+          stdout:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          stderr:
+            pipeline: [
+              {
+                name: "profile"
+                config:
+                  profile: "gcc_clang"
+              }
+            ]
+          output:
+            console:
+              close_success: true
+              queue_in_buffer: true
+              colors: false
+              stdin: false
+          version: 2
+        }
+      ]
+  }
+]

@@ -44,20 +44,21 @@ int main(int argc, char** argv)
 	int result = 0;
 	try
 	{
-		CollectEDGARApp myApp{argc, argv};
+		CollectEDGARApp myApp;
+		myApp.init(argc, argv);
 		result = myApp.run();
 	}
 
 	catch (const std::exception& theProblem)
 	{
 		// poco_fatal(myApp->logger(), theProblem.what());
-		std::clog << "Something fundamental went wrong: " << theProblem.what();
-		result = 7
+		std::clog << "Something fundamental went wrong: " << theProblem.what() << std::endl;
+		result = 7;
 	}
 	catch (...)
 	{		// handle exception: unspecified
         std::clog << "Something totally unexpected happened." << std::endl;
-		result = 9
+		result = 9;
 	}
 
 	return result;
