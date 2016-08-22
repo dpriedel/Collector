@@ -68,9 +68,6 @@ providers: [
               queue_in_buffer: true
               colors: false
               stdin: false
-            linter:
-              no_trace: false
-              immediate: false
           version: 2
         }
         {
@@ -153,5 +150,11 @@ providers: [
           version: 2
         }
       ]
+  }
+  {
+    key: "bte"
+    config:
+      file: "../CollectEDGARData_Test/.build-tools.cson"
+      overwrite: false
   }
 ]

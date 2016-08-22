@@ -119,6 +119,7 @@ void CollectEDGARApp::initialize(Application& self)
 
 void  CollectEDGARApp::uninitialize()
 {
+	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 	// add your own uninitialization code here
 	Application::uninitialize();
 }
@@ -436,7 +437,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
     {
 		poco_assert_msg(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
     }
-    
+
 	if (mode_ == "ticker-only")
 		return;
 

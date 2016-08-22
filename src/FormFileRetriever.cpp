@@ -215,6 +215,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 	const fs::path& local_form_directory, bool replace_files)
 {
 	ftp_server_.OpenFTPConnection();
+    int downloaded_files_counter = 0;
 
 	for (const auto& remote_file_name : form_file_list)
 	{
@@ -231,6 +232,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 			try
 			{
 				ftp_server_.DownloadFile(remote_file_name, local_file_name);
+                ++downloaded_files_counter;
 				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
 				std::this_thread::sleep_for(pause_);
 			}
@@ -244,6 +246,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 			}
 		}
 	}
+
+	poco_information(the_logger_, "F: Downloaded a total of " + std::to_string(downloaded_files_counter) + " files for form type: " + the_form);
 
 	ftp_server_.CloseFTPConnection();
 
