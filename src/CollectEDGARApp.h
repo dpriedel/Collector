@@ -39,7 +39,7 @@
 #ifndef COLLECTEDGARAPP_H_
 #define COLLECTEDGARAPP_H_
 
-#include <fstream>
+// #include <fstream>
 #include <map>
 
 #include <boost/filesystem.hpp>
@@ -97,8 +97,6 @@ protected:
 	void	Do_CheckArgs (void);
 	void	Do_Run (void);
 	void	Do_Quit (void);
-	// virtual	void	Do_SetupProgramOptions(void);
-	// virtual	void	Do_ParseProgramOptions(po::parsed_options& options);
 
 	void Do_Run_DailyIndexFiles(void);
 	void Do_Run_QuarterlyIndexFiles(void);
@@ -178,9 +176,6 @@ private:
 	fs::path local_form_file_directory_;
 	fs::path ticker_cache_file_name_;
 	fs::path ticker_list_file_name_;
-
-	std::ofstream log_file_;
-	// std::streambuf* saved_from_clog_;
 
 	int pause_;
     int max_forms_to_download_;     // mainly for testing

@@ -111,15 +111,12 @@ void CollectEDGARApp::initialize(Application& self)
     the_logger.setChannel(logger_file_);
     the_logger.setLevel(logging_level_);
 
-	the_logger.information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
-
     setLogger(the_logger);
     // set log level here since options will have been parsed before we get here.
 }
 
 void  CollectEDGARApp::uninitialize()
 {
-	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 	// add your own uninitialization code here
 	Application::uninitialize();
 }
@@ -417,7 +414,7 @@ void CollectEDGARApp::Do_Main(void)
 
 void CollectEDGARApp::Do_StartUp (void)
 {
-	return;
+	logger().information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectEDGARApp::Do_StartUp  -----
 
 void CollectEDGARApp::Do_CheckArgs (void)
@@ -631,44 +628,9 @@ void CollectEDGARApp::Do_Quit (void)
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.SaveCIKDataToFile();
 
+	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectEDGARApp::Do_Quit  -----
 
-// void CollectEDGARApp::Do_SetupProgramOptions (void)
-// {
-// 	mNewOptions.add_options()
-// 		("help,h",								"produce help message")
-// 		("mode", 		po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only'")
-// 		("begin-date",	po::value<bg::date>(&this->begin_date_)->default_value(bg::day_clock::local_day()), "retrieve files with dates greater than or equal to")
-// 		("end-date",	po::value<bg::date>(&this->end_date_), "retrieve files with dates less than or equal to")
-// 		("form",	po::value<std::string>(&this->form_)->default_value("10-Q"),	"name of form type[s] we are downloading")
-// 		("ticker",	po::value<std::string>(&this->ticker_),	"ticker to lookup and filter form downloads")
-// 		/* ("file,f",				po::value<std::string>(),	"name of file containing data for ticker. Default is stdin") */
-// 		/* ("mode,m",				po::value<std::string>(),	"mode: either 'load' new data or 'update' existing data. Default is 'load'") */
-// 		/* ("output,o",			po::value<std::string>(),	"output file name") */
-// 		/* ("destination,d",		po::value<std::string>(),	"send data to file or DB. Default is 'stdout'.") */
-// 		/* ("boxsize,b",			po::value<DprDecimal::DDecimal<16>>(),	"box step size. 'n', 'm.n'") */
-// 		/* ("reversal,r",			po::value<int>(),			"reversal size in number of boxes. Default is 1") */
-// 		/* ("scale",				po::value<std::string>(),	"'arithmetic', 'log'. Default is 'arithmetic'") */
-// 		("index-dir",		po::value<fs::path>(&this->local_index_file_directory_),	"directory index files are downloaded to")
-// 		("form-dir",		po::value<fs::path>(&this->local_form_file_directory_),	"directory form files are downloaded to")
-// 		("log-path",		po::value<fs::path>(&this->log_file_path_name_),	"path name for log file")
-// 		("ticker-cache",		po::value<fs::path>(&this->ticker_cache_file_name_),	"path name for ticker-to-CIK cache file")
-// 		("ticker-file",		po::value<fs::path>(&this->ticker_list_file_name_),	"path name for file with list of ticker symbols to convert to CIKs")
-// 		("replace-index-files",		po::value<bool>(&this->replace_index_files_)->implicit_value(true),	"over write local index files if specified")
-// 		("replace-form-files",		po::value<bool>(&this->replace_form_files_)->implicit_value(true),	"over write local form files if specified")
-// 		("index-only",		po::value<bool>(&this->index_only_)->implicit_value(true),	"do not download form files.")
-// 		("pause,p", 		po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
-// 		("login", 		po::value<std::string>(&this->login_ID_)->required(), "email address to use for anonymous login to EDGAR")
-// 		("host", 		po::value<std::string>(&this->FTP_host_)->default_value("ftp.sec.gov"), "FTP address to use for EDGAR")
-// 		("max", 		po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing.")
-// 		;
-//
-// }		// -----  end of method CollectEDGARApp::Do_SetupProgramOptions  -----
-//
-// void CollectEDGARApp::Do_ParseProgramOptions (po::parsed_options&)
-// {
-// }		// -----  end of method CollectEDGARApp::Do_ParseProgramOptions  -----
-//
 void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_list)
 {
 	boost::algorithm::split(destination_, comma_list, boost::algorithm::is_any_of(seperator_));
