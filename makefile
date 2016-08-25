@@ -104,7 +104,7 @@ all: $(OUTFILE)
 $(OUTDIR)/%.o : %.cpp
 	$(COMPILE)
 
-$(OUTFILE): $(OUTDIR) $(OBJS1) $(OBJS2) $(OBJS3)
+$(OUTFILE): $(OUTDIR) $(OBJS1) $(OBJS2)
 	$(LINK)
 
 -include $(DEPS)
