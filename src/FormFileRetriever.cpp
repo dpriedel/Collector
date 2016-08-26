@@ -214,6 +214,11 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const FormsList& form_list,
 void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& form_file_list, const std::string& the_form,
 	const fs::path& local_form_directory, bool replace_files)
 {
+    // some forms can have slash in the form local_file_name so...
+
+    std::string form_name{the_form};
+    std::replace(form_name.begin(), form_name.end(), '/', '_');
+
 	ftp_server_.OpenFTPConnection();
     int downloaded_files_counter = 0;
 
@@ -223,7 +228,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
 		fs::path local_file_name{local_form_directory};
 		local_file_name /= CIK_directory;
-		local_file_name /= the_form;
+		local_file_name /= form_name;
 		fs::create_directories(local_file_name);
 		local_file_name /= remote_file.leaf();
 
