@@ -120,15 +120,21 @@ void FTP_Server::DownloadFile (const std::string& remote_file_name, const fs::pa
 	std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
 	std::ostream_iterator<aLine> otor{local_file, "\n"};
 
-	decltype(auto) remote_file = session_->beginDownload(remote_file_name);
+    try
+    {
+    	decltype(auto) remote_file = session_->beginDownload(remote_file_name);
 
-	std::istream_iterator<aLine> itor{remote_file};
-	std::istream_iterator<aLine> itor_end;
+    	std::istream_iterator<aLine> itor{remote_file};
+    	std::istream_iterator<aLine> itor_end;
 
-	std::move(itor, itor_end, otor);
-
-	session_->endDownload();
-
+    	std::move(itor, itor_end, otor);
+        session_->endDownload();
+    }
+    catch(...)
+    {
+        session_->endDownload();
+        throw;
+    }
 }		// -----  end of method FTP_Server::DownloadFile  -----
 
 void FTP_Server::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)

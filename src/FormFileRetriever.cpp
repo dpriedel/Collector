@@ -241,6 +241,16 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
 				std::this_thread::sleep_for(pause_);
 			}
+			catch(Poco::TimeoutException& e)
+			{
+				//	we just need to log this and then continue on with the next
+				//	request just assuming the problem was temporary.
+
+				poco_error(the_logger_, "F: !! Timeout retrieving remote form file: " + remote_file_name
+					+ " to: " + local_file_name.string() + " !!\n" + e.displayText());
+
+                continue;
+			}
 			catch(Poco::Net::FTPException& e)
 			{
 				//	we just need to log this and then continue on with the next
