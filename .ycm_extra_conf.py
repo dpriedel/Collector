@@ -46,7 +46,7 @@ flags = [
     # a "-std=<something>".
     # For a C project, you would set this to something like 'c99' instead of
     # 'c++11'.
-    '-std=c++14',
+    '-std=c++1z',
     # ...and the same thing goes for the magic -x option which specifies the
     # language that the files to be compiled are written in. This is mostly
     # relevant for c++ headers.
@@ -58,13 +58,13 @@ flags = [
     '-I',
     '.'
     '-I',
-    '/extra/gcc/gcc-6',
+    '/extra/gcc/gcc-7',
     '-I',
-    '/extra/gcc/gcc-6/include/c++/6.1.0',
+    '/extra/gcc/gcc-7/include/c++/7.1.0',
     '-I',
     '/extra/gcc/decNumber',
     '-I',
-    '/extra/boost/boost-1.61_gcc-6',
+    '/extra/boost/boost-1.64_gcc-7',
     '-I',
     '/usr/include/pqxx',
     '-I',
