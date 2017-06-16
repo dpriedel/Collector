@@ -50,7 +50,7 @@ class HTTPS_Server
 	public:
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Server ()=delete;                             // constructor
-		HTTPS_Server(const std::string& server_name, const std::string& user_name, const std::string& pswd);
+		HTTPS_Server(const std::string& server_name);
 		~HTTPS_Server(void);
 
 		// ====================  ACCESSORS     =======================================
@@ -77,8 +77,6 @@ class HTTPS_Server
 		// ====================  DATA MEMBERS  =======================================
 
 		std::string server_name_;
-		std::string user_name_;
-		std::string pswd_;
 		std::string cwd_;
 		Poco::Net::HTTPSClientSession* session_;
 

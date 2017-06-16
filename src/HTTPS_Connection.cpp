@@ -46,8 +46,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Server::HTTPS_Server(const std::string& server_name, const std::string& user_name, const std::string& pswd)
-	: server_name_{server_name}, user_name_{user_name}, pswd_{pswd}, session_{nullptr}
+HTTPS_Server::HTTPS_Server(const std::string& server_name)
+	: server_name_{server_name}, session_{nullptr}
 
 {
 }  // -----  end of method HTTPS_Server::HTTPS_Server  (constructor)  -----
@@ -149,5 +149,5 @@ void HTTPS_Server::DownloadBinaryFile (const std::string& remote_file_name, cons
 	// decltype(auto) remote_file = session_->beginDownload(remote_file_name);
 	// local_file << remote_file.rdbuf();
 	// session_->endDownload();
-	// 
+	//
 }		// -----  end of method HTTPS_Server::DownloadBinaryFile  -----
