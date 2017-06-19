@@ -30,15 +30,37 @@
 	/* You should have received a copy of the GNU General Public License */
 	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
 
+    // This code is based on sample code from Poco.
 
 #include <fstream>
 #include <iterator>
+#include <memory>
+#include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
 #include "Poco/Bugcheck.h"
 
 #include "HTTPS_Connection.h"
-#include "aLine.h"
+
+#include "Poco/URIStreamOpener.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/URI.h"
+#include "Poco/Exception.h"
+#include "Poco/Net/SSLManager.h"
+#include "Poco/Net/HTTPStreamFactory.h"
+#include "Poco/Net/HTTPSStreamFactory.h"
+#include "Poco/Net/FTPStreamFactory.h"
+
+
+using Poco::URIStreamOpener;
+using Poco::StreamCopier;
+using Poco::URI;
+using Poco::Exception;
+using Poco::Net::HTTPStreamFactory;
+using Poco::Net::HTTPSStreamFactory;
+using Poco::Net::FTPStreamFactory;
+
+
 
 //--------------------------------------------------------------------------------------
 //       Class:  HTTPS_Server
@@ -50,6 +72,15 @@ HTTPS_Server::HTTPS_Server(const std::string& server_name)
 	: server_name_{server_name}, session_{nullptr}
 
 {
+	session_ = new SSLInitializer();
+
+	HTTPStreamFactory::registerFactory();
+	HTTPSStreamFactory::registerFactory();
+	FTPStreamFactory::registerFactory();
+
+	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // ask the user via console
+	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
 }  // -----  end of method HTTPS_Server::HTTPS_Server  (constructor)  -----
 
 
@@ -61,12 +92,8 @@ HTTPS_Server::~HTTPS_Server (void)
 
 void HTTPS_Server::OpenHTTPSConnection (void)
 {
-	// if (! session_)
-	// {
-	// 	session_ = new Poco::Net::HTTPSClientSession{server_name_};
-	// 	session_->login(user_name_, pswd_);
-	// 	session_->setPassive(true);
-	// }
+	URI uri(server_name_);
+	std::unique_ptr<std::istream> pStr(URIStreamOpener::defaultOpener().open(uri));
 
 }		// -----  end of method HTTPS_Server::MakeHTTPSConnection  -----
 
