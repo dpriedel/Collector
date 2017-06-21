@@ -50,6 +50,8 @@
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/HTTPSStreamFactory.h"
 #include "Poco/Net/FTPStreamFactory.h"
+#include "Poco/Net/HTTPRequest.h"
+#include "Poco/Net/HTTPResponse.h"
 
 
 using Poco::URIStreamOpener;
@@ -69,16 +71,16 @@ using Poco::Net::FTPStreamFactory;
 //--------------------------------------------------------------------------------------
 
 HTTPS_Server::HTTPS_Server(const std::string& server_name)
-	: server_name_{server_name}, session_{nullptr}
+	: server_name_{server_name}, ssl_initializer_{nullptr}, session_{nullptr}
 
 {
-	session_ = new SSLInitializer();
+	ssl_initializer_ = new SSLInitializer();
 
 	HTTPStreamFactory::registerFactory();
 	HTTPSStreamFactory::registerFactory();
 	FTPStreamFactory::registerFactory();
 
-	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // ask the user via console
+	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
 	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
 }  // -----  end of method HTTPS_Server::HTTPS_Server  (constructor)  -----
@@ -87,13 +89,21 @@ HTTPS_Server::HTTPS_Server(const std::string& server_name)
 HTTPS_Server::~HTTPS_Server (void)
 {
 	delete session_;
+	delete ssl_initializer_;
 }		// -----  end of method HTTPS_Server::~HTTPS_Server  -----
 
 
 void HTTPS_Server::OpenHTTPSConnection (void)
 {
-	URI uri(server_name_);
-	std::unique_ptr<std::istream> pStr(URIStreamOpener::defaultOpener().open(uri));
+	// URI uri(server_name_);
+	// std::unique_ptr<std::istream> pStr(URIStreamOpener::defaultOpener().open(uri));
+	server_uri_ = server_name_;
+	std::string path(server_uri_.getPathAndQuery());
+	if (path.empty()) path = "/";
+
+	session_ = new Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_};
+
+	this->InteractWithServer(path);
 
 }		// -----  end of method HTTPS_Server::MakeHTTPSConnection  -----
 
@@ -105,6 +115,26 @@ void HTTPS_Server::CloseHTTPSConnection (void)
 	// session_ = nullptr;
 }		// -----  end of method HTTPS_Server::CloseHTTPSConnection  -----
 
+
+std::string HTTPS_Server::InteractWithServer(const std::string& request)
+
+{
+	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request, Poco::Net::HTTPMessage::HTTP_1_1);
+	std::ostream& ostr = session_->sendRequest(req);
+	ostr << request;
+	Poco::Net::HTTPResponse res;
+	std::istream& rs = session_->receiveResponse(res);
+
+	std::string result;
+
+	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
+	{
+		throw std::runtime_error("Unable to interact with server.");
+	}
+	else
+		rs >> result;
+	return result;
+}
 
 void HTTPS_Server::ChangeWorkingDirectoryTo (const std::string& directory_name)
 {

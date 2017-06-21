@@ -38,7 +38,7 @@
 
 namespace fs = boost::filesystem;
 
-//#include <Poco/URI.h>
+#include <Poco/URI.h>
 #include "Poco/Net/Context.h"
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/AcceptCertificateHandler.h"
@@ -74,8 +74,8 @@ class HTTPS_Server
 
 		// ====================  ACCESSORS     =======================================
 
-		bool HaveActiveSession(void) const { return session_; }
-		const std::string& GetWorkingDirectory(void) const { return cwd_;}
+		bool HaveActiveSession(void) const { return session_ && session_->connected(); }
+		const std::string& GetWorkingDirectory(void) const { return path_;}
 
 		// ====================  MUTATORS      =======================================
 
@@ -92,17 +92,21 @@ class HTTPS_Server
 	protected:
 		// ====================  DATA MEMBERS  =======================================
 
+        std::string InteractWithServer(const std::string& request);
+
 	private:
 		// ====================  DATA MEMBERS  =======================================
 
+		Poco::URI server_uri_;
 		std::string server_name_;
-		std::string cwd_;
+		std::string path_;
 
 		// Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
 		Poco::SharedPtr<Poco::Net::AcceptCertificateHandler> ptrCert_; // ask the user via console
 		Poco::Net::Context::Ptr ptrContext_;
 
-		SSLInitializer* session_;
+		SSLInitializer* ssl_initializer_;
+		Poco::Net::HTTPSClientSession* session_;
 }; // -----  end of class HTTPS_Server  -----
 
 #endif /* HTTPS_CONNECTION_H_ */
