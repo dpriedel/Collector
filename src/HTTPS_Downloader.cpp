@@ -2,10 +2,10 @@
 //
 //       Filename:  HTTPS_Connection.cpp
 //
-//    Description:  Implements HTTPS server read-only access
+//    Description:  Implements class which downloads files from an HTTPS server.
 //
 //        Version:  1.0
-//        Created:  01/14/2014 10:23:57 AM
+//        Created:  06/21/2017 10:08:13 AM
 //       Revision:  none
 //       Compiler:  g++
 //
@@ -32,6 +32,7 @@
 
     // This code is based on sample code from Poco.
 
+#include <algorithm>
 #include <fstream>
 #include <iterator>
 #include <memory>
@@ -40,11 +41,10 @@
 #include <boost/algorithm/string/trim.hpp>
 #include "Poco/Bugcheck.h"
 
-#include "HTTPS_Connection.h"
-
+#include "HTTPS_Downloader.h"
+#include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/URIStreamOpener.h"
 #include "Poco/StreamCopier.h"
-#include "Poco/URI.h"
 #include "Poco/Exception.h"
 #include "Poco/Net/SSLManager.h"
 #include "Poco/Net/HTTPStreamFactory.h"
@@ -65,88 +65,70 @@ using Poco::Net::FTPStreamFactory;
 
 
 //--------------------------------------------------------------------------------------
-//       Class:  HTTPS_Server
-//      Method:  HTTPS_Server
+//       Class:  HTTPS_Downloader
+//      Method:  HTTPS_Downloader
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Server::HTTPS_Server(const std::string& server_name)
-	: server_name_{server_name}, ssl_initializer_{nullptr}, session_{nullptr}
+HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name)
+	: server_name_{server_name}
 
 {
-	ssl_initializer_ = new SSLInitializer();
+	ssl_initializer_.reset(new SSLInitializer());
 
 	HTTPStreamFactory::registerFactory();
 	HTTPSStreamFactory::registerFactory();
 	FTPStreamFactory::registerFactory();
 
 	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
-	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
+		9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
-}  // -----  end of method HTTPS_Server::HTTPS_Server  (constructor)  -----
 
-
-HTTPS_Server::~HTTPS_Server (void)
-{
-	delete session_;
-	delete ssl_initializer_;
-}		// -----  end of method HTTPS_Server::~HTTPS_Server  -----
-
-
-void HTTPS_Server::OpenHTTPSConnection (void)
-{
-	// URI uri(server_name_);
-	// std::unique_ptr<std::istream> pStr(URIStreamOpener::defaultOpener().open(uri));
 	server_uri_ = server_name_;
 	std::string path(server_uri_.getPathAndQuery());
 	if (path.empty()) path = "/";
+}  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
 
-	session_ = new Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_};
 
-	this->InteractWithServer(path);
-
-}		// -----  end of method HTTPS_Server::MakeHTTPSConnection  -----
-
-void HTTPS_Server::CloseHTTPSConnection (void)
+HTTPS_Downloader::~HTTPS_Downloader (void)
 {
-	// // if (session_)
-	// // 	session_->close();
-	// delete session_;
-	// session_ = nullptr;
-}		// -----  end of method HTTPS_Server::CloseHTTPSConnection  -----
+}		// -----  end of method HTTPS_Downloader::~HTTPS_Downloader  -----
 
-
-std::string HTTPS_Server::InteractWithServer(const std::string& request)
+std::string HTTPS_Downloader::RetrieveDataFromServer(const std::string& request)
 
 {
+	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
+
+	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
 	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request, Poco::Net::HTTPMessage::HTTP_1_1);
-	std::ostream& ostr = session_->sendRequest(req);
+	std::ostream& ostr = session.sendRequest(req);
 	ostr << request;
 	Poco::Net::HTTPResponse res;
-	std::istream& rs = session_->receiveResponse(res);
+	std::istream& rs = session.receiveResponse(res);
 
 	std::string result;
 
 	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
 	{
-		throw std::runtime_error("Unable to interact with server.");
+		throw std::runtime_error(request + ". Result: " + std::to_string(res.getStatus()) +
+			": Unable to complete request with server.");
 	}
 	else
-		rs >> result;
+		std::copy(std::istreambuf_iterator<char>(rs), std::istreambuf_iterator<char>(), std::back_inserter(result));
 	return result;
 }
 
-void HTTPS_Server::ChangeWorkingDirectoryTo (const std::string& directory_name)
+void HTTPS_Downloader::ChangeWorkingDirectoryTo (const fs::path& directory_path_name)
 {
-	// poco_assert_msg(session_, "Must open session before doing 'cwd'.");
-	// cwd_.clear();
-	// session_->setWorkingDirectory(directory_name);
-	// cwd_ = directory_name;
-}		// -----  end of method HTTPS_Server::ChangeWorkingDirectoryTo  -----
+	poco_assert_msg(ssl_initializer_, "Must initialize SSL before doing 'cwd'.");
+	cwd_ = directory_path_name;
+	server_uri_.setPath(cwd_.string());
+}		// -----  end of method HTTPS_Downloader::ChangeWorkingDirectoryTo  -----
 
-std::vector<std::string> HTTPS_Server::ListWorkingDirectoryContents (void)
+std::vector<std::string> HTTPS_Downloader::ListWorkingDirectoryContents (void)
 {
-	poco_assert_msg(session_, "Must open session before doing 'dir'.");
+	poco_assert_msg(ssl_initializer_, "Must initialize SSL before doing 'cwd'.");
 
 	//	we read and store our results so we can end the active connection quickly.
 
@@ -170,7 +152,7 @@ std::vector<std::string> HTTPS_Server::ListWorkingDirectoryContents (void)
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
-void HTTPS_Server::DownloadFile (const std::string& remote_file_name, const fs::path& local_file_name)
+void HTTPS_Downloader::DownloadFile (const std::string& remote_file_name, const fs::path& local_file_name)
 {
 	// poco_assert_msg(session_, "Must open session before doing 'download'.");
 	//
@@ -192,9 +174,9 @@ void HTTPS_Server::DownloadFile (const std::string& remote_file_name, const fs::
     //     session_->endDownload();
     //     throw;
     // }
-}		// -----  end of method HTTPS_Server::DownloadFile  -----
+}		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
-void HTTPS_Server::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)
+void HTTPS_Downloader::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)
 {
 	// //	found this approach at insanecoding.blogspot.com
 	//
@@ -207,4 +189,4 @@ void HTTPS_Server::DownloadBinaryFile (const std::string& remote_file_name, cons
 	// local_file << remote_file.rdbuf();
 	// session_->endDownload();
 	//
-}		// -----  end of method HTTPS_Server::DownloadBinaryFile  -----
+}		// -----  end of method HTTPS_Downloader::DownloadBinaryFile  -----
