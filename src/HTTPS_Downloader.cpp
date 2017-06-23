@@ -91,9 +91,11 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
 
 	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
+
 	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request.string(), Poco::Net::HTTPMessage::HTTP_1_1);
 	std::ostream& ostr = session.sendRequest(req);
-	ostr << request.string();
+	req.write(ostr);
+
 	Poco::Net::HTTPResponse res;
 	std::istream& rs = session.receiveResponse(res);
 
