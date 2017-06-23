@@ -50,6 +50,7 @@
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 
+#include "cpp-json/json.h"
 
 using Poco::URIStreamOpener;
 using Poco::StreamCopier;
@@ -125,23 +126,17 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 
 	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
 
-
+	auto json_listing = json::parse(index_listing);
 
 	std::vector<std::string> results;
 
-	// decltype(auto) listing = session_->beginList();
-	//
-	// std::istream_iterator<aLine> itor{listing};
-	// std::istream_iterator<aLine> itor_end;
-	//
-	// std::move(itor, itor_end, std::back_inserter(results));
-	//
-	// session_->endList();
-	//
-	// //	one last thing...let's make sure there's no junk at end of each entry.
-	//
-	// for (auto& x : results)
-	// 	boost::algorithm::trim_right(x);
+	for (auto& e : json::as_array(json_listing["directory"]["item"]))
+		results.push_back(json::as_string(e["name"]));
+
+	//	one last thing...let's make sure there's no junk at end of each entry.
+
+	for (auto& x : results)
+		boost::algorithm::trim_right(x);
 
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
