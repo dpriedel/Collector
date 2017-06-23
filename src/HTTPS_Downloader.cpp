@@ -47,9 +47,6 @@
 #include "Poco/StreamCopier.h"
 #include "Poco/Exception.h"
 #include "Poco/Net/SSLManager.h"
-#include "Poco/Net/HTTPStreamFactory.h"
-#include "Poco/Net/HTTPSStreamFactory.h"
-#include "Poco/Net/FTPStreamFactory.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 
@@ -58,9 +55,6 @@ using Poco::URIStreamOpener;
 using Poco::StreamCopier;
 using Poco::URI;
 using Poco::Exception;
-using Poco::Net::HTTPStreamFactory;
-using Poco::Net::HTTPSStreamFactory;
-using Poco::Net::FTPStreamFactory;
 
 
 
@@ -75,10 +69,6 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name)
 
 {
 	ssl_initializer_.reset(new SSLInitializer());
-
-	HTTPStreamFactory::registerFactory();
-	HTTPSStreamFactory::registerFactory();
-	FTPStreamFactory::registerFactory();
 
 	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
 	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
@@ -95,15 +85,15 @@ HTTPS_Downloader::~HTTPS_Downloader (void)
 {
 }		// -----  end of method HTTPS_Downloader::~HTTPS_Downloader  -----
 
-std::string HTTPS_Downloader::RetrieveDataFromServer(const std::string& request)
+std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 
 {
 	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
 
 	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
-	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request, Poco::Net::HTTPMessage::HTTP_1_1);
+	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request.string(), Poco::Net::HTTPMessage::HTTP_1_1);
 	std::ostream& ostr = session.sendRequest(req);
-	ostr << request;
+	ostr << request.string();
 	Poco::Net::HTTPResponse res;
 	std::istream& rs = session.receiveResponse(res);
 
@@ -111,7 +101,7 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const std::string& request)
 
 	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
 	{
-		throw std::runtime_error(request + ". Result: " + std::to_string(res.getStatus()) +
+		throw std::runtime_error(request.string() + ". Result: " + std::to_string(res.getStatus()) +
 			": Unable to complete request with server.");
 	}
 	else
@@ -119,18 +109,21 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const std::string& request)
 	return result;
 }
 
-void HTTPS_Downloader::ChangeWorkingDirectoryTo (const fs::path& directory_path_name)
+std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path& directory_name)
 {
-	poco_assert_msg(ssl_initializer_, "Must initialize SSL before doing 'cwd'.");
-	cwd_ = directory_path_name;
-	server_uri_.setPath(cwd_.string());
-}		// -----  end of method HTTPS_Downloader::ChangeWorkingDirectoryTo  -----
-
-std::vector<std::string> HTTPS_Downloader::ListWorkingDirectoryContents (void)
-{
-	poco_assert_msg(ssl_initializer_, "Must initialize SSL before doing 'cwd'.");
+	poco_assert_msg(ssl_initializer_, "Must initialize SSL before accessing the server.");
 
 	//	we read and store our results so we can end the active connection quickly.
+	// we will ask for the directory listing in JSON format which means we will
+	// have to parse it out.
+
+	fs::path index_file_name{directory_name};
+	index_file_name /= "index.json";
+	// server_uri_.setPath(directory_name.string());
+
+	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
+
+
 
 	std::vector<std::string> results;
 

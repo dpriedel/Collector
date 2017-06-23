@@ -59,11 +59,11 @@ class HTTPS_Downloader
 
 		// ====================  ACCESSORS     =======================================
 
-		const fs::path& GetWorkingDirectory(void) const { return path_;}
+		// request must be a full path name for what is to be retrieved.
 
-		// ====================  MUTATORS      =======================================
+        std::string RetrieveDataFromServer(const fs::path& request);
 
-		void ChangeWorkingDirectoryTo(const fs::path& directory_name);
+		std::vector<std::string> ListDirectoryContents(const fs::path& directory_name);
 
 		// for these next 2 methods, the file name will be appended to whatever
 		// the current working directory is.
@@ -71,11 +71,7 @@ class HTTPS_Downloader
 		void DownloadFile(const std::string& remote_file_name, const fs::path& local_file_name);
 		void DownloadBinaryFile(const std::string& remote_file_name, const fs::path& local_file_name);
 
-		// request must be a full path name for what is to be retrieved.
-
-        std::string RetrieveDataFromServer(const std::string& request);
-
-		std::vector<std::string> ListWorkingDirectoryContents(void);
+		// ====================  MUTATORS      =======================================
 
 		// ====================  OPERATORS     =======================================
 
@@ -102,7 +98,6 @@ class HTTPS_Downloader
 
 		Poco::URI server_uri_;
 		std::string server_name_;
-		fs::path cwd_;
 		fs::path path_;
 
 		// Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
