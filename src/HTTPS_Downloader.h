@@ -68,7 +68,7 @@ class HTTPS_Downloader
 		// for these next 2 methods, the file name will be appended to whatever
 		// the current working directory is.
 
-		void DownloadFile(const std::string& remote_file_name, const fs::path& local_file_name);
+		void DownloadFile(const fs::path& remote_file_name, const fs::path& local_file_name);
 		void DownloadBinaryFile(const std::string& remote_file_name, const fs::path& local_file_name);
 
 		// ====================  MUTATORS      =======================================
