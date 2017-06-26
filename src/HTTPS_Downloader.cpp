@@ -104,6 +104,7 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 
 	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
 	{
+		session.reset();
 		throw std::runtime_error(request.string() + ". Result: " + std::to_string(res.getStatus()) +
 			": Unable to complete request with server.");
 	}
@@ -142,28 +143,35 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
-void HTTPS_Downloader::DownloadFile (const std::string& remote_file_name, const fs::path& local_file_name)
+void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs::path& local_file_name)
 {
-	// poco_assert_msg(session_, "Must open session before doing 'download'.");
-	//
-	// std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
-	// std::ostream_iterator<aLine> otor{local_file, "\n"};
-	//
-    // try
-    // {
-    // 	decltype(auto) remote_file = session_->beginDownload(remote_file_name);
-	//
-    // 	std::istream_iterator<aLine> itor{remote_file};
-    // 	std::istream_iterator<aLine> itor_end;
-	//
-    // 	std::move(itor, itor_end, otor);
-    //     session_->endDownload();
-    // }
-    // catch(...)
-    // {
-    //     session_->endDownload();
-    //     throw;
-    // }
+	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
+
+	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
+
+	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
+
+	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
+	std::ostream& ostr = session.sendRequest(req);
+	req.write(ostr);
+
+	Poco::Net::HTTPResponse res;
+	std::istream& remote_file = session.receiveResponse(res);
+
+	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
+	{
+		session.reset();
+		throw std::runtime_error(remote_file_name.string() + ". Result: " + std::to_string(res.getStatus()) +
+			": Unable to download file.");
+	}
+	else
+	{
+		std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
+
+		// avoid stream formatting by using streambufs
+
+		std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
 void HTTPS_Downloader::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)
