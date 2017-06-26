@@ -42,8 +42,8 @@
 //      Method:  QuarterlyIndexFileRetriever
 // Description:  constructor
 //--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger)
-	: ftp_server_{ftp_server}, the_logger_{the_logger}
+QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger)
+	: the_server_{a_server}, the_logger_{the_logger}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
@@ -84,19 +84,19 @@ void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& loc
 	if (! replace_files && fs::exists(local_quarterly_index_file_name_))
 		return;
 
-	ftp_server_.OpenFTPConnection();
-	ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
-
-	ftp_server_.DownloadBinaryFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_zip_);
-
-	ftp_server_.CloseFTPConnection();
-
-	UnzipLocalIndexFile(local_quarterly_index_file_name_zip_);
-
-	fs::remove(local_quarterly_index_file_name_zip_);
-
-	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_ +
-		" to: " + local_quarterly_index_file_name_.string());
+	// ftp_server_.OpenFTPConnection();
+	// ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
+	//
+	// ftp_server_.DownloadBinaryFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_zip_);
+	//
+	// ftp_server_.CloseFTPConnection();
+	//
+	// UnzipLocalIndexFile(local_quarterly_index_file_name_zip_);
+	//
+	// fs::remove(local_quarterly_index_file_name_zip_);
+	//
+	// poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_ +
+	// 	" to: " + local_quarterly_index_file_name_.string());
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo  -----
 
 
@@ -165,30 +165,30 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 
 	local_quarterly_index_file_directory_ = local_directory_name;
 
-	ftp_server_.OpenFTPConnection();
-	ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
-
-	for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
-	{
-		decltype(auto) local_quarterly_index_file_name_zip = local_quarterly_index_file_directory_;
-		local_quarterly_index_file_name_zip /= remote_file;
-
-		fs::create_directories(local_quarterly_index_file_name_zip.parent_path());
-
-		fs::path local_file_name{local_quarterly_index_file_name_zip};
-		local_file_name.replace_extension("idx");
-
-		if (replace_files || ! fs::exists(local_file_name))
-		{
-			ftp_server_.DownloadBinaryFile(remote_file, local_quarterly_index_file_name_zip);
-			UnzipLocalIndexFile(local_quarterly_index_file_name_zip);
-			fs::remove(local_quarterly_index_file_name_zip);
-
-			poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file + " to: " + local_file_name.string());
-		}
-	}
-
-	ftp_server_.CloseFTPConnection();
+	// ftp_server_.OpenFTPConnection();
+	// ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
+	//
+	// for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
+	// {
+	// 	decltype(auto) local_quarterly_index_file_name_zip = local_quarterly_index_file_directory_;
+	// 	local_quarterly_index_file_name_zip /= remote_file;
+	//
+	// 	fs::create_directories(local_quarterly_index_file_name_zip.parent_path());
+	//
+	// 	fs::path local_file_name{local_quarterly_index_file_name_zip};
+	// 	local_file_name.replace_extension("idx");
+	//
+	// 	if (replace_files || ! fs::exists(local_file_name))
+	// 	{
+	// 		ftp_server_.DownloadBinaryFile(remote_file, local_quarterly_index_file_name_zip);
+	// 		UnzipLocalIndexFile(local_quarterly_index_file_name_zip);
+	// 		fs::remove(local_quarterly_index_file_name_zip);
+	//
+	// 		poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file + " to: " + local_file_name.string());
+	// 	}
+	// }
+	//
+	// ftp_server_.CloseFTPConnection();
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
 

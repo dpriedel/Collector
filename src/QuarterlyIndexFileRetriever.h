@@ -42,7 +42,7 @@
 
 namespace bg = boost::gregorian;
 
-// #include "FTP_Connection.h"
+#include "HTTPS_Downloader.h"
 
 // =====================================================================================
 //        Class:  QuarterlyIndexFileRetriever
@@ -53,7 +53,7 @@ class QuarterlyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger);                // constructor
+		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger);                // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -130,7 +130,7 @@ class QuarterlyIndexFileRetriever
 
 		// ====================  DATA MEMBERS  =======================================
 
-		FTP_Server ftp_server_;
+		HTTPS_Downloader& the_server_;
 		std::string remote_quarterly_index_file_name_;
 		std::vector<std::string> remote_quarterly_index_zip_file_name_list_;
 		std::vector<std::string> local_quarterly_index_file_name_list_;
