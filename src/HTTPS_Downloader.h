@@ -69,7 +69,6 @@ class HTTPS_Downloader
 		// the current working directory is.
 
 		void DownloadFile(const fs::path& remote_file_name, const fs::path& local_file_name);
-		void DownloadBinaryFile(const std::string& remote_file_name, const fs::path& local_file_name);
 
 		// ====================  MUTATORS      =======================================
 

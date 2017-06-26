@@ -173,18 +173,3 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
-
-void HTTPS_Downloader::DownloadBinaryFile (const std::string& remote_file_name, const fs::path& local_file_name)
-{
-	// //	found this approach at insanecoding.blogspot.com
-	//
-	// poco_assert_msg(session_, "Must open session before doing 'download'.");
-	//
-	// session_->setFileType(Poco::Net::HTTPSClientSession::TYPE_BINARY);
-	// std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
-	//
-	// decltype(auto) remote_file = session_->beginDownload(remote_file_name);
-	// local_file << remote_file.rdbuf();
-	// session_->endDownload();
-	//
-}		// -----  end of method HTTPS_Downloader::DownloadBinaryFile  -----
