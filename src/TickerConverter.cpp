@@ -38,12 +38,7 @@
 
 //#include <regex>
 #include <boost/regex.hpp>
-
-#include <Poco/Net/HTTPSClientSession.h>
-#include <Poco/Net/HTTPRequest.h>
-#include <Poco/Net/HTTPResponse.h>
-
-namespace pn = Poco::Net;
+#include "HTTPS_Downloader.h"
 
 #include "TickerConverter.h"
 
@@ -113,36 +108,18 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 
 std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pause)
 {
+    // let's use our HTTPS_Downloader class since it knows how to do what we want to do.
+
 	std::chrono::seconds pause_time{pause};
-
-	pn::HTTPSClientSession session{"www.sec.gov"};
-
-	pn::HTTPRequest req{pn::HTTPMessage::HTTP_1_1};
-	req.setMethod(pn::HTTPRequest::HTTP_GET);
 
 	std::string uri{"/cgi-bin/browse-edgar?CIK="};
 	uri += ticker;
 	uri += "&Find=Search&owner=exclude&action=getcompany";
-	req.setURI(uri);
 
-	std::string the_html;
-	the_html.reserve(5000);		//	we know we're going to get a couple K at least
+    HTTPS_Downloader edgar_server{"https://www.sec.gov"};
 
-	try
-	{
-		session.sendRequest(req);
+	std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 
-		pn::HTTPResponse res;
-
-		decltype(auto) response = session.receiveResponse(res);
-
-		the_html.assign(std::istreambuf_iterator<char>(response), std::istreambuf_iterator<char>());
-	}
-	catch (std::exception& e)
-	{
-		poco_error(the_logger_, "Unable to do ticker-to-CIK conversion for ticker: " + ticker + "\n" + e.what());
-		return "";
-	}
 	boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
 
 	boost::smatch cik;
@@ -153,7 +130,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 	if (found)
 		return cik[1].str();
 	else
-		return "";
+		return std::string();
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
 void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
