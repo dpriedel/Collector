@@ -46,7 +46,7 @@ namespace fs = boost::filesystem;
 class PathNameGenerator : public boost::iterator_facade
 <
 	PathNameGenerator,
-	std::string const,
+	fs::path const,
 	boost::forward_traversal_tag
 >
 {
@@ -63,10 +63,10 @@ class PathNameGenerator : public boost::iterator_facade
 
 		bool equal(PathNameGenerator const& other) const
 		{
-			return this->path_ == other.path_;
+			return this->EDGAR_path_ == other.EDGAR_path_;
 		}
 
-		std::string const& dereference() const { return path_; }
+		fs::path const& dereference() const { return EDGAR_path_; }
 
 		bg::date start_date_;
 		bg::date end_date_;
@@ -80,7 +80,7 @@ class PathNameGenerator : public boost::iterator_facade
 		bg::greg_month active_month_;
 
 		fs::path remote_prefix_;
-		std::string path_;
+		fs::path EDGAR_path_;
 };
 
 #endif /* PATHNAMEGENERATOR_H_ */

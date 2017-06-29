@@ -59,12 +59,9 @@ PathNameGenerator::PathNameGenerator (const fs::path& prefix, const bg::date& st
 	    start_month_{start_date.month()}, end_month_{end_date.month()}, active_month_{start_date.month()},
 		remote_prefix_{prefix}
 {
-	fs::path EDGAR_path{remote_prefix_};
-	EDGAR_path /= std::to_string(active_year_);
-	EDGAR_path /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
-	EDGAR_path /= "form.zip";
-
-	path_ = EDGAR_path.string();
+	EDGAR_path_ = remote_prefix_;
+	EDGAR_path_ /= std::to_string(active_year_);
+	EDGAR_path_ /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
 
 }  // -----  end of method PathNameGenerator::PathNameGenerator  (constructor)  -----
 
@@ -80,18 +77,15 @@ void PathNameGenerator::increment (void)
 
 		active_year_ = start_year_;
 		active_month_ = start_month_;
-		path_.clear();
+		EDGAR_path_.clear();
 	}
 	else
 	{
 		active_year_ = active_date_.year();
 		active_month_ = active_date_.month();
 
-		fs::path EDGAR_path{remote_prefix_};
-		EDGAR_path /= std::to_string(active_year_);
-		EDGAR_path /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
-		EDGAR_path /= "form.zip";
-
-		path_ = EDGAR_path.string();
+		EDGAR_path_ = remote_prefix_;
+		EDGAR_path_ /= std::to_string(active_year_);
+		EDGAR_path_ /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
 	}
 }		// -----  end of method PathNameGenerator::increment  -----
