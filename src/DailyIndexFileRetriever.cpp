@@ -44,6 +44,7 @@
 
 
 #include "DailyIndexFileRetriever.h"
+#include "PathNameGenerator.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  DailyIndexFileRetriever
@@ -51,8 +52,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-DailyIndexFileRetriever::DailyIndexFileRetriever(const FTP_Server& ftp_server, Poco::Logger& the_logger)
-	: ftp_server_{ftp_server}, the_logger_{the_logger}
+DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
+	: the_server_{a_server}, remote_file_directory_{prefix}, the_logger_{the_logger}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
@@ -76,6 +77,17 @@ bg::date DailyIndexFileRetriever::UseDate (const bg::date& aDate)
 	return aDate;
 }		// -----  end of method DailyIndexFileRetriever::UseDate  -----
 
+fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in_quarter)
+{
+	input_date_ = UseDate(day_in_quarter);
+
+	PathNameGenerator p_gen{remote_file_directory_, day_in_quarter, day_in_quarter};
+
+	remote_index_file_directory_ = *p_gen;
+
+	return remote_index_file_directory_;
+
+}		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date& aDate)
 {
@@ -83,12 +95,12 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 
 	poco_debug(the_logger_, "D: Looking for Daily Index File nearest date: " + bg::to_simple_string(aDate));
 
-	decltype(auto) directory_list = this->GetRemoteIndexList();
+	decltype(auto) directory_list = this->GetRemoteIndexList(aDate);
 
 	std::string looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
 
 	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
-        [&looking_for](const auto& x) {return x <= looking_for;});
+        [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
 	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
 
 	remote_daily_index_file_name_ = *pos;
@@ -107,7 +119,7 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 
 	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: " + bg::to_simple_string(end_date_));
 
-	decltype(auto) directory_list = this->GetRemoteIndexList();
+	decltype(auto) directory_list = this->GetRemoteIndexList(begin_date);
 
 	decltype(auto) looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
 	decltype(auto) looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
@@ -129,14 +141,11 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
 
-std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (void)
+std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const bg::date& day_in_quarter)
 {
-	ftp_server_.OpenFTPConnection();
-	ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
+	auto remote_directory = this->MakeDailyIndexPathName(day_in_quarter);
 
-	decltype(auto) directory_list = ftp_server_.ListWorkingDirectoryContents();
-
-	ftp_server_.CloseFTPConnection();
+	decltype(auto) directory_list = the_server_.ListDirectoryContents(remote_directory);
 
 	//	we need to do some cleanup of the directory listing to simplify our searches.
 
@@ -160,12 +169,12 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 	if (! replace_files && fs::exists(local_daily_index_file_name_))
 		return;
 
-	ftp_server_.OpenFTPConnection();
-	ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
-
-	ftp_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
-
-	ftp_server_.CloseFTPConnection();
+	// ftp_server_.OpenFTPConnection();
+	// ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
+	//
+	// ftp_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
+	//
+	// ftp_server_.CloseFTPConnection();
 
 	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_ + " to: " + local_daily_index_file_name_.string());
 
@@ -179,21 +188,21 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 	fs::create_directories(local_directory_name);
 	local_daily_index_file_directory_ = local_directory_name;
 
-	ftp_server_.OpenFTPConnection();
-	ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
-
-	for (const auto& remote_file : remote_daily_index_file_name_list_)
-	{
-		decltype(auto) local_file_name = local_daily_index_file_directory_;
-		local_file_name /= remote_file;
-		if (replace_files || ! fs::exists(local_file_name))
-		{
-			ftp_server_.DownloadFile(remote_file, local_file_name);
-			poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_file + " to: " + local_file_name.string());
-		}
-	}
-
-	ftp_server_.CloseFTPConnection();
+	// ftp_server_.OpenFTPConnection();
+	// ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
+	//
+	// for (const auto& remote_file : remote_daily_index_file_name_list_)
+	// {
+	// 	decltype(auto) local_file_name = local_daily_index_file_directory_;
+	// 	local_file_name /= remote_file;
+	// 	if (replace_files || ! fs::exists(local_file_name))
+	// 	{
+	// 		ftp_server_.DownloadFile(remote_file, local_file_name);
+	// 		poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_file + " to: " + local_file_name.string());
+	// 	}
+	// }
+	//
+	// ftp_server_.CloseFTPConnection();
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
 void DailyIndexFileRetriever::MakeLocalIndexFilePath (void)
