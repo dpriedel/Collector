@@ -35,12 +35,14 @@
 
 
 #include <string>
+#include <vector>
 
+#include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/iterator/iterator_facade.hpp>
 #include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
+namespace fs = boost::filesystem;
 
 #include "HTTPS_Downloader.h"
 
@@ -53,7 +55,7 @@ class QuarterlyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger);                // constructor
+		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger);                // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -86,54 +88,13 @@ class QuarterlyIndexFileRetriever
 
 	private:
 
-		//	a Quarterly Index path name generator
-		//	we use an iterator but we are actually acting as a generator.
-
-		class PathNameGenerator : public boost::iterator_facade
-		<
-			PathNameGenerator,
-			std::string const,
-			boost::forward_traversal_tag
-		>
-		{
-			public:
-
-				PathNameGenerator(void);
-				PathNameGenerator(const bg::date& start_date, const bg::date& end_date);
-
-			private:
-
-				friend class boost::iterator_core_access;
-
-				void increment();
-
-				bool equal(PathNameGenerator const& other) const
-				{
-					return this->path_ == other.path_;
-				}
-
-				std::string const& dereference() const { return path_; }
-
-				bg::date start_date_;
-				bg::date end_date_;
-				bg::date active_date_;
-
-				bg::greg_year start_year_;
-				bg::greg_year end_year_;
-				bg::greg_year active_year_;
-				bg::greg_month start_month_;
-				bg::greg_month end_month_;
-				bg::greg_month active_month_;
-
-				std::string path_;
-		};
-
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
 		std::string remote_quarterly_index_file_name_;
 		std::vector<std::string> remote_quarterly_index_zip_file_name_list_;
 		std::vector<std::string> local_quarterly_index_file_name_list_;
+        fs::path remote_file_directory_;                // top-level directory path
 		fs::path local_quarterly_index_file_name_;
 		fs::path local_quarterly_index_file_name_zip_;
 		fs::path local_quarterly_index_file_directory_;

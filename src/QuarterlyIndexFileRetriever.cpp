@@ -36,14 +36,15 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <Poco/Zip/Decompress.h>
 #include "QuarterlyIndexFileRetriever.h"
+#include "PathNameGenerator.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  QuarterlyIndexFileRetriever
 //      Method:  QuarterlyIndexFileRetriever
 // Description:  constructor
 //--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger)
-	: the_server_{a_server}, the_logger_{the_logger}
+QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
+	: the_server_{a_server}, remote_file_directory_{prefix}, the_logger_{the_logger}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
@@ -64,7 +65,7 @@ std::string QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::dat
 {
 	input_date_ = UseDate(day_in_quarter);
 
-	PathNameGenerator p_gen{day_in_quarter, day_in_quarter};
+	PathNameGenerator p_gen{remote_file_directory_, day_in_quarter, day_in_quarter};
 
 	remote_quarterly_index_file_name_ = *p_gen;
 
@@ -84,19 +85,14 @@ void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& loc
 	if (! replace_files && fs::exists(local_quarterly_index_file_name_))
 		return;
 
-	// ftp_server_.OpenFTPConnection();
-	// ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
-	//
-	// ftp_server_.DownloadBinaryFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_zip_);
-	//
-	// ftp_server_.CloseFTPConnection();
-	//
-	// UnzipLocalIndexFile(local_quarterly_index_file_name_zip_);
-	//
-	// fs::remove(local_quarterly_index_file_name_zip_);
-	//
-	// poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_ +
-	// 	" to: " + local_quarterly_index_file_name_.string());
+	the_server_.DownloadFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_zip_);
+
+	UnzipLocalIndexFile(local_quarterly_index_file_name_zip_);
+
+	fs::remove(local_quarterly_index_file_name_zip_);
+
+	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_ +
+		" to: " + local_quarterly_index_file_name_.string());
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo  -----
 
 
@@ -146,7 +142,7 @@ std::vector<std::string> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 {
 	std::vector<std::string> results;
 
-	PathNameGenerator p_gen{start_date_, end_date_};
+	PathNameGenerator p_gen{remote_file_directory_, start_date_, end_date_};
 	PathNameGenerator p_end;
 
 	for (; p_gen != p_end; ++p_gen)
@@ -190,65 +186,3 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 	//
 	// ftp_server_.CloseFTPConnection();
 }		// -----  end of method QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
-
-
-//--------------------------------------------------------------------------------------
-//       Class:  QuarterlyIndexFileRetriever::PathNameGenerator
-//      Method:  QuarterlyIndexFileRetriever::PathNameGenerator
-// Description:  constructor
-//--------------------------------------------------------------------------------------
-
-//	NOTE:	The range validity edits on greg_year and greg_month don't allow you to use
-//			meaningful default values.
-
-QuarterlyIndexFileRetriever::PathNameGenerator::PathNameGenerator (void)
-	: start_year_{2000}, end_year_{2000}, active_year_{2000}, start_month_{1}, end_month_{1}, active_month_{1}
-{
-
-}  // -----  end of method QuarterlyIndexFileRetriever::PathNameGenerator  (constructor)  -----
-
-
-//--------------------------------------------------------------------------------------
-//       Class:  QuarterlyIndexFileRetriever::PathNameGenerator
-//      Method:  QuarterlyIndexFileRetriever::PathNameGenerator
-// Description:  constructor
-//--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::PathNameGenerator::PathNameGenerator (const bg::date& start_date, const bg::date& end_date)
-	: start_date_{start_date}, end_date_{end_date}, active_date_{start_date},
-		start_year_{start_date.year()}, end_year_{end_date.year()}, active_year_{start_date.year()},
-	    start_month_{start_date.month()}, end_month_{end_date.month()}, active_month_{start_date.month()}
-{
-	fs::path EDGAR_path{std::to_string(active_year_)};
-	EDGAR_path /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
-	EDGAR_path /= "form.zip";
-
-	path_ = EDGAR_path.string();
-
-}  // -----  end of method QuarterlyIndexFileRetriever::PathNameGenerator::QuarterlyIndexFileRetriever::PathNameGenerator  (constructor)  -----
-
-
-void QuarterlyIndexFileRetriever::PathNameGenerator::increment (void)
-{
-	bg::months a_quarter{3};
-	active_date_ += a_quarter;
-
-	if (active_date_ > end_date_)
-	{
-		//	we need to become equal to and 'end' iterator
-
-		active_year_ = start_year_;
-		active_month_ = start_month_;
-		path_.clear();
-	}
-	else
-	{
-		active_year_ = active_date_.year();
-		active_month_ = active_date_.month();
-
-		fs::path EDGAR_path{std::to_string(active_year_)};
-		EDGAR_path /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
-		EDGAR_path /= "form.zip";
-
-		path_ = EDGAR_path.string();
-	}
-}		// -----  end of method PathNameGenerator::increment  -----
