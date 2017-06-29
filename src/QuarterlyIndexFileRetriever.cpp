@@ -67,7 +67,9 @@ std::string QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::dat
 
 	PathNameGenerator p_gen{remote_file_directory_, day_in_quarter, day_in_quarter};
 
-	remote_quarterly_index_file_name_ = *p_gen;
+	auto remote_file_name = *p_gen;
+	remote_file_name /= "form.zip";
+	remote_quarterly_index_file_name_ = remote_file_name.string();
 
 	return remote_quarterly_index_file_name_;
 
@@ -147,7 +149,9 @@ std::vector<std::string> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 
 	for (; p_gen != p_end; ++p_gen)
 	{
-		results.push_back(*p_gen);
+		auto remote_file_name = *p_gen;
+		remote_file_name /= "form.zip";
+		results.push_back(remote_file_name.string());
 	}
 
 	return results;
