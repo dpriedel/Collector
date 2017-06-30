@@ -99,6 +99,8 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
 
 	std::string looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
 
+	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
+
 	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
         [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
 	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
@@ -125,12 +127,16 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 	decltype(auto) looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
 
 	remote_daily_index_file_name_list_.clear();
+
+	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
+
 	std::copy_if(directory_list.crbegin(), directory_list.crend(), std::back_inserter(remote_daily_index_file_name_list_),
 			[&looking_for_start, &looking_for_end](const std::string& elem)
-			{ return (elem <= looking_for_end && elem >= looking_for_start); });
+			{ return (elem.compare(0, looking_for_end.size(), looking_for_end) <= 0
+			 	&& elem.compare(0, looking_for_start.size(), looking_for_start) >= 0); });
 
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
-		   	+ bg::to_simple_string(start_date_) + bg::to_simple_string(end_date_)).c_str());
+		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
 
 	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().substr(5, 8));
 	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().substr(5, 8));
@@ -169,12 +175,7 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 	if (! replace_files && fs::exists(local_daily_index_file_name_))
 		return;
 
-	// ftp_server_.OpenFTPConnection();
-	// ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
-	//
-	// ftp_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
-	//
-	// ftp_server_.CloseFTPConnection();
+	the_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
 
 	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_ + " to: " + local_daily_index_file_name_.string());
 
@@ -185,24 +186,24 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 {
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
+	auto remote_directory = this->MakeDailyIndexPathName(actual_start_date_);
+
 	fs::create_directories(local_directory_name);
 	local_daily_index_file_directory_ = local_directory_name;
 
-	// ftp_server_.OpenFTPConnection();
-	// ftp_server_.ChangeWorkingDirectoryTo("edgar/daily-index");
-	//
-	// for (const auto& remote_file : remote_daily_index_file_name_list_)
-	// {
-	// 	decltype(auto) local_file_name = local_daily_index_file_directory_;
-	// 	local_file_name /= remote_file;
-	// 	if (replace_files || ! fs::exists(local_file_name))
-	// 	{
-	// 		ftp_server_.DownloadFile(remote_file, local_file_name);
-	// 		poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_file + " to: " + local_file_name.string());
-	// 	}
-	// }
-	//
-	// ftp_server_.CloseFTPConnection();
+	for (const auto& remote_file : remote_daily_index_file_name_list_)
+	{
+		auto remote_file_name{remote_directory};
+		remote_file_name /= remote_file;
+
+		decltype(auto) local_file_name = local_daily_index_file_directory_;
+		local_file_name /= remote_file;
+		if (replace_files || ! fs::exists(local_file_name))
+		{
+			the_server_.DownloadFile(remote_file_name, local_file_name);
+			poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_file_name.string() + " to: " + local_file_name.string());
+		}
+	}
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
 void DailyIndexFileRetriever::MakeLocalIndexFilePath (void)
