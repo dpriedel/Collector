@@ -89,7 +89,7 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in
 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
-std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date& aDate)
+fs::path DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date& aDate)
 {
 	input_date_ = this->UseDate(aDate);
 
@@ -105,16 +105,16 @@ std::string DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date
         [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
 	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
 
-	remote_daily_index_file_name_ = *pos;
-	actual_file_date_ = bg::from_undelimited_string(remote_daily_index_file_name_.substr(5, 8));
+	actual_file_date_ = bg::from_undelimited_string((*pos).substr(5, 8));
 
 	poco_debug(the_logger_, "D: Found Daily Index File for date: " + bg::to_simple_string(actual_file_date_));
 
+	remote_daily_index_file_name_ = remote_index_file_directory_ /= *pos;
 	return remote_daily_index_file_name_;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
-const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+const std::vector<fs::path>& DailyIndexFileRetriever::FindIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->UseDate(begin_date);
 	end_date_ = this->UseDate(end_date);
@@ -126,22 +126,28 @@ const std::vector<std::string>& DailyIndexFileRetriever::FindIndexFileNamesForDa
 	decltype(auto) looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
 	decltype(auto) looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
 
-	remote_daily_index_file_name_list_.clear();
+	std::vector<std::string> found_files;
 
 	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
-	std::copy_if(directory_list.crbegin(), directory_list.crend(), std::back_inserter(remote_daily_index_file_name_list_),
+	std::copy_if(directory_list.crbegin(), directory_list.crend(), std::back_inserter(found_files),
 			[&looking_for_start, &looking_for_end](const std::string& elem)
 			{ return (elem.compare(0, looking_for_end.size(), looking_for_end) <= 0
 			 	&& elem.compare(0, looking_for_start.size(), looking_for_start) >= 0); });
 
-	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
+	poco_assert_msg(! found_files.empty(), ("Can't find daily index files for date range: "
 		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
 
-	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().substr(5, 8));
-	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().substr(5, 8));
+	actual_start_date_ = bg::from_undelimited_string(found_files.back().substr(5, 8));
+	actual_end_date_ = bg::from_undelimited_string(found_files.front().substr(5, 8));
 
-	poco_debug(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list_.size()) + " files for date range.");
+	poco_debug(the_logger_, "D: Found " + std::to_string(found_files.size()) + " files for date range.");
+
+	// last thing...prepend directory name
+
+	remote_daily_index_file_name_list_.clear();
+	std::transform(found_files.cbegin(), found_files.cend(), std::back_inserter(remote_daily_index_file_name_list_),
+		[this](const auto& e){ auto fpath{remote_index_file_directory_}; return fpath /= e; });
 
 	return remote_daily_index_file_name_list_;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
@@ -177,7 +183,7 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 
 	the_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
 
-	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_ + " to: " + local_daily_index_file_name_.string());
+	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_.string() + " to: " + local_daily_index_file_name_.string());
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
@@ -186,18 +192,13 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 {
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
-	auto remote_directory = this->MakeDailyIndexPathName(actual_start_date_);
-
 	fs::create_directories(local_directory_name);
 	local_daily_index_file_directory_ = local_directory_name;
 
-	for (const auto& remote_file : remote_daily_index_file_name_list_)
+	for (const auto& remote_file_name : remote_daily_index_file_name_list_)
 	{
-		auto remote_file_name{remote_directory};
-		remote_file_name /= remote_file;
-
 		decltype(auto) local_file_name = local_daily_index_file_directory_;
-		local_file_name /= remote_file;
+		local_file_name /= remote_file_name.leaf();
 		if (replace_files || ! fs::exists(local_file_name))
 		{
 			the_server_.DownloadFile(remote_file_name, local_file_name);

@@ -63,10 +63,10 @@ class DailyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		const std::string& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
+		const fs::path& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
 		const fs::path& GetLocalIndexFilePath(void) const { return local_daily_index_file_name_; }
 		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
-		const std::vector<std::string>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_daily_index_file_name_list_; }
+		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_daily_index_file_name_list_; }
 		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::make_pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
@@ -74,12 +74,12 @@ class DailyIndexFileRetriever
 		//	If there is no file for the specified date, this function will return the
 		//	immediately prior file.
 
-		std::string FindIndexFileNameNearestDate(const bg::date& aDate);
+		fs::path FindIndexFileNameNearestDate(const bg::date& aDate);
 		void RetrieveRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
-		const std::vector<std::string>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		const std::vector<fs::path>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 		void RetrieveIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
@@ -100,8 +100,8 @@ class DailyIndexFileRetriever
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
-		std::string remote_daily_index_file_name_;
-		std::vector<std::string> remote_daily_index_file_name_list_;
+		fs::path remote_daily_index_file_name_;
+		std::vector<fs::path> remote_daily_index_file_name_list_;
         fs::path remote_file_directory_;                // top-level directory path
         fs::path remote_index_file_directory_;
 		fs::path local_daily_index_file_directory_;
