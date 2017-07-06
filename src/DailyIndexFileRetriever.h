@@ -90,7 +90,7 @@ class DailyIndexFileRetriever
 
 	protected:
 
-		bg::date UseDate(const bg::date& aDate);
+		bg::date CheckDate(const bg::date& aDate);
 		void MakeLocalIndexFilePath(const fs::path& local_prefix);
 		std::vector<std::string> GetRemoteIndexList(const bg::date& day_in_quarter);
 
@@ -102,7 +102,7 @@ class DailyIndexFileRetriever
 		HTTPS_Downloader& the_server_;
 		fs::path remote_daily_index_file_name_;
 		std::vector<fs::path> remote_daily_index_file_name_list_;
-        fs::path remote_file_directory_;                // top-level directory path
+        fs::path remote_directory_prefix_;                // top-level directory path
         fs::path remote_index_file_directory_;
 		fs::path local_daily_index_file_directory_;
 		fs::path local_daily_index_file_name_;

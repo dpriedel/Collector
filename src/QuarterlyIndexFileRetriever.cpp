@@ -44,12 +44,12 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
-	: the_server_{a_server}, remote_file_directory_{prefix}, the_logger_{the_logger}
+	: the_server_{a_server}, remote_directory_prefix_{prefix}, the_logger_{the_logger}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
 
-bg::date QuarterlyIndexFileRetriever::UseDate (const bg::date& day_in_quarter)
+bg::date QuarterlyIndexFileRetriever::CheckDate (const bg::date& day_in_quarter)
 {
 	input_date_ = bg::date();		//	don't know of a better way to clear date field.
 
@@ -59,13 +59,13 @@ bg::date QuarterlyIndexFileRetriever::UseDate (const bg::date& day_in_quarter)
 	poco_assert_msg(day_in_quarter < today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
 
 	return day_in_quarter;
-}		// -----  end of method QuarterlyIndexFileRetriever::UseDate  -----
+}		// -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
 
 fs::path QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& day_in_quarter)
 {
-	input_date_ = UseDate(day_in_quarter);
+	input_date_ = CheckDate(day_in_quarter);
 
-	PathNameGenerator p_gen{remote_file_directory_, day_in_quarter, day_in_quarter};
+	PathNameGenerator p_gen{remote_directory_prefix_, day_in_quarter, day_in_quarter};
 
 	remote_quarterly_index_file_name_ = *p_gen;
 	remote_quarterly_index_file_name_ /= "form.zip";
@@ -101,7 +101,7 @@ void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
-	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_quarterly_index_file_name_.string(), remote_file_directory_.string(), "");
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_quarterly_index_file_name_.string(), remote_directory_prefix_.string(), "");
 	local_quarterly_index_file_name_= local_prefix;
 	local_quarterly_index_file_name_ /= remote_index_name;
 	local_quarterly_index_file_name_.replace_extension("idx");
@@ -111,8 +111,8 @@ void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 
 const std::vector<fs::path>& QuarterlyIndexFileRetriever::FindIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
-	start_date_ = this->UseDate(begin_date);
-	end_date_ = this->UseDate(end_date);
+	start_date_ = this->CheckDate(begin_date);
+	end_date_ = this->CheckDate(end_date);
 
 	remote_quarterly_index_zip_file_name_list_ = this->GetRemoteIndexList();
 
@@ -136,7 +136,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 {
 	std::vector<fs::path> results;
 
-	PathNameGenerator p_gen{remote_file_directory_, start_date_, end_date_};
+	PathNameGenerator p_gen{remote_directory_prefix_, start_date_, end_date_};
 	PathNameGenerator p_end;
 
 	for (; p_gen != p_end; ++p_gen)

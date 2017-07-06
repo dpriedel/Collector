@@ -79,7 +79,7 @@ class PathNameGenerator : public boost::iterator_facade
 		bg::greg_month end_month_;
 		bg::greg_month active_month_;
 
-		fs::path remote_prefix_;
+		fs::path remote_directory_prefix_;
 		fs::path EDGAR_path_;
 };
 

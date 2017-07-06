@@ -53,7 +53,7 @@
 //--------------------------------------------------------------------------------------
 
 DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
-	: the_server_{a_server}, remote_file_directory_{prefix}, the_logger_{the_logger}
+	: the_server_{a_server}, remote_directory_prefix_{prefix}, the_logger_{the_logger}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
@@ -65,7 +65,7 @@ DailyIndexFileRetriever::~DailyIndexFileRetriever(void)
 }		// -----  end of method IndexFileRetreiver::~DailyIndexFileRetriever  -----
 
 
-bg::date DailyIndexFileRetriever::UseDate (const bg::date& aDate)
+bg::date DailyIndexFileRetriever::CheckDate (const bg::date& aDate)
 {
 	input_date_ = bg::date();		//	don't know of a better way to clear date field.
 
@@ -75,13 +75,13 @@ bg::date DailyIndexFileRetriever::UseDate (const bg::date& aDate)
 	poco_assert_msg(aDate <= today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
 
 	return aDate;
-}		// -----  end of method DailyIndexFileRetriever::UseDate  -----
+}		// -----  end of method DailyIndexFileRetriever::CheckDate  -----
 
 fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in_quarter)
 {
-	input_date_ = UseDate(day_in_quarter);
+	input_date_ = CheckDate(day_in_quarter);
 
-	PathNameGenerator p_gen{remote_file_directory_, day_in_quarter, day_in_quarter};
+	PathNameGenerator p_gen{remote_directory_prefix_, day_in_quarter, day_in_quarter};
 
 	remote_index_file_directory_ = *p_gen;
 
@@ -91,7 +91,7 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in
 
 fs::path DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date& aDate)
 {
-	input_date_ = this->UseDate(aDate);
+	input_date_ = this->CheckDate(aDate);
 
 	poco_debug(the_logger_, "D: Looking for Daily Index File nearest date: " + bg::to_simple_string(aDate));
 
@@ -116,8 +116,8 @@ fs::path DailyIndexFileRetriever::FindIndexFileNameNearestDate(const bg::date& a
 
 const std::vector<fs::path>& DailyIndexFileRetriever::FindIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
-	start_date_ = this->UseDate(begin_date);
-	end_date_ = this->UseDate(end_date);
+	start_date_ = this->CheckDate(begin_date);
+	end_date_ = this->CheckDate(end_date);
 
 	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: " + bg::to_simple_string(end_date_));
 
@@ -216,7 +216,7 @@ void DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_pref
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
-	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name_.string(), remote_file_directory_.string(), "");
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name_.string(), remote_directory_prefix_.string(), "");
 	local_daily_index_file_name_= local_prefix;
 	local_daily_index_file_name_ /= remote_index_name;
 

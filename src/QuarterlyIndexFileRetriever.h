@@ -79,7 +79,7 @@ class QuarterlyIndexFileRetriever
 
 	protected:
 
-		bg::date UseDate(const bg::date& aDate);
+		bg::date CheckDate(const bg::date& aDate);
 		void MakeLocalIndexFilePath(const fs::path& local_prefix);
 		std::vector<fs::path> GetRemoteIndexList(void);
 
@@ -93,7 +93,7 @@ class QuarterlyIndexFileRetriever
 		fs::path remote_quarterly_index_file_name_;
 		std::vector<fs::path> remote_quarterly_index_zip_file_name_list_;
 		std::vector<fs::path> local_quarterly_index_file_name_list_;
-        fs::path remote_file_directory_;                // top-level directory path
+        fs::path remote_directory_prefix_;                // top-level directory path
 		fs::path local_quarterly_index_file_name_;
 		fs::path local_quarterly_index_file_name_zip_;
 		fs::path local_quarterly_index_file_directory_;
