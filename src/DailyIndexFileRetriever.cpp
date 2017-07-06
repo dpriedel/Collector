@@ -174,9 +174,10 @@ void DailyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_d
 {
 	poco_assert_msg(! remote_daily_index_file_name_.empty(), "Must locate remote index file before attempting download.");
 
-	fs::create_directories(local_directory_name);
-	local_daily_index_file_directory_ = local_directory_name;
-	this->MakeLocalIndexFilePath();
+	this->MakeLocalIndexFilePath(local_directory_name);
+
+	local_daily_index_file_directory_ = local_daily_index_file_name_.parent_path();
+	fs::create_directories(local_daily_index_file_directory_);
 
 	if (! replace_files && fs::exists(local_daily_index_file_name_))
 		return;
@@ -207,10 +208,16 @@ void DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& 
 	}
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
 
-void DailyIndexFileRetriever::MakeLocalIndexFilePath (void)
+void DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix)
 {
-	local_daily_index_file_name_ = local_daily_index_file_directory_;
-	local_daily_index_file_name_ /= remote_daily_index_file_name_;
+	// want keep the directory hierarchy the same as on the remote system
+	// EXCCEPT for the remote system prefix (which is given to our ctor)
 
+	// we will assume there is not trailing delimiter on the stored remote prefix.
+	// (even though we have no edit to enforce that for now.)
+
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name_.string(), remote_file_directory_.string(), "");
+	local_daily_index_file_name_= local_prefix;
+	local_daily_index_file_name_ /= remote_index_name;
 
 }		// -----  end of method DailyIndexFileRetriever::MakeLocalIndexFileName  -----

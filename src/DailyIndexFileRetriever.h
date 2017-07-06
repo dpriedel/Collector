@@ -91,7 +91,7 @@ class DailyIndexFileRetriever
 	protected:
 
 		bg::date UseDate(const bg::date& aDate);
-		void MakeLocalIndexFilePath(void);
+		void MakeLocalIndexFilePath(const fs::path& local_prefix);
 		std::vector<std::string> GetRemoteIndexList(const bg::date& day_in_quarter);
 
 		// ====================  DATA MEMBERS  =======================================
