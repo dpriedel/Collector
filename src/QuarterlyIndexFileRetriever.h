@@ -60,19 +60,19 @@ class QuarterlyIndexFileRetriever
 		// ====================  ACCESSORS     =======================================
 
 		const fs::path& GetLocalIndexFilePath(void) const { return local_quarterly_index_file_name_; }
-		const std::vector<std::string>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_quarterly_index_zip_file_name_list_; }
+		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_quarterly_index_zip_file_name_list_; }
 
 		//	this method provides file names ending in .idx, not .zip as above
-		const std::vector<std::string>& GetLocalIndexFileNamesForDateRange(void) const { return local_quarterly_index_file_name_list_; }
+		const std::vector<fs::path>& GetLocalIndexFileNamesForDateRange(void) const { return local_quarterly_index_file_name_list_; }
 
 		// ====================  MUTATORS      =======================================
 
-		std::string MakeQuarterIndexPathName(const bg::date& day_in_quarter);
+		fs::path MakeQuarterIndexPathName(const bg::date& day_in_quarter);
 		void RetrieveRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
-		const std::vector<std::string>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		const std::vector<fs::path>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 		void RetrieveIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		// ====================  OPERATORS     =======================================
@@ -80,9 +80,8 @@ class QuarterlyIndexFileRetriever
 	protected:
 
 		bg::date UseDate(const bg::date& aDate);
-		void MakeLocalIndexFilePath(void);
-		void UnzipLocalIndexFile(const fs::path& local_zip_file_name);
-		std::vector<std::string> GetRemoteIndexList(void);
+		void MakeLocalIndexFilePath(const fs::path& local_prefix);
+		std::vector<fs::path> GetRemoteIndexList(void);
 
 		// ====================  DATA MEMBERS  =======================================
 
@@ -91,9 +90,9 @@ class QuarterlyIndexFileRetriever
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
-		std::string remote_quarterly_index_file_name_;
-		std::vector<std::string> remote_quarterly_index_zip_file_name_list_;
-		std::vector<std::string> local_quarterly_index_file_name_list_;
+		fs::path remote_quarterly_index_file_name_;
+		std::vector<fs::path> remote_quarterly_index_zip_file_name_list_;
+		std::vector<fs::path> local_quarterly_index_file_name_list_;
         fs::path remote_file_directory_;                // top-level directory path
 		fs::path local_quarterly_index_file_name_;
 		fs::path local_quarterly_index_file_name_zip_;
