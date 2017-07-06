@@ -32,31 +32,21 @@
 
     // This code is based on sample code from Poco.
 
-#include <algorithm>
 #include <fstream>
 #include <iterator>
-#include <memory>
-#include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
+
 #include "Poco/Bugcheck.h"
 
 #include "HTTPS_Downloader.h"
 #include "Poco/Net/HTTPSClientSession.h"
-#include "Poco/URIStreamOpener.h"
-#include "Poco/StreamCopier.h"
-#include "Poco/Exception.h"
+#include <Poco/Zip/Decompress.h>
 #include "Poco/Net/SSLManager.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 
 #include "cpp-json/json.h"
-
-using Poco::URIStreamOpener;
-using Poco::StreamCopier;
-using Poco::URI;
-using Poco::Exception;
-
 
 
 //--------------------------------------------------------------------------------------
@@ -149,6 +139,15 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
 	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
 
+    // but we also need to decompress any zipped files.  Might as well do it here.
+
+    auto remote_ext = remote_file_name.extension();
+    auto local_ext = local_file_name.extension();
+
+    // we can unzip zipped files but only if the local file name indicates the local file is not zipped.
+
+	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
+
 	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
 
 	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
@@ -166,10 +165,38 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 	}
 	else
 	{
-		std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
+		if (! need_to_unzip)
+		{
+			std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
 
-		// avoid stream formatting by using streambufs
+			// avoid stream formatting by using streambufs
 
-		std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+		}
+		else
+		{
+			// we're going to download the compressed file and then expand it.
+			// (trying to expand on the fly using stream filters seems to not work.)
+
+			fs::path temp_file_name{local_file_name};
+			temp_file_name.replace_extension(remote_ext);
+
+			std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
+
+			// avoid stream formatting by using streambufs
+
+			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+
+			local_file.close();
+
+			std::ifstream zipped_file(temp_file_name.string(), std::ios::in | std::ios::binary);
+			Poco::Zip::Decompress expander(zipped_file, temp_file_name.parent_path().string(), true);
+
+			expander.decompressAllFiles();
+
+			fs::remove(temp_file_name);
+			// if (! local_file)
+			// 	throw std::runtime_error("Unable to download file: " + remote_file_name.string() + " to file: " + local_file_name.string());
+		}
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
