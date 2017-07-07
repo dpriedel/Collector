@@ -75,12 +75,14 @@ class DailyIndexFileRetriever
 		//	immediately prior file.
 
 		fs::path FindIndexFileNameNearestDate(const bg::date& aDate);
-		void RetrieveRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
+		void CopyRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
+		void HierarchicalCopyRemoteIndexFileTo(const fs::path& local_directory_prefix, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
 		const std::vector<fs::path>& FindIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		void RetrieveIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
+		void CopyIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
+		void HierarchicalCopyIndexFilesForDateRangeTo(const fs::path& local_directory_prefix, bool replace_files=false);
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
 

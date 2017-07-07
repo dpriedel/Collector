@@ -68,14 +68,14 @@ fs::path QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& 
 	PathNameGenerator p_gen{remote_directory_prefix_, day_in_quarter, day_in_quarter};
 
 	remote_quarterly_index_file_name_ = *p_gen;
-	remote_quarterly_index_file_name_ /= "form.zip";
+	remote_quarterly_index_file_name_ /= "form.zip";		// we know this.
 
 	return remote_quarterly_index_file_name_;
 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 
-void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
+void QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
 
@@ -90,7 +90,7 @@ void QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo (const fs::path& loc
 
 	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_.string() +
 		" to: " + local_quarterly_index_file_name_.string());
-}		// -----  end of method QuarterlyIndexFileRetriever::RetrieveRemoteIndexFileTo  -----
+}		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
 
 
 void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix)
@@ -149,7 +149,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::GetRemoteIndexList  -----
 
-void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+void QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
@@ -181,4 +181,4 @@ void QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo (const fs::pa
 	// }
 	//
 	// ftp_server_.CloseFTPConnection();
-}		// -----  end of method QuarterlyIndexFileRetriever::RetrieveIndexFilesForDateRangeTo  -----
+}		// -----  end of method QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
