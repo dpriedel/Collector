@@ -37,14 +37,25 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+
 #include "Poco/Bugcheck.h"
 
 #include "HTTPS_Downloader.h"
 #include "Poco/Net/HTTPSClientSession.h"
-#include <Poco/Zip/Decompress.h>
 #include "Poco/Net/SSLManager.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
+
+// for .zip files, we need to use Poco's tools.
+
+#include <Poco/Zip/Decompress.h>
+#include "Poco/Zip/ZipArchive.h"
+#include "Poco/Zip/ZipStream.h"
+#include "Poco/StreamCopier.h"
 
 #include "cpp-json/json.h"
 
@@ -175,28 +186,41 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		}
 		else
 		{
-			// we're going to download the compressed file and then expand it.
-			// (trying to expand on the fly using stream filters seems to not work.)
+			// we are going to decompress on the fly...
 
-			fs::path temp_file_name{local_file_name};
-			temp_file_name.replace_extension(remote_ext);
+			std::ofstream expanded_file{local_file_name.string(), std::ios::out | std::ios::binary};
 
-			std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
+			if (remote_ext == ".gz")
+			{
+				// for gzipped files, we can use boost (which uses zlib)
 
-			// avoid stream formatting by using streambufs
+		    	boost::iostreams::filtering_istream in;
+		    	in.push(boost::iostreams::gzip_decompressor());
+		    	in.push(remote_file);
+		    	boost::iostreams::copy(in, expanded_file);
+			}
+			else
+			{
+				// zip archives, we need to use Poco.
+				// but, to do that, we need to download the file then expand it.
 
-			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+				fs::path temp_file_name{local_file_name};
+				temp_file_name.replace_extension(remote_ext);
 
-			local_file.close();
+				std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
 
-			std::ifstream zipped_file(temp_file_name.string(), std::ios::in | std::ios::binary);
-			Poco::Zip::Decompress expander(zipped_file, temp_file_name.parent_path().string(), true);
+				// avoid stream formatting by using streambufs
 
-			expander.decompressAllFiles();
+				std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
 
-			fs::remove(temp_file_name);
-			// if (! local_file)
-			// 	throw std::runtime_error("Unable to download file: " + remote_file_name.string() + " to file: " + local_file_name.string());
+				local_file.close();
+
+				std::ifstream zipped_file(temp_file_name.string(), std::ios_base::in | std::ios_base::binary);
+				Poco::Zip::Decompress expander{zipped_file, local_file_name.parent_path().string(), true};
+				expander.decompressAllFiles();
+
+				fs::remove(temp_file_name);
+			}
 		}
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
