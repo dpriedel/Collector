@@ -181,7 +181,10 @@ void DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& local_direc
 		local_daily_index_file_name_.replace_extension("");
 
 	if (! replace_files && fs::exists(local_daily_index_file_name_))
+	{
+		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name_.leaf().string());
 		return;
+	}
 
 	fs::create_directories(local_directory_name);
 
@@ -198,11 +201,17 @@ void DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path&
 
 	this->MakeLocalIndexFilePath(local_directory_prefix);
 
+	if (local_daily_index_file_name_.extension() == ".gz")
+		local_daily_index_file_name_.replace_extension("");
+
 	local_daily_index_file_directory_ = local_daily_index_file_name_.parent_path();
 	fs::create_directories(local_daily_index_file_directory_);
 
 	if (! replace_files && fs::exists(local_daily_index_file_name_))
+	{
+		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name_.leaf().string());
 		return;
+	}
 
 	the_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
 
@@ -215,18 +224,21 @@ void DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const fs::path& loca
 {
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
-	fs::create_directories(local_directory_name);
-	local_daily_index_file_directory_ = local_directory_name;
-
-	for (const auto& remote_file_name : remote_daily_index_file_name_list_)
+	for (const auto& remote_index_name : remote_daily_index_file_name_list_)
 	{
-		decltype(auto) local_file_name = local_daily_index_file_directory_;
-		local_file_name /= remote_file_name.leaf();
-		if (replace_files || ! fs::exists(local_file_name))
-		{
-			the_server_.DownloadFile(remote_file_name, local_file_name);
-			poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_file_name.string() + " to: " + local_file_name.string());
-		}
+		remote_daily_index_file_name_ = remote_index_name;
+		CopyRemoteIndexFileTo(local_directory_name, replace_files);
+	}
+}		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
+
+void DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+{
+	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
+
+	for (const auto& remote_index_name : remote_daily_index_file_name_list_)
+	{
+		remote_daily_index_file_name_ = remote_index_name;
+		this->HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
 	}
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 

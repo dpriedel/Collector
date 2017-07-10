@@ -75,7 +75,7 @@ fs::path QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 
-void QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
+void QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
 
@@ -84,7 +84,10 @@ void QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& local_d
 	fs::create_directories(local_quarterly_index_file_directory_);
 
 	if (! replace_files && fs::exists(local_quarterly_index_file_name_))
+	{
+		poco_debug(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name_.leaf().string());
 		return;
+	}
 
 	the_server_.DownloadFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_);
 
@@ -109,7 +112,7 @@ void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeLocalIndexFilePath  -----
 
 
-const std::vector<fs::path>& QuarterlyIndexFileRetriever::FindIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+const std::vector<fs::path>& QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
@@ -149,36 +152,15 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::GetRemoteIndexList  -----
 
-void QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+void QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
 
 	//	Remember...we are working with compressed directory files on the EDGAR server
 
-	local_quarterly_index_file_directory_ = local_directory_name;
-
-	// ftp_server_.OpenFTPConnection();
-	// ftp_server_.ChangeWorkingDirectoryTo("edgar/full-index");
-	//
-	// for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
-	// {
-	// 	decltype(auto) local_quarterly_index_file_name_zip = local_quarterly_index_file_directory_;
-	// 	local_quarterly_index_file_name_zip /= remote_file;
-	//
-	// 	fs::create_directories(local_quarterly_index_file_name_zip.parent_path());
-	//
-	// 	fs::path local_file_name{local_quarterly_index_file_name_zip};
-	// 	local_file_name.replace_extension("idx");
-	//
-	// 	if (replace_files || ! fs::exists(local_file_name))
-	// 	{
-	// 		ftp_server_.DownloadBinaryFile(remote_file, local_quarterly_index_file_name_zip);
-	// 		UnzipLocalIndexFile(local_quarterly_index_file_name_zip);
-	// 		fs::remove(local_quarterly_index_file_name_zip);
-	//
-	// 		poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file + " to: " + local_file_name.string());
-	// 	}
-	// }
-	//
-	// ftp_server_.CloseFTPConnection();
+	for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
+	{
+		remote_quarterly_index_file_name_ = remote_file;
+		HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
+	}
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
