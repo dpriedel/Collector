@@ -50,7 +50,7 @@
 
 #include "CollectEDGARApp.h"
 
-#include "FTP_Connection.h"
+#include "HTTPS_Downloader.h"
 #include "DailyIndexFileRetriever.h"
 #include "FormFileRetriever.h"
 #include "QuarterlyIndexFileRetriever.h"
@@ -61,9 +61,9 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
     ticker_converter_{logger()},
     mode_{"daily"},
     form_{"10-Q"},
-    FTP_host_{"ftp.sec.gov"},
+    HTTPS_host_{"https://www.sec.gov"},
     logging_level_{"information"},
-    pause_{1},
+    pause_{0},
     max_forms_to_download_{-1},
     replace_index_files_{false},
     replace_form_files_{false},
@@ -78,9 +78,9 @@ CollectEDGARApp::CollectEDGARApp (void)
     ticker_converter_{logger()},
     mode_{"daily"},
     form_{"10-Q"},
-    FTP_host_{"ftp.sec.gov"},
+    HTTPS_host_{"https://www.sec.gov"},
     logging_level_{"information"},
-    pause_{1},
+    pause_{0},
     max_forms_to_download_{-1},
     replace_index_files_{false},
     replace_form_files_{false},
@@ -191,18 +191,18 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_form_dir)));
 
 	options.addOption(
-		Poco::Util::Option("host", "", "FTP address to use for EDGAR.")
+		Poco::Util::Option("host", "", "Server address to use for EDGAR.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_FTP_host)));
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_HTTPS_host)));
 
-	options.addOption(
-		Poco::Util::Option("login", "", "email address to use for anonymous login to EDGAR.")
-			.required(true)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_login_ID)));
+	// options.addOption(
+	// 	Poco::Util::Option("login", "", "email address to use for anonymous login to EDGAR.")
+	// 		.required(true)
+	// 		.repeatable(false)
+	// 		.argument("value")
+	// 		.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_login_ID)));
 
 	options.addOption(
 		Poco::Util::Option("mode", "", "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
@@ -490,15 +490,15 @@ void CollectEDGARApp::Do_Run_TickerFileLookup (void)
 void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
-	DailyIndexFileRetriever idxFileRet{a_server, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_};
+	DailyIndexFileRetriever idxFileRet{a_server, "/edgar/daily-index", logger()};
 
 	Do_TickerMap_Setup();
 
 	if (begin_date_ == end_date_)
 	{
 		idxFileRet.FindIndexFileNameNearestDate(this->begin_date_);
-		idxFileRet.RetrieveRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
+		idxFileRet.CopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
@@ -525,7 +525,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 	else
 	{
 		idxFileRet.FindIndexFileNamesForDateRange(begin_date_, end_date_);
-		idxFileRet.RetrieveIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
+		idxFileRet.CopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
@@ -556,13 +556,13 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 {
 	Do_TickerMap_Setup();
 
-	FTP_Server a_server{FTP_host_, "anonymous", login_ID_};
-	QuarterlyIndexFileRetriever idxFileRet{a_server, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_};
+	QuarterlyIndexFileRetriever idxFileRet{a_server, "/edgar/full-index", logger()};
 
 	if (begin_date_ == end_date_)
 	{
 		idxFileRet.MakeQuarterIndexPathName(begin_date_);
-		idxFileRet.RetrieveRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
+		idxFileRet.HierarchicalCopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
@@ -588,8 +588,8 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 	}
 	else
 	{
-		idxFileRet.FindIndexFileNamesForDateRange(begin_date_, end_date_);
-		idxFileRet.RetrieveIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
+		idxFileRet.MakeIndexFileNamesForDateRange(begin_date_, end_date_);
+		idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{

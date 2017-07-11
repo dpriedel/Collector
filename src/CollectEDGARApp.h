@@ -134,8 +134,8 @@ private:
     void inline store_end_date(const std::string& name, const std::string& value) { end_date_ = bg::from_string(value); }
     void inline store_index_dir(const std::string& name, const std::string& value) { local_index_file_directory_ = value; }
     void inline store_form_dir(const std::string& name, const std::string& value) { local_form_file_directory_ = value; }
-    void inline store_FTP_host(const std::string& name, const std::string& value) { FTP_host_ = value; }
-    void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
+    void inline store_HTTPS_host(const std::string& name, const std::string& value) { HTTPS_host_ = value; }
+    // void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
 
     void inline store_log_level(const std::string& name, const std::string& value) { logging_level_ = value; }
     void inline store_mode(const std::string& name, const std::string& value) { mode_ = value; }
@@ -162,8 +162,8 @@ private:
 	std::string mode_;
 	std::string form_;
 	std::string ticker_;
-	std::string login_ID_;
-    std::string FTP_host_;
+	// std::string login_ID_;
+    std::string HTTPS_host_;
     std::string logging_level_;
 
 	std::vector<std::string> form_list_;
