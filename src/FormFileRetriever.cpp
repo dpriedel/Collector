@@ -51,8 +51,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger, int pause)
-	: ftp_server_{ftp_server}, the_logger_{the_logger}, pause_{pause}
+FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int pause)
+	: the_server_{a_server}, the_logger_{the_logger}, pause_{pause}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
@@ -146,7 +146,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				found_a_form += 1;
 				decltype(auto) pos = itor->lineData.find("edgar/data");
 				poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
-				found_files.push_back(itor->lineData.substr(pos));
+				found_files.push_back("/" + itor->lineData.substr(pos));
 				boost::algorithm::trim_right(found_files.back());
 			}
 			else
@@ -173,16 +173,13 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 }		// -----  end of method FormFileRetriever::FindFilesForForms  -----
 
 FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_forms, const fs::path& local_index_file_dir,
-				const std::vector<std::string>& local_index_file_list, const std::map<std::string, std::string>& ticker_map)
+				const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map)
 {
 	FormsList results;
 
 	for (const auto& index_file : local_index_file_list)
 	{
-		fs::path local_index_file_name{local_index_file_dir};
-		local_index_file_name /= index_file;
-
-		decltype(auto) single_file_results = FindFilesForForms(the_forms, local_index_file_name, ticker_map);
+		decltype(auto) single_file_results = FindFilesForForms(the_forms, index_file, ticker_map);
 
 		for (const auto& elem : single_file_results)
 		{
@@ -219,8 +216,9 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
     std::string form_name{the_form};
     std::replace(form_name.begin(), form_name.end(), '/', '_');
 
-	ftp_server_.OpenFTPConnection();
     int downloaded_files_counter = 0;
+    int skipped_files_counter = 0;
+	int error_counter = 0;
 
 	for (const auto& remote_file_name : form_file_list)
 	{
@@ -236,7 +234,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 		{
 			try
 			{
-				ftp_server_.DownloadFile(remote_file_name, local_file_name);
+				the_server_.DownloadFile(remote_file_name, local_file_name);
                 ++downloaded_files_counter;
 				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
 				std::this_thread::sleep_for(pause_);
@@ -249,21 +247,27 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				poco_error(the_logger_, "F: !! Timeout retrieving remote form file: " + remote_file_name
 					+ " to: " + local_file_name.string() + " !!\n" + e.displayText());
 
+				++error_counter;
                 continue;
 			}
-			catch(Poco::Net::FTPException& e)
+			catch(std::exception& e)
 			{
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
 
 				poco_error(the_logger_, "F: !! Problem retrieving remote form file: " + remote_file_name
-					+ " to: " + local_file_name.string() + " !!\n" + e.displayText());
+					+ " to: " + local_file_name.string() + " !!\n" + e.what());
+				++error_counter;
 			}
+		}
+		else
+		{
+			poco_debug(the_logger_, "F: File exists and 'replace' is false: skipping download: " + local_file_name.leaf().string());
+			++skipped_files_counter;
 		}
 	}
 
-	poco_information(the_logger_, "F: Downloaded a total of " + std::to_string(downloaded_files_counter) + " files for form type: " + the_form);
-
-	ftp_server_.CloseFTPConnection();
-
+	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
+		" Skipped: " + std::to_string(skipped_files_counter) +
+		" Errors: " + std::to_string(error_counter) + " for files for form type: " + the_form);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----

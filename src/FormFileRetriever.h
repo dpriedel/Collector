@@ -45,7 +45,7 @@
 namespace fs = boost::filesystem;
 
 
-// #include "FTP_Connection.h"
+#include "HTTPS_Downloader.h"
 
 // =====================================================================================
 //        Class:  FormFileRetriever
@@ -59,7 +59,7 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (const FTP_Server& ftp_server, Poco::Logger& the_logger, int pause=1);                   // constructor
+		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int pause=1);                   // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -71,7 +71,7 @@ class FormFileRetriever
 				const fs::path& local_index_file_name, const std::map<std::string, std::string>& ticker_map={});
 
 		FormsList FindFilesForForms(const std::vector<std::string>& the_forms, const fs::path& local_index_file_dir,
-				const std::vector<std::string>& local_index_file_list, const std::map<std::string, std::string>& ticker_map={});
+				const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map={});
 
 		// NOTE: the retrieved files will be placed in a directory hierarchy as follows:
 		// <form_directory>/<the_form>/<CIK number>/<file name>
@@ -91,7 +91,7 @@ class FormFileRetriever
 
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
-		FTP_Server ftp_server_;
+		HTTPS_Downloader& the_server_;
 		fs::path local_form_directory_name_;
 
         Poco::Logger& the_logger_;
