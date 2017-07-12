@@ -68,12 +68,12 @@ class QuarterlyIndexFileRetriever
 		// ====================  MUTATORS      =======================================
 
 		fs::path MakeQuarterIndexPathName(const bg::date& day_in_quarter);
-		void HierarchicalCopyRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
+		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
 		const std::vector<fs::path>& MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		void HierarchicalCopyIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
+		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
 
 		// ====================  OPERATORS     =======================================
 

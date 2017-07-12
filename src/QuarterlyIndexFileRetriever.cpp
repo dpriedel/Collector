@@ -75,7 +75,7 @@ fs::path QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 
-void QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
+fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
 
@@ -86,13 +86,15 @@ void QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 	if (! replace_files && fs::exists(local_quarterly_index_file_name_))
 	{
 		poco_debug(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name_.leaf().string());
-		return;
+		return local_quarterly_index_file_name_;
 	}
 
 	the_server_.DownloadFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_);
 
 	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_.string() +
 		" to: " + local_quarterly_index_file_name_.string());
+
+	return local_quarterly_index_file_name_;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
 
 
@@ -152,15 +154,20 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::GetRemoteIndexList  -----
 
-void QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
 {
 	poco_assert_msg(! remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
+
+	std::vector<fs::path> results;
 
 	//	Remember...we are working with compressed directory files on the EDGAR server
 
 	for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
 	{
 		remote_quarterly_index_file_name_ = remote_file;
-		HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
+		auto local_file = HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
+		results.push_back(local_file);
 	}
+	
+	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
