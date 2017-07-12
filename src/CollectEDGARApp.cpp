@@ -498,7 +498,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 	if (begin_date_ == end_date_)
 	{
 		idxFileRet.FindIndexFileNameNearestDate(this->begin_date_);
-		idxFileRet.CopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
+		idxFileRet.HierarchicalCopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
@@ -510,6 +510,10 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
             {
     			for (auto& elem : form_file_list)
     			{
+                    // I don't remember why I'm doing this...
+                    // If we are downloading only some of the files possible
+                    // to download, then take a random selection of those files.
+
         			if (elem.second.size() > max_forms_to_download_)
                     {
             			std::default_random_engine dre;
@@ -525,7 +529,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 	else
 	{
 		idxFileRet.FindIndexFileNamesForDateRange(begin_date_, end_date_);
-		idxFileRet.CopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
+		idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
@@ -536,6 +540,8 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
             if (max_forms_to_download_ > -1)
             {
+                // same comment here as above for single file.
+
     			for (auto& elem : form_file_list)
     			{
         			if (elem.second.size() > max_forms_to_download_)
