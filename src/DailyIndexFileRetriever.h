@@ -63,8 +63,8 @@ class DailyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		const fs::path& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
-		const fs::path& GetLocalIndexFilePath(void) const { return local_daily_index_file_name_; }
+		// const fs::path& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
+		// const fs::path& GetLocalIndexFilePath(void) const { return local_daily_index_file_name_; }
 		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
 		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_daily_index_file_name_list_; }
 		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::make_pair(actual_start_date_, actual_end_date_); }
@@ -78,8 +78,8 @@ class DailyIndexFileRetriever
 
 		//	returns the local path name of the downloaded file.
 
-		fs::path CopyRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
-		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& local_directory_prefix, bool replace_files=false);
+		fs::path CopyRemoteIndexFileTo(const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name, bool replace_files=false);
+		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_daily_index_file_name, const fs::path& local_directory_prefix, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
@@ -87,8 +87,8 @@ class DailyIndexFileRetriever
 
 		//	returns the local path name of the downloaded file.
 
-		std::vector<fs::path> CopyIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
-		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const fs::path& local_directory_prefix, bool replace_files=false);
+		std::vector<fs::path> CopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files=false);
+		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_prefix, bool replace_files=false);
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
 
@@ -99,7 +99,7 @@ class DailyIndexFileRetriever
 	protected:
 
 		bg::date CheckDate(const bg::date& aDate);
-		void MakeLocalIndexFilePath(const fs::path& local_prefix);
+		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_daily_index_file_name);
 		std::vector<std::string> GetRemoteIndexList(const bg::date& day_in_quarter);
 
 		// ====================  DATA MEMBERS  =======================================
@@ -108,12 +108,12 @@ class DailyIndexFileRetriever
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
-		fs::path remote_daily_index_file_name_;
+		// fs::path remote_daily_index_file_name_;
 		std::vector<fs::path> remote_daily_index_file_name_list_;
         fs::path remote_directory_prefix_;                // top-level directory path
         fs::path remote_index_file_directory_;
-		fs::path local_daily_index_file_directory_;
-		fs::path local_daily_index_file_name_;
+		// fs::path local_daily_index_file_directory_;
+		// fs::path local_daily_index_file_name_;
 		bg::date input_date_;
 		bg::date actual_file_date_;
 		bg::date start_date_;

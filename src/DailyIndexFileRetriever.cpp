@@ -109,8 +109,8 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const bg::d
 
 	poco_debug(the_logger_, "D: Found Daily Index File for date: " + bg::to_simple_string(actual_file_date_));
 
-	remote_daily_index_file_name_ = remote_index_file_directory_ /= *pos;
-	return remote_daily_index_file_name_;
+	auto remote_daily_index_file_name = remote_index_file_directory_ /= *pos;
+	return remote_daily_index_file_name;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
@@ -170,91 +170,81 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const bg::
 	return directory_list;
 }		// -----  end of method DailyIndexFileRetriever::GetRemoteIndexList  -----
 
-fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
+fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name, bool replace_files)
 {
-	poco_assert_msg(! remote_daily_index_file_name_.empty(), "Must locate remote index file before attempting download.");
+	auto local_daily_index_file_name = local_directory_name;
+	local_daily_index_file_name /= remote_daily_index_file_name.leaf();
 
-	local_daily_index_file_name_= local_directory_name;
-	local_daily_index_file_name_ /= remote_daily_index_file_name_.leaf();
+	if (local_daily_index_file_name.extension() == ".gz")
+		local_daily_index_file_name.replace_extension("");
 
-	if (local_daily_index_file_name_.extension() == ".gz")
-		local_daily_index_file_name_.replace_extension("");
-
-	if (! replace_files && fs::exists(local_daily_index_file_name_))
+	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name_.leaf().string());
-		return local_daily_index_file_name_;
+		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		return local_daily_index_file_name;
 	}
 
 	fs::create_directories(local_directory_name);
 
-	the_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
+	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_.string() + " to: " + local_daily_index_file_name_.string());
+	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
 
-	return local_daily_index_file_name_;
+	return local_daily_index_file_name;
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
 
-fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& local_directory_prefix, bool replace_files)
+fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_prefix, bool replace_files)
 {
-	poco_assert_msg(! remote_daily_index_file_name_.empty(), "Must locate remote index file before attempting download.");
+	auto local_daily_index_file_name = MakeLocalIndexFilePath(local_directory_prefix, remote_daily_index_file_name);
 
-	this->MakeLocalIndexFilePath(local_directory_prefix);
+	if (local_daily_index_file_name.extension() == ".gz")
+		local_daily_index_file_name.replace_extension("");
 
-	if (local_daily_index_file_name_.extension() == ".gz")
-		local_daily_index_file_name_.replace_extension("");
+	auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
+	fs::create_directories(local_daily_index_file_directory);
 
-	local_daily_index_file_directory_ = local_daily_index_file_name_.parent_path();
-	fs::create_directories(local_daily_index_file_directory_);
-
-	if (! replace_files && fs::exists(local_daily_index_file_name_))
+	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name_.leaf().string());
-		return local_daily_index_file_name_;
+		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		return local_daily_index_file_name;
 	}
 
-	the_server_.DownloadFile(remote_daily_index_file_name_, local_daily_index_file_name_);
+	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name_.string() + " to: " + local_daily_index_file_name_.string());
+	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
 
-	return local_daily_index_file_name_;
+	return local_daily_index_file_name;
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
 
-std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files)
 {
-	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
-
 	std::vector<fs::path> results;
 
-	for (const auto& remote_index_name : remote_daily_index_file_name_list_)
+	for (const auto& remote_daily_index_file_name : remote_file_list)
 	{
-		remote_daily_index_file_name_ = remote_index_name;
-		auto local_file = CopyRemoteIndexFileTo(local_directory_name, replace_files);
+		auto local_file = CopyRemoteIndexFileTo(remote_daily_index_file_name, local_directory_name, replace_files);
 		results.push_back(local_file);
 	}
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+std::vector<fs::path> DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files)
 {
-	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
-
 	std::vector<fs::path> results;
 
-	for (const auto& remote_index_name : remote_daily_index_file_name_list_)
+	for (const auto& remote_daily_index_file_name : remote_file_list)
 	{
-		remote_daily_index_file_name_ = remote_index_name;
-		auto local_file = HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
+		auto local_file = HierarchicalCopyRemoteIndexFileTo(remote_daily_index_file_name, local_directory_name, replace_files);
 		results.push_back(local_file);
 	}
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 
-void DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix)
+fs::path DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix, const fs::path& remote_daily_index_file_name)
 {
 	// want keep the directory hierarchy the same as on the remote system
 	// EXCCEPT for the remote system prefix (which is given to our ctor)
@@ -262,8 +252,9 @@ void DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_pref
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
-	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name_.string(), remote_directory_prefix_.string(), "");
-	local_daily_index_file_name_= local_prefix;
-	local_daily_index_file_name_ /= remote_index_name;
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name.string(), remote_directory_prefix_.string(), "");
+	auto local_daily_index_file_name = local_prefix;
+	local_daily_index_file_name /= remote_index_name;
+	return local_daily_index_file_name;
 
 }		// -----  end of method DailyIndexFileRetriever::MakeLocalIndexFileName  -----

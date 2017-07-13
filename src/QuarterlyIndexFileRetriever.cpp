@@ -61,44 +61,41 @@ bg::date QuarterlyIndexFileRetriever::CheckDate (const bg::date& day_in_quarter)
 	return day_in_quarter;
 }		// -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
 
-fs::path QuarterlyIndexFileRetriever::MakeQuarterIndexPathName (const bg::date& day_in_quarter)
+fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (const bg::date& day_in_quarter)
 {
 	input_date_ = CheckDate(day_in_quarter);
 
 	PathNameGenerator p_gen{remote_directory_prefix_, day_in_quarter, day_in_quarter};
 
-	remote_quarterly_index_file_name_ = *p_gen;
-	remote_quarterly_index_file_name_ /= "form.zip";		// we know this.
+	auto remote_quarterly_index_file_name = *p_gen;
+	remote_quarterly_index_file_name /= "form.zip";		// we know this.
 
-	return remote_quarterly_index_file_name_;
+	return remote_quarterly_index_file_name;
 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 
-fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& local_directory_name, bool replace_files)
+fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_file_name, const fs::path& local_directory_name, bool replace_files)
 {
-	poco_assert_msg(! remote_quarterly_index_file_name_.empty(), "Must generate remote index file name before attempting download.");
+	auto local_quarterly_index_file_name = this->MakeLocalIndexFilePath(local_directory_name, remote_file_name);
+	auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
+	fs::create_directories(local_quarterly_index_file_directory);
 
-	this->MakeLocalIndexFilePath(local_directory_name);
-	local_quarterly_index_file_directory_ = local_quarterly_index_file_name_.parent_path();
-	fs::create_directories(local_quarterly_index_file_directory_);
-
-	if (! replace_files && fs::exists(local_quarterly_index_file_name_))
+	if (! replace_files && fs::exists(local_quarterly_index_file_name))
 	{
-		poco_debug(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name_.leaf().string());
-		return local_quarterly_index_file_name_;
+		poco_debug(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.leaf().string());
+		return local_quarterly_index_file_name;
 	}
 
-	the_server_.DownloadFile(remote_quarterly_index_file_name_, local_quarterly_index_file_name_);
+	the_server_.DownloadFile(remote_file_name, local_quarterly_index_file_name);
 
-	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_quarterly_index_file_name_.string() +
-		" to: " + local_quarterly_index_file_name_.string());
+	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: " + local_quarterly_index_file_name.string());
 
-	return local_quarterly_index_file_name_;
+	return local_quarterly_index_file_name;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
 
 
-void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix)
+fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_prefix, const fs::path& remote_quarterly_index_file_name)
 {
 	// want keep the directory hierarchy the same as on the remote system
 	// EXCCEPT for the remote system prefix (which is given to our ctor)
@@ -106,39 +103,20 @@ void QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
-	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_quarterly_index_file_name_.string(), remote_directory_prefix_.string(), "");
-	local_quarterly_index_file_name_= local_prefix;
-	local_quarterly_index_file_name_ /= remote_index_name;
-	local_quarterly_index_file_name_.replace_extension("idx");
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_quarterly_index_file_name.string(), remote_directory_prefix_.string(), "");
+	auto local_quarterly_index_file_name = local_prefix;
+	local_quarterly_index_file_name /= remote_index_name;
+	local_quarterly_index_file_name.replace_extension("idx");
 
+	return local_quarterly_index_file_name;
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeLocalIndexFilePath  -----
 
 
-const std::vector<fs::path>& QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+const std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
 
-	remote_quarterly_index_zip_file_name_list_ = this->GetRemoteIndexList();
-
-	//	we need to keep a copy of these file names for the unzipped files which will end up locally.
-	// (mainly for testing purposes)
-
-	local_quarterly_index_file_name_list_.clear();
-
-	//	NOTE: elem is passed by value since the replace algorith modifies in place
-
-	std::transform(remote_quarterly_index_zip_file_name_list_.cbegin(), remote_quarterly_index_zip_file_name_list_.cend(),
-			std::back_inserter(local_quarterly_index_file_name_list_),
-				[](fs::path elem) { elem.replace_extension(".idx"); return elem; });
-
-	poco_debug(the_logger_, "Q: Found " + std::to_string(remote_quarterly_index_zip_file_name_list_.size()) + " files for date range.");
-
-	return remote_quarterly_index_zip_file_name_list_;
-}		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
-
-std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
-{
 	std::vector<fs::path> results;
 
 	PathNameGenerator p_gen{remote_directory_prefix_, start_date_, end_date_};
@@ -152,22 +130,20 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::GetRemoteIndexList (void)
 	}
 
 	return results;
-}		// -----  end of method QuarterlyIndexFileRetriever::GetRemoteIndexList  -----
+}		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
-std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const fs::path& local_directory_name, bool replace_files)
+
+std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files)
 {
-	poco_assert_msg(! remote_quarterly_index_zip_file_name_list_.empty(), "Must generate list of remote index files before attempting download.");
-
 	std::vector<fs::path> results;
 
 	//	Remember...we are working with compressed directory files on the EDGAR server
 
-	for (const auto& remote_file : remote_quarterly_index_zip_file_name_list_)
+	for (const auto& remote_file : remote_file_list)
 	{
-		remote_quarterly_index_file_name_ = remote_file;
-		auto local_file = HierarchicalCopyRemoteIndexFileTo(local_directory_name, replace_files);
+		auto local_file = HierarchicalCopyRemoteIndexFileTo(remote_file, local_directory_name, replace_files);
 		results.push_back(local_file);
 	}
-	
+
 	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----

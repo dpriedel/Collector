@@ -59,29 +59,29 @@ class QuarterlyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		const fs::path& GetLocalIndexFilePath(void) const { return local_quarterly_index_file_name_; }
-		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_quarterly_index_zip_file_name_list_; }
+		// const fs::path& GetLocalIndexFilePath(void) const { return local_quarterly_index_file_name_; }
+		// const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_quarterly_index_zip_file_name_list_; }
 
 		//	this method provides file names ending in .idx, not .zip as above
-		const std::vector<fs::path>& GetLocalIndexFileNamesForDateRange(void) const { return local_quarterly_index_file_name_list_; }
+		// const std::vector<fs::path>& GetLocalIndexFileNamesForDateRange(void) const { return local_quarterly_index_file_name_list_; }
 
 		// ====================  MUTATORS      =======================================
 
-		fs::path MakeQuarterIndexPathName(const bg::date& day_in_quarter);
-		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& local_directory_name, bool replace_files=false);
+		fs::path MakeQuarterlyIndexPathName(const bg::date& day_in_quarter);
+		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name, bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
-		const std::vector<fs::path>& MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const fs::path& local_directory_name, bool replace_files=false);
+		const std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files=false);
 
 		// ====================  OPERATORS     =======================================
 
 	protected:
 
 		bg::date CheckDate(const bg::date& aDate);
-		void MakeLocalIndexFilePath(const fs::path& local_prefix);
-		std::vector<fs::path> GetRemoteIndexList(void);
+		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_quarterly_index_file_name);
+		// std::vector<fs::path> GetRemoteIndexList(void);
 
 		// ====================  DATA MEMBERS  =======================================
 
@@ -90,13 +90,12 @@ class QuarterlyIndexFileRetriever
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
-		fs::path remote_quarterly_index_file_name_;
-		std::vector<fs::path> remote_quarterly_index_zip_file_name_list_;
-		std::vector<fs::path> local_quarterly_index_file_name_list_;
+		// fs::path remote_quarterly_index_file_name_;
+		// std::vector<fs::path> remote_quarterly_index_zip_file_name_list_;
+		// std::vector<fs::path> local_quarterly_index_file_name_list_;
         fs::path remote_directory_prefix_;                // top-level directory path
-		fs::path local_quarterly_index_file_name_;
-		fs::path local_quarterly_index_file_name_zip_;
-		fs::path local_quarterly_index_file_directory_;
+		// fs::path local_quarterly_index_file_name_;
+		// fs::path local_quarterly_index_file_directory_;
 		bg::date input_date_;
 		bg::date start_date_;
 		bg::date end_date_;
