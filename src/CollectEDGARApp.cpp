@@ -497,12 +497,11 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
 	if (begin_date_ == end_date_)
 	{
-		idxFileRet.FindIndexFileNameNearestDate(this->begin_date_);
-		idxFileRet.HierarchicalCopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
+		auto remote_daily_index_file_name = idxFileRet.FindRemoteIndexFileNameNearestDate(this->begin_date_);
+		auto local_daily_index_file_name = idxFileRet.HierarchicalCopyRemoteIndexFileTo(remote_daily_index_file_name, this->local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			decltype(auto) local_daily_index_file_name = idxFileRet.GetLocalIndexFilePath();
 			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 
@@ -528,14 +527,13 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 	}
 	else
 	{
-		idxFileRet.FindIndexFileNamesForDateRange(begin_date_, end_date_);
-		idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
+		auto remote_daily_index_file_list = idxFileRet.FindRemoteIndexFileNamesForDateRange(begin_date_, end_date_);
+		auto local_daily_index_file_list = idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(remote_daily_index_file_list, local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			decltype(auto) index_file_list = idxFileRet.GetfRemoteIndexFileNamesForDateRange();
 			FormFileRetriever form_file_getter{a_server, logger(), pause_};
-			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, local_daily_index_file_list,
 					ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -567,12 +565,11 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
 	if (begin_date_ == end_date_)
 	{
-		idxFileRet.MakeQuarterIndexPathName(begin_date_);
-		idxFileRet.HierarchicalCopyRemoteIndexFileTo(this->local_index_file_directory_, replace_index_files_);
+		auto remote_quarterly_index_file_name = idxFileRet.MakeQuarterlyIndexPathName(begin_date_);
+		auto local_quarterly_index_file_name = idxFileRet.HierarchicalCopyRemoteIndexFileTo(remote_quarterly_index_file_name, this->local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			decltype(auto) local_quarterly_index_file_name = idxFileRet.GetLocalIndexFilePath();
 			FormFileRetriever form_file_getter{a_server, logger(), pause_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
@@ -594,14 +591,13 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 	}
 	else
 	{
-		idxFileRet.MakeIndexFileNamesForDateRange(begin_date_, end_date_);
-		idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(local_index_file_directory_, replace_index_files_);
+		auto remote_index_file_list = idxFileRet.MakeIndexFileNamesForDateRange(begin_date_, end_date_);
+		auto local_index_file_list = idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(remote_index_file_list, local_index_file_directory_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			decltype(auto) index_file_list = idxFileRet.GetLocalIndexFileNamesForDateRange();
 			FormFileRetriever form_file_getter{a_server, logger(), pause_};
-			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, index_file_list,
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, local_index_file_list,
 					ticker_map_);
 
             if (max_forms_to_download_ > -1)
