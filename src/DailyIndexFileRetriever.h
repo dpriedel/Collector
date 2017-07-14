@@ -84,6 +84,7 @@ class DailyIndexFileRetriever
 		//	This method treats the date range as a closed interval.
 
 		const std::vector<fs::path>& FindRemoteIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		const std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 
 		//	returns the local path name of the downloaded file.
 
@@ -100,7 +101,7 @@ class DailyIndexFileRetriever
 
 		bg::date CheckDate(const bg::date& aDate);
 		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_daily_index_file_name);
-		std::vector<std::string> GetRemoteIndexList(const bg::date& day_in_quarter);
+		std::vector<std::string> GetRemoteIndexList(const fs::path& remote_directory);
 
 		// ====================  DATA MEMBERS  =======================================
 
@@ -111,7 +112,7 @@ class DailyIndexFileRetriever
 		// fs::path remote_daily_index_file_name_;
 		std::vector<fs::path> remote_daily_index_file_name_list_;
         fs::path remote_directory_prefix_;                // top-level directory path
-        fs::path remote_index_file_directory_;
+        // fs::path remote_index_file_directory_;
 		// fs::path local_daily_index_file_directory_;
 		// fs::path local_daily_index_file_name_;
 		bg::date input_date_;
