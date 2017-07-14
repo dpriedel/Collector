@@ -54,11 +54,16 @@ PathNameGenerator::PathNameGenerator (void)
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 PathNameGenerator::PathNameGenerator (const fs::path& prefix, const bg::date& start_date, const bg::date& end_date)
-	: start_date_{start_date}, end_date_{end_date}, active_date_{start_date},
+	: start_date_{start_date}, end_date_{end_date},
 		start_year_{start_date.year()}, end_year_{end_date.year()}, active_year_{start_date.year()},
 	    start_month_{start_date.month()}, end_month_{end_date.month()}, active_month_{start_date.month()},
 		remote_directory_prefix_{prefix}
 {
+	// compute the first day of the quarter and use that as the base of calculations
+
+	active_date_ = bg::date(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+	active_month_ = active_date_.month();
+
 	EDGAR_path_ = remote_directory_prefix_;
 	EDGAR_path_ /= std::to_string(active_year_);
 	EDGAR_path_ /= "QTR" + std::to_string(active_month_ / 3 + (active_month_ % 3 == 0 ? 0 : 1));
