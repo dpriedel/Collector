@@ -47,6 +47,7 @@
 #include "Poco/SimpleFileChannel.h"
 #include "Poco/LogStream.h"
 #include "Poco/Util/OptionException.h"
+#include "Poco/Util/AbstractConfiguration.h"
 
 #include "CollectEDGARApp.h"
 
@@ -112,7 +113,51 @@ void CollectEDGARApp::initialize(Application& self)
     the_logger.setLevel(logging_level_);
 
     setLogger(the_logger);
+
+	the_logger.information("Command line:");
+	std::ostringstream ostr;
+	for (ArgVec::const_iterator it = argv().begin(); it != argv().end(); ++it)
+	{
+		ostr << *it << ' ';
+	}
+	the_logger.information(ostr.str());
+	the_logger.information("Arguments to main():");
+    auto args = argv();
+	for (ArgVec::const_iterator it = args.begin(); it != args.end(); ++it)
+	{
+		the_logger.information(*it);
+	}
+	the_logger.information("Application properties:");
+	printProperties("");
+
     // set log level here since options will have been parsed before we get here.
+}
+
+void CollectEDGARApp::printProperties(const std::string& base)
+{
+	Poco::Util::AbstractConfiguration::Keys keys;
+	config().keys(base, keys);
+	if (keys.empty())
+	{
+		if (config().hasProperty(base))
+		{
+			std::string msg;
+			msg.append(base);
+			msg.append(" = ");
+			msg.append(config().getString(base));
+			logger().information(msg);
+		}
+	}
+	else
+	{
+		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = keys.begin(); it != keys.end(); ++it)
+		{
+			std::string fullKey = base;
+			if (!fullKey.empty()) fullKey += '.';
+			fullKey.append(*it);
+			printProperties(fullKey);
+		}
+	}
 }
 
 void  CollectEDGARApp::uninitialize()
@@ -355,51 +400,9 @@ int  CollectEDGARApp::main(const ArgVec& args)
 {
 	if (!help_requested_)
 	{
-		// logger().information("Command line:");
-		// std::ostringstream ostr;
-		// for (ArgVec::const_iterator it = argv().begin(); it != argv().end(); ++it)
-		// {
-		// 	ostr << *it << ' ';
-		// }
-		// logger().information(ostr.str());
-		// logger().information("Arguments to main():");
-		// for (ArgVec::const_iterator it = args.begin(); it != args.end(); ++it)
-		// {
-		// 	logger().information(*it);
-		// }
-		// logger().information("Application properties:");
-		// printProperties("");
-
         Do_Main();
 	}
 	return Application::EXIT_OK;
-}
-
-void  CollectEDGARApp::printProperties(const std::string& base)
-{
-	Poco::Util::AbstractConfiguration::Keys keys;
-	config().keys(base, keys);
-	if (keys.empty())
-	{
-		if (config().hasProperty(base))
-		{
-			std::string msg;
-			msg.append(base);
-			msg.append(" = ");
-			msg.append(config().getString(base));
-			logger().information(msg);
-		}
-	}
-	else
-	{
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = keys.begin(); it != keys.end(); ++it)
-		{
-			std::string fullKey = base;
-			if (!fullKey.empty()) fullKey += '.';
-			fullKey.append(*it);
-			printProperties(fullKey);
-		}
-	}
 }
 
 void CollectEDGARApp::Do_Main(void)
@@ -491,7 +494,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
 	HTTPS_Downloader a_server{HTTPS_host_};
-	DailyIndexFileRetriever idxFileRet{a_server, "/edgar/daily-index", logger()};
+	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index", logger()};
 
 	Do_TickerMap_Setup();
 
@@ -561,7 +564,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 	Do_TickerMap_Setup();
 
 	HTTPS_Downloader a_server{HTTPS_host_};
-	QuarterlyIndexFileRetriever idxFileRet{a_server, "/edgar/full-index", logger()};
+	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index", logger()};
 
 	if (begin_date_ == end_date_)
 	{

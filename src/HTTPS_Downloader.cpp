@@ -107,7 +107,7 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 	{
 		session.reset();
 		throw std::runtime_error(request.string() + ". Result: " + std::to_string(res.getStatus()) +
-			": Unable to complete request with server.");
+			": Unable to complete request with server because: " + res.getReason());
 	}
 	else
 		std::copy(std::istreambuf_iterator<char>(rs), std::istreambuf_iterator<char>(), std::back_inserter(result));

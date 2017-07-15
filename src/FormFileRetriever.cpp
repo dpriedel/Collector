@@ -146,7 +146,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 				found_a_form += 1;
 				decltype(auto) pos = itor->lineData.find("edgar/data");
 				poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
-				found_files.push_back("/" + itor->lineData.substr(pos));
+				found_files.push_back("/Archives/" + itor->lineData.substr(pos));
 				boost::algorithm::trim_right(found_files.back());
 			}
 			else
