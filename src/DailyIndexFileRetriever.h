@@ -63,8 +63,6 @@ class DailyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		// const fs::path& GetRemoteIndexFileName (void) const { return remote_daily_index_file_name_; }
-		// const fs::path& GetLocalIndexFilePath(void) const { return local_daily_index_file_name_; }
 		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
 		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_daily_index_file_name_list_; }
 		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::make_pair(actual_start_date_, actual_end_date_); }
@@ -109,12 +107,8 @@ class DailyIndexFileRetriever
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;
-		// fs::path remote_daily_index_file_name_;
 		std::vector<fs::path> remote_daily_index_file_name_list_;
         fs::path remote_directory_prefix_;                // top-level directory path
-        // fs::path remote_index_file_directory_;
-		// fs::path local_daily_index_file_directory_;
-		// fs::path local_daily_index_file_name_;
 		bg::date input_date_;
 		bg::date actual_file_date_;
 		bg::date start_date_;
