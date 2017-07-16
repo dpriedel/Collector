@@ -70,14 +70,14 @@ class PathNameGenerator : public boost::iterator_facade
 
 		bg::date start_date_;
 		bg::date end_date_;
-		bg::date active_date_;
+		bg::date working_date_;
 
 		bg::greg_year start_year_;
 		bg::greg_year end_year_;
-		bg::greg_year active_year_;
+		bg::greg_year working_year_;
 		bg::greg_month start_month_;
 		bg::greg_month end_month_;
-		bg::greg_month active_month_;
+		bg::greg_month working_month_;
 
 		fs::path remote_directory_prefix_;
 		fs::path EDGAR_path_;
