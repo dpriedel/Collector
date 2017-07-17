@@ -50,37 +50,37 @@ class PathNameGenerator : public boost::iterator_facade
 	boost::forward_traversal_tag
 >
 {
-	public:
+public:
 
-		PathNameGenerator(void);
-		PathNameGenerator(const fs::path& prefix, const bg::date& start_date, const bg::date& end_date);
+	PathNameGenerator(void);
+	PathNameGenerator(const fs::path& prefix, const bg::date& start_date, const bg::date& end_date);
 
-	private:
+private:
 
-		friend class boost::iterator_core_access;
+	friend class boost::iterator_core_access;
 
-		void increment();
+	void increment();
 
-		bool equal(PathNameGenerator const& other) const
-		{
-			return this->EDGAR_path_ == other.EDGAR_path_;
-		}
+	bool equal(PathNameGenerator const& other) const
+	{
+		return this->EDGAR_path_ == other.EDGAR_path_;
+	}
 
-		fs::path const& dereference() const { return EDGAR_path_; }
+	fs::path const& dereference() const { return EDGAR_path_; }
 
-		bg::date start_date_;
-		bg::date end_date_;
-		bg::date working_date_;
+	bg::date start_date_;
+	bg::date end_date_;
+	bg::date working_date_;
 
-		bg::greg_year start_year_;
-		bg::greg_year end_year_;
-		bg::greg_year working_year_;
-		bg::greg_month start_month_;
-		bg::greg_month end_month_;
-		bg::greg_month working_month_;
+	bg::greg_year start_year_;
+	bg::greg_year end_year_;
+	bg::greg_year working_year_;
+	bg::greg_month start_month_;
+	bg::greg_month end_month_;
+	bg::greg_month working_month_;
 
-		fs::path remote_directory_prefix_;
-		fs::path EDGAR_path_;
+	fs::path remote_directory_prefix_;
+	fs::path EDGAR_path_;
 };
 
 #endif /* PATHNAMEGENERATOR_H_ */
