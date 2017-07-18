@@ -87,7 +87,10 @@ class DailyIndexFileRetriever
 		//	returns the local path name of the downloaded file.
 
 		std::vector<fs::path> CopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files=false);
+		std::vector<fs::path> ConcurrentlyCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, int max_at_a_time, bool replace_files=false);
+
 		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_prefix, bool replace_files=false);
+		std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_prefix, int max_at_a_time, bool replace_files=false);
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
 

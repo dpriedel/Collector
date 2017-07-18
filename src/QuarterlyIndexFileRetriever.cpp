@@ -147,3 +147,43 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesFor
 
 	return results;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
+
+std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, int max_at_a_time, bool replace_files)
+{
+	if (remote_file_list.size() < max_at_a_time)
+		return HierarchicalCopyIndexFilesForDateRangeTo(remote_file_list, local_directory_name, replace_files);
+
+	std::vector<fs::path> results;
+
+	// we need to create a list of file name pairs -- remote file name, local file name.
+	// we'll pass that list to the downloader and let it manage to process from there.
+
+	// Also, here we will create the directory hierarchies for the to-be downloaded files.
+	// Taking the easy way out so we don't have to worry about file system race conditions.
+
+	HTTPS_Downloader::remote_local_list concurrent_copy_list;
+
+	for (const auto& remote_file_name : remote_file_list)
+	{
+		auto local_quarterly_index_file_name = this->MakeLocalIndexFilePath(local_directory_name, remote_file_name);
+		auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
+		fs::create_directories(local_quarterly_index_file_directory);
+
+		if (! replace_files && fs::exists(local_quarterly_index_file_name))
+			results.push_back(local_quarterly_index_file_name);
+		else
+			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_quarterly_index_file_name));
+
+	}
+
+	// now, we expect some magic to happen here...
+
+	the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+	// TODO: figure our error handling when some files do not get downloaded.
+
+	for (const auto& e : concurrent_copy_list)
+		results.push_back(e.second);
+
+	return results;
+}		// -----  end of method DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo  -----

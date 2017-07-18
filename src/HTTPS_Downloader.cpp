@@ -35,6 +35,9 @@
 #include <fstream>
 #include <iterator>
 
+#include <future>
+#include <thread>
+
 #include <boost/algorithm/string/trim.hpp>
 
 #include <boost/iostreams/filtering_stream.hpp>
@@ -58,6 +61,35 @@
 #include "Poco/StreamCopier.h"
 
 #include "cpp-json/json.h"
+
+
+// code from "The C++ Programming Language" 4th Edition. p. 1243.
+
+template<typename T>
+int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::duration d)
+// return index of ready future
+// if no future is ready, wait for d before trying again
+{
+    while(true)
+    {
+        for (int i=0; i!=vf.size(); ++i)
+        {
+            if (!vf[i].valid()) continue;
+            switch (vf[i].wait_for(std::chrono::seconds{0}))
+            {
+            case std::future_status::ready:
+                    return i;
+
+                case std::future_status::timeout:
+                    break;
+
+                case std::future_status::deferred:
+                    throw std::runtime_error("wait_for_all(): deferred future");
+            }
+        }
+    std::this_thread::sleep_for(d);
+    }
+}
 
 
 //--------------------------------------------------------------------------------------
@@ -224,3 +256,40 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		}
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
+
+void HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
+
+{
+    for (int i = 0; i < file_list.size(); )
+    {
+        // keep track of our async processes here.
+
+        std::vector<std::future<void>> tasks;
+
+        for (int j = 0; j < max_at_a_time && i < file_list.size(); ++j, ++i)
+        {
+            // queue up our tasks up to the limit.
+
+            auto& [remote_file, local_file] = file_list[i];
+            tasks.push_back(std::async(&HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
+        }
+
+        // now, let's wait till they're all done
+        // and then we'll do the next bunch.
+
+        for (int count = tasks.size(); count; --count)
+        {
+            int i = wait_for_any(tasks, std::chrono::microseconds{100});
+            try
+            {
+                tasks[i].get();
+            }
+            catch (...)
+            {
+                // any problems, let's just ignore them.
+                // poco_error(the_logger_, "Some problem with an async process");
+                continue;
+            }
+        }
+    }
+}		// -----  end of method HTTPS_Downloader::DownloadFilesConcurrently  -----

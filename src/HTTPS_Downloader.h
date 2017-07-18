@@ -52,6 +52,9 @@ namespace fs = boost::filesystem;
 class HTTPS_Downloader
 {
 	public:
+
+		using  remote_local_list = std::vector<std::pair<fs::path, fs::path>>;
+
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
 		HTTPS_Downloader(const std::string& server_name);
@@ -65,10 +68,13 @@ class HTTPS_Downloader
 
 		std::vector<std::string> ListDirectoryContents(const fs::path& directory_name);
 
-		// for these next 2 methods, the file name will be appended to whatever
-		// the current working directory is.
+		// download a file at a time
 
 		void DownloadFile(const fs::path& remote_file_name, const fs::path& local_file_name);
+
+		// download multiple files at a time, up to specified limit.
+
+		void DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time);
 
 		// ====================  MUTATORS      =======================================
 
