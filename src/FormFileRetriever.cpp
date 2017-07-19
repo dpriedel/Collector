@@ -51,8 +51,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int max_at_a_time)
-	: the_server_{a_server}, the_logger_{the_logger}, max_at_a_time_{max_at_a_time}
+FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger)
+	: the_server_{a_server}, the_logger_{the_logger}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
@@ -211,6 +211,13 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const FormsAndFilesList& form_li
 		RetrieveSpecifiedFiles(form_files, form_type, local_form_directory, replace_files);
 }
 
+void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const FormsAndFilesList& form_list,
+	const fs::path& local_form_directory, int max_at_a_time, bool replace_files)
+{
+	for (const auto& [form_type, form_files] : form_list)
+		ConcurrentlyRetrieveSpecifiedFiles(form_files, form_type, local_form_directory, max_at_a_time, replace_files);
+}
+
 void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& form_files, const std::string& form_type,
 	const fs::path& local_form_directory, bool replace_files)
 {
@@ -269,6 +276,61 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 			++skipped_files_counter;
 		}
 	}
+
+	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
+		" Skipped: " + std::to_string(skipped_files_counter) +
+		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
+}		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
+
+void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<std::string>& form_files, const std::string& form_type,
+	const fs::path& local_form_directory, int max_at_a_time, bool replace_files)
+{
+	if (form_files.size() < max_at_a_time)
+		return RetrieveSpecifiedFiles(form_files, form_type, local_form_directory, replace_files);
+
+    // some forms can have slash in the form local_file_name so...
+
+    std::string form_name{form_type};
+    std::replace(form_name.begin(), form_name.end(), '/', '_');
+
+	// we need to create a list of file name pairs -- remote file name, local file name.
+	// we'll pass that list to the downloader and let it manage to process from there.
+
+	// Also, here we will create the directory hierarchies for the to-be downloaded files.
+	// Taking the easy way out so we don't have to worry about file system race conditions.
+
+    int downloaded_files_counter = 0;
+    int skipped_files_counter = 0;
+	int error_counter = 0;
+
+	HTTPS_Downloader::remote_local_list concurrent_copy_list;
+
+	for (const auto& remote_file_name : form_files)
+	{
+		fs::path remote_file{remote_file_name};
+		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
+		fs::path local_file_name{local_form_directory};
+		local_file_name /= CIK_directory;
+		local_file_name /= form_name;
+		fs::create_directories(local_file_name);
+		local_file_name /= remote_file.leaf();
+
+		if (replace_files || ! fs::exists(local_file_name))
+		{
+			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_file_name));
+			++downloaded_files_counter;
+		}
+		else
+		{
+			++ skipped_files_counter;
+		}
+	}
+
+	// now, we expect some magic to happen here...
+
+	the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+	// TODO: figure our error handling when some files do not get downloaded.
 
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +

@@ -58,7 +58,7 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int max_at_a_time=1);                   // constructor
+		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger);                   // constructor
 
 		FormFileRetriever(void) = delete;
 		FormFileRetriever(const FormFileRetriever& rhs) = delete;
@@ -81,11 +81,16 @@ class FormFileRetriever
 		void RetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
 				const fs::path& local_form_directory, bool replace_files=false);
 
+		void ConcurrentlyRetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
+				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
+
 	protected:
 
 		void RetrieveSpecifiedFiles(const std::vector<std::string>& form_files, const std::string& form_type,
 				const fs::path& local_form_directory, bool replace_files=false);
 
+		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<std::string>& form_files, const std::string& form_type,
+				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
@@ -97,8 +102,6 @@ class FormFileRetriever
 		// fs::path local_form_directory_name_;
 
         Poco::Logger& the_logger_;
-		int max_at_a_time_;
-
 
 }; // -----  end of class FormFileRetriever  -----
 
