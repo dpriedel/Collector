@@ -51,13 +51,13 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int pause)
-	: the_server_{a_server}, the_logger_{the_logger}, pause_{pause}
+FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int max_at_a_time)
+	: the_server_{a_server}, the_logger_{the_logger}, max_at_a_time_{max_at_a_time}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
 
-FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_forms,
+FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types,
 		const fs::path& local_index_file_name, const std::map<std::string, std::string>& ticker_map)
 {
 	//	Form types can have '/A' suffix to indicate ammended forms.
@@ -73,7 +73,7 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 
     poco_debug(the_logger_, "F: Searching index file: " + local_index_file_name.string());
 
-	std::vector<std::string> forms_list{the_forms};
+	std::vector<std::string> forms_list{the_form_types};
 	std::sort(forms_list.begin(), forms_list.end());
 
 	//	just in case there are duplicates in the forms list
@@ -82,14 +82,15 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	if (pos != forms_list.end())
 		forms_list.erase(pos);
 
-	FormsList results;
+	FormsAndFilesList results;
 
 	//	CIKs can have leading zeroes but the leading zeroes are not in the CIK field
 	//	in the index file.
 	//	Also, to avoid matching a substring, append a space to the CIK used in matching.
 	//
 	//	NOTE: we use a set below because the list of symbols(CIKs) that we are matching against
-	//	is potentially large.  As such, search through a set will be faster than searching a vector.
+	//	is potentially large.  As such, search through a set might be faster than searching a vector
+	//	(cache memory prefetch can do wonders for linear searchs)
 
 	std::set<std::string> cik_list;
 	if (! ticker_map.empty())
@@ -172,17 +173,19 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForms  -----
 
-FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_forms, const fs::path& local_index_file_dir,
-				const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map)
+FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types, const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map)
 {
-	FormsList results;
+	FormsAndFilesList results;
 
 	for (const auto& index_file : local_index_file_list)
 	{
-		decltype(auto) single_file_results = FindFilesForForms(the_forms, index_file, ticker_map);
+		decltype(auto) single_file_results = FindFilesForForms(the_form_types, index_file, ticker_map);
 
 		for (const auto& elem : single_file_results)
 		{
+			// if we already have found files for the given form type, add them to to the list
+			// otherwise, make a new entry.
+
 			decltype(auto) pos = results.find(elem.first);
 			if (pos != results.end())
 				std::move(elem.second.begin(), elem.second.end(), std::back_inserter(results[pos->first]));
@@ -201,26 +204,26 @@ FormFileRetriever::FormsList FormFileRetriever::FindFilesForForms (const std::ve
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForm  -----
 
-void FormFileRetriever::RetrieveSpecifiedFiles (const FormsList& form_list,
+void FormFileRetriever::RetrieveSpecifiedFiles (const FormsAndFilesList& form_list,
 	const fs::path& local_form_directory, bool replace_files)
 {
-	for (const auto& elem : form_list)
-		RetrieveSpecifiedFiles(elem.second, elem.first, local_form_directory, replace_files);
+	for (const auto& [form_type, form_files] : form_list)
+		RetrieveSpecifiedFiles(form_files, form_type, local_form_directory, replace_files);
 }
 
-void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& form_file_list, const std::string& the_form,
+void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& form_files, const std::string& form_type,
 	const fs::path& local_form_directory, bool replace_files)
 {
     // some forms can have slash in the form local_file_name so...
 
-    std::string form_name{the_form};
+    std::string form_name{form_type};
     std::replace(form_name.begin(), form_name.end(), '/', '_');
 
     int downloaded_files_counter = 0;
     int skipped_files_counter = 0;
 	int error_counter = 0;
 
-	for (const auto& remote_file_name : form_file_list)
+	for (const auto& remote_file_name : form_files)
 	{
 		fs::path remote_file{remote_file_name};
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
@@ -237,7 +240,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				the_server_.DownloadFile(remote_file_name, local_file_name);
                 ++downloaded_files_counter;
 				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
-				std::this_thread::sleep_for(pause_);
+				// std::this_thread::sleep_for(pause_);
 			}
 			catch(Poco::TimeoutException& e)
 			{
@@ -269,5 +272,5 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " for files for form type: " + the_form);
+		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----

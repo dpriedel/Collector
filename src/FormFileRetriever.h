@@ -34,7 +34,6 @@
 #ifndef FORMRETRIEVER_H_
 #define FORMRETRIEVER_H_
 
-#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
@@ -55,11 +54,14 @@ class FormFileRetriever
 {
 	public:
 
-		using FormsList = std::map<std::string, std::vector<std::string>>;
+		using FormsAndFilesList = std::map<std::string, std::vector<std::string>>;
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int pause=1);                   // constructor
+		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger, int max_at_a_time=1);                   // constructor
+
+		FormFileRetriever(void) = delete;
+		FormFileRetriever(const FormFileRetriever& rhs) = delete;
 
 		// ====================  ACCESSORS     =======================================
 
@@ -67,21 +69,21 @@ class FormFileRetriever
 
 		// ====================  OPERATORS     =======================================
 
-		FormsList FindFilesForForms(const std::vector<std::string>& the_forms,
+		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
 				const fs::path& local_index_file_name, const std::map<std::string, std::string>& ticker_map={});
 
-		FormsList FindFilesForForms(const std::vector<std::string>& the_forms, const fs::path& local_index_file_dir,
+		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
 				const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map={});
 
 		// NOTE: the retrieved files will be placed in a directory hierarchy as follows:
 		// <form_directory>/<the_form>/<CIK number>/<file name>
 
-		void RetrieveSpecifiedFiles(const FormsList& form_list,
+		void RetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
 				const fs::path& local_form_directory, bool replace_files=false);
 
 	protected:
 
-		void RetrieveSpecifiedFiles(const std::vector<std::string>& form_file_list, const std::string& the_form,
+		void RetrieveSpecifiedFiles(const std::vector<std::string>& form_files, const std::string& form_type,
 				const fs::path& local_form_directory, bool replace_files=false);
 
 		// ====================  DATA MEMBERS  =======================================
@@ -92,10 +94,10 @@ class FormFileRetriever
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
 		HTTPS_Downloader& the_server_;
-		fs::path local_form_directory_name_;
+		// fs::path local_form_directory_name_;
 
         Poco::Logger& the_logger_;
-		std::chrono::seconds pause_;
+		int max_at_a_time_;
 
 
 }; // -----  end of class FormFileRetriever  -----
