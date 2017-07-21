@@ -178,9 +178,13 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 
 	// now, we expect some magic to happen here...
 
-	the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
 	// TODO: figure our error handling when some files do not get downloaded.
+    // Let's try this for now.
+
+    if (concurrent_copy_list.size() != success_counter)
+        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
 
 	for (const auto& e : concurrent_copy_list)
 		results.push_back(e.second);

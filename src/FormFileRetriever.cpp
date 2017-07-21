@@ -43,7 +43,6 @@
 
 #include "FormFileRetriever.h"
 #include "aLine.h"
-#include "TickerConverter.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  FormFileRetriever
@@ -58,7 +57,7 @@ FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& 
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
 
 FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types,
-		const fs::path& local_index_file_name, const std::map<std::string, std::string>& ticker_map)
+		const fs::path& local_index_file_name, const TickerConverter::TickerCIKMap& ticker_map)
 {
 	//	Form types can have '/A' suffix to indicate ammended forms.
 	//	For now, assume there is space in the file after form name such that I can
@@ -173,11 +172,11 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForms  -----
 
-FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types, const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map)
+FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types, const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map)
 {
 	FormsAndFilesList results;
 
-	for (const auto& index_file : local_index_file_list)
+	for (const auto& index_file : local_index_files)
 	{
 		decltype(auto) single_file_results = FindFilesForForms(the_form_types, index_file, ticker_map);
 
@@ -199,7 +198,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 		grand_total += elem.second.size();
 
 	poco_information(the_logger_, "F: Found a grand total of " + std::to_string(grand_total) + " files for specified forms in "
-		+ std::to_string(local_index_file_list.size()) + " files.");
+		+ std::to_string(local_index_files.size()) + " files.");
 
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForm  -----
@@ -218,7 +217,7 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const FormsAndFilesL
 		ConcurrentlyRetrieveSpecifiedFiles(form_files, form_type, local_form_directory, max_at_a_time, replace_files);
 }
 
-void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& form_files, const std::string& form_type,
+void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& remote_file_names, const std::string& form_type,
 	const fs::path& local_form_directory, bool replace_files)
 {
     // some forms can have slash in the form local_file_name so...
@@ -230,7 +229,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
     int skipped_files_counter = 0;
 	int error_counter = 0;
 
-	for (const auto& remote_file_name : form_files)
+	for (const auto& remote_file_name : remote_file_names)
 	{
 		fs::path remote_file{remote_file_name};
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
@@ -282,11 +281,11 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
 
-void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<std::string>& form_files, const std::string& form_type,
+void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<std::string>& remote_file_names, const std::string& form_type,
 	const fs::path& local_form_directory, int max_at_a_time, bool replace_files)
 {
-	if (form_files.size() < max_at_a_time)
-		return RetrieveSpecifiedFiles(form_files, form_type, local_form_directory, replace_files);
+	if (remote_file_names.size() < max_at_a_time)
+		return RetrieveSpecifiedFiles(remote_file_names, form_type, local_form_directory, replace_files);
 
     // some forms can have slash in the form local_file_name so...
 
@@ -299,13 +298,11 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 	// Also, here we will create the directory hierarchies for the to-be downloaded files.
 	// Taking the easy way out so we don't have to worry about file system race conditions.
 
-    int downloaded_files_counter = 0;
     int skipped_files_counter = 0;
-	int error_counter = 0;
 
 	HTTPS_Downloader::remote_local_list concurrent_copy_list;
 
-	for (const auto& remote_file_name : form_files)
+	for (const auto& remote_file_name : remote_file_names)
 	{
 		fs::path remote_file{remote_file_name};
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
@@ -318,7 +315,6 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 		if (replace_files || ! fs::exists(local_file_name))
 		{
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_file_name));
-			++downloaded_files_counter;
 		}
 		else
 		{
@@ -328,11 +324,11 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 
 	// now, we expect some magic to happen here...
 
-	the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
 	// TODO: figure our error handling when some files do not get downloaded.
 
-	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
+	poco_information(the_logger_, "F: Downloaded: " + std::to_string(success_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +
 		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----

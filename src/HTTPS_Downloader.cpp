@@ -98,9 +98,8 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name)
-	: server_name_{server_name}
-
+HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger& the_logger)
+	: server_name_{server_name}, the_logger_{the_logger}
 {
 	ssl_initializer_.reset(new SSLInitializer());
 
@@ -203,7 +202,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
 	{
 		session.reset();
-		throw std::runtime_error(remote_file_name.string() + ". Result: " + std::to_string(res.getStatus()) +
+		throw std::runtime_error(remote_file_name.string() + ": Result: " + std::to_string(res.getStatus()) +
 			": Unable to download file.");
 	}
 	else
@@ -257,9 +256,12 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
-void HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
+std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
 
 {
+    int success_counter = 0;
+    int error_counter = 0;
+
     for (int i = 0; i < file_list.size(); )
     {
         // keep track of our async processes here.
@@ -283,13 +285,27 @@ void HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_l
             try
             {
                 tasks[i].get();
+                ++success_counter;
+            }
+            catch (const std::exception& e)
+            {
+                // any problems, we'll document them and continue.
+
+                poco_error(the_logger_, e.what());
+                ++error_counter;
+                continue;
             }
             catch (...)
             {
-                // any problems, let's just ignore them.
-                // poco_error(the_logger_, "Some problem with an async process");
+                // any problems, we'll document them and continue.
+
+                poco_error(the_logger_, "Unknown problem with an async download process");
+                ++error_counter;
                 continue;
             }
         }
     }
+
+    return std::make_pair(success_counter, error_counter);
+
 }		// -----  end of method HTTPS_Downloader::DownloadFilesConcurrently  -----

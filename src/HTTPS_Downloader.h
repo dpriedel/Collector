@@ -43,6 +43,7 @@ namespace fs = boost::filesystem;
 #include "Poco/Net/AcceptCertificateHandler.h"
 #include "Poco/Net/ConsoleCertificateHandler.h"
 #include "Poco/SharedPtr.h"
+#include "Poco/Logger.h"
 
 
 // =====================================================================================
@@ -57,7 +58,7 @@ class HTTPS_Downloader
 
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
-		HTTPS_Downloader(const std::string& server_name);
+		HTTPS_Downloader(const std::string& server_name, Poco::Logger& the_logger);
 		~HTTPS_Downloader(void);
 
 		// ====================  ACCESSORS     =======================================
@@ -73,8 +74,10 @@ class HTTPS_Downloader
 		void DownloadFile(const fs::path& remote_file_name, const fs::path& local_file_name);
 
 		// download multiple files at a time, up to specified limit.
+        // this version returns the number of errors encountered.
+        // Errors are trapped and logged by the downloader.
 
-		void DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time);
+		std::pair<int, int> DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time);
 
 		// ====================  MUTATORS      =======================================
 
@@ -110,6 +113,8 @@ class HTTPS_Downloader
 		Poco::Net::Context::Ptr ptrContext_;
 
 		std::unique_ptr<SSLInitializer> ssl_initializer_;
+
+        Poco::Logger& the_logger_;
 }; // -----  end of class HTTPS_Downloader  -----
 
 #endif /* HTTPS_DOWNLOADER_H */

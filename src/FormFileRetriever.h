@@ -45,6 +45,7 @@ namespace fs = boost::filesystem;
 
 
 #include "HTTPS_Downloader.h"
+#include "TickerConverter.h"
 
 // =====================================================================================
 //        Class:  FormFileRetriever
@@ -70,13 +71,13 @@ class FormFileRetriever
 		// ====================  OPERATORS     =======================================
 
 		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
-				const fs::path& local_index_file_name, const std::map<std::string, std::string>& ticker_map={});
+				const fs::path& local_index_file_name, const TickerConverter::TickerCIKMap& ticker_map={});
 
 		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
-				const std::vector<fs::path>& local_index_file_list, const std::map<std::string, std::string>& ticker_map={});
+				const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map={});
 
 		// NOTE: the retrieved files will be placed in a directory hierarchy as follows:
-		// <form_directory>/<the_form>/<CIK number>/<file name>
+		// <form_directory>/<the_form_type>/<CIK number>/<file name>
 
 		void RetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
 				const fs::path& local_form_directory, bool replace_files=false);
@@ -86,11 +87,12 @@ class FormFileRetriever
 
 	protected:
 
-		void RetrieveSpecifiedFiles(const std::vector<std::string>& form_files, const std::string& form_type,
+		void RetrieveSpecifiedFiles(const std::vector<std::string>& remote_file_names, const std::string& form_type,
 				const fs::path& local_form_directory, bool replace_files=false);
 
-		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<std::string>& form_files, const std::string& form_type,
+		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<std::string>& remote_file_names, const std::string& form_type,
 				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
+
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
