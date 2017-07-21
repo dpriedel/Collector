@@ -66,6 +66,7 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
     logging_level_{"information"},
     pause_{0},
     max_forms_to_download_{-1},
+	max_at_a_time_{10},
     replace_index_files_{false},
     replace_form_files_{false},
 	index_only_{false},
@@ -83,6 +84,7 @@ CollectEDGARApp::CollectEDGARApp (void)
     logging_level_{"information"},
     pause_{0},
     max_forms_to_download_{-1},
+	max_at_a_time_{10},
     replace_index_files_{false},
     replace_form_files_{false},
 	index_only_{false},
@@ -333,6 +335,12 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 			.argument("value")
 			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_log_level)));
 
+	options.addOption(
+		Poco::Util::Option("concurrent", "k", "Maximun number of concurrent downloads. Default of 10.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_concurrency_limit)));
 
 	/* options.addOption( */
 	/* 	Option("define", "D", "define a configuration property") */
@@ -493,7 +501,7 @@ void CollectEDGARApp::Do_Run_TickerFileLookup (void)
 void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	HTTPS_Downloader a_server{HTTPS_host_};
+	HTTPS_Downloader a_server{HTTPS_host_, logger()};
 	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index", logger()};
 
 	Do_TickerMap_Setup();
@@ -505,7 +513,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger(), pause_};
+			FormFileRetriever form_file_getter{a_server, logger()};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -524,20 +532,18 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
                     }
     			}
             }
-			form_file_getter.RetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_,
-					replace_form_files_);
+			form_file_getter.ConcurrentlyRetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_, max_at_a_time_, replace_form_files_);
 		}
 	}
 	else
 	{
 		auto remote_daily_index_file_list = idxFileRet.FindRemoteIndexFileNamesForDateRange(begin_date_, end_date_);
-		auto local_daily_index_file_list = idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(remote_daily_index_file_list, local_index_file_directory_, replace_index_files_);
+		auto local_daily_index_file_list = idxFileRet.ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(remote_daily_index_file_list, local_index_file_directory_, max_at_a_time_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger(), pause_};
-			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, local_daily_index_file_list,
-					ticker_map_);
+			FormFileRetriever form_file_getter{a_server, logger()};
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)
             {
@@ -553,7 +559,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
                     }
     			}
             }
-			form_file_getter.RetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, replace_form_files_);
+			form_file_getter.ConcurrentlyRetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, max_at_a_time_, replace_form_files_);
 		}
 	}
 
@@ -563,7 +569,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 {
 	Do_TickerMap_Setup();
 
-	HTTPS_Downloader a_server{HTTPS_host_};
+	HTTPS_Downloader a_server{HTTPS_host_, logger()};
 	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index", logger()};
 
 	if (begin_date_ == end_date_)
@@ -573,7 +579,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger(), pause_};
+			FormFileRetriever form_file_getter{a_server, logger()};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -588,20 +594,18 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
                     }
     			}
             }
-			form_file_getter.RetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_,
-					replace_form_files_);
+			form_file_getter.ConcurrentlyRetrieveSpecifiedFiles(form_file_list, this->local_form_file_directory_, max_at_a_time_, replace_form_files_);
 		}
 	}
 	else
 	{
 		auto remote_index_file_list = idxFileRet.MakeIndexFileNamesForDateRange(begin_date_, end_date_);
-		auto local_index_file_list = idxFileRet.HierarchicalCopyIndexFilesForDateRangeTo(remote_index_file_list, local_index_file_directory_, replace_index_files_);
+		auto local_index_file_list = idxFileRet.ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(remote_index_file_list, local_index_file_directory_, max_at_a_time_, replace_index_files_);
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger(), pause_};
-			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_directory_, local_index_file_list,
-					ticker_map_);
+			FormFileRetriever form_file_getter{a_server, logger()};
+			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)
             {
@@ -615,7 +619,7 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
                     }
     			}
             }
-			form_file_getter.RetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, replace_form_files_);
+			form_file_getter.ConcurrentlyRetrieveSpecifiedFiles(form_file_list, local_form_file_directory_, max_at_a_time_, replace_form_files_);
 		}
 	}
 

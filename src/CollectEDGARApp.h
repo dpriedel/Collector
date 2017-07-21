@@ -149,6 +149,7 @@ private:
     void inline store_index_only(const std::string& name, const std::string& value) { index_only_ = true; }
     void inline store_pause(const std::string& name, const std::string& value) { pause_ = std::stoi(value); }
     void inline store_max(const std::string& name, const std::string& value) { max_forms_to_download_ = std::stoi(value); }
+    void inline store_concurrency_limit(const std::string& name, const std::string& value) { max_at_a_time_ = std::stoi(value); }
 
 		// ====================  DATA MEMBERS  =======================================
 
@@ -179,6 +180,7 @@ private:
 
 	int pause_;
     int max_forms_to_download_;     // mainly for testing
+    int max_at_a_time_;             // how many concurrent downloads allowed
 
 	bool replace_index_files_;
 	bool replace_form_files_;
