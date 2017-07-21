@@ -116,7 +116,7 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 	uri += ticker;
 	uri += "&Find=Search&owner=exclude&action=getcompany";
 
-    HTTPS_Downloader edgar_server{"https://www.sec.gov"};
+    HTTPS_Downloader edgar_server{"https://www.sec.gov", the_logger_};
 
 	std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 

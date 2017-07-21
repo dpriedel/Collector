@@ -37,7 +37,6 @@
 
 #include <map>
 #include <string>
-#include <vector>
 
 #include <boost/filesystem.hpp>
 #include "Poco/Logger.h"
@@ -51,6 +50,9 @@ namespace fs = boost::filesystem;
 class TickerConverter
 {
 	public:
+
+		using  TickerCIKMap = std::map<std::string, std::string>;
+
 		// ====================  LIFECYCLE     =======================================
 		TickerConverter (Poco::Logger& the_logger);                             // constructor
 
@@ -78,13 +80,13 @@ class TickerConverter
 	private:
 		// ====================  DATA MEMBERS  =======================================
 
-		std::map<std::string, std::string> ticker_to_CIK_;
+		TickerCIKMap ticker_to_CIK_;
 
 		fs::path cache_file_name_;
 		fs::path ticker_file_name_;
 
         Poco::Logger& the_logger_;
-        
+
 		std::size_t ticker_count_start_ = 0;
 		std::size_t ticker_count_end_ = 0;
 
