@@ -35,6 +35,7 @@
 #include <fstream>
 #include <iterator>
 
+#include <chrono>
 #include <future>
 #include <thread>
 
@@ -267,6 +268,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
         // keep track of our async processes here.
 
         std::vector<std::future<void>> tasks;
+        tasks.reserve(max_at_a_time + 1);
 
         for (int j = 0; j < max_at_a_time && i < file_list.size(); ++j, ++i)
         {
@@ -275,6 +277,10 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
             auto& [remote_file, local_file] = file_list[i];
             tasks.push_back(std::async(&HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
         }
+
+        // lastly, throw in our delay just in case we need it.
+
+        tasks.push_back(std::async(&HTTPS_Downloader::Timer, this));
 
         // now, let's wait till they're all done
         // and then we'll do the next bunch.
@@ -309,3 +315,14 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
     return std::make_pair(success_counter, error_counter);
 
 }		// -----  end of method HTTPS_Downloader::DownloadFilesConcurrently  -----
+
+
+void HTTPS_Downloader::Timer(void)
+
+{
+	//	given the size of the files we are downloading, it
+	// seems unlikely this will have any effect.  But, for
+	// small files it may.
+
+	std::this_thread::sleep_for(std::chrono::seconds{1});
+}

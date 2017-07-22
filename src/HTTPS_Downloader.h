@@ -88,6 +88,10 @@ class HTTPS_Downloader
 
 	private:
 
+		// we use a timer to stay within usage restrictions of EDGAR web site.
+
+		void Timer(void);
+
 		class SSLInitializer
 		{
 		public:
