@@ -203,7 +203,7 @@ fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
 		return local_daily_index_file_name;
 	}
 
@@ -211,7 +211,7 @@ fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
+	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
 
 	return local_daily_index_file_name;
 
@@ -230,13 +230,13 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_debug(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
 		return local_daily_index_file_name;
 	}
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_debug(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
+	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
 
 	return local_daily_index_file_name;
 
@@ -264,6 +264,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 
 	fs::create_directories(local_directory_name);
 
+    int skipped_files_counter = 0;
+
 	// we need to create a list of file name pairs -- remote file name, local file name.
 	// we'll pass that list to the downloader and let it manage to process from there.
 
@@ -278,7 +280,10 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 			local_daily_index_file_name.replace_extension("");
 
 		if (! replace_files && fs::exists(local_daily_index_file_name))
+		{
 			results.push_back(local_daily_index_file_name);
+			++skipped_files_counter;
+		}
 		else
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
 
@@ -286,9 +291,17 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 
 	// now, we expect some magic to happen here...
 
-	the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
+		" Skipped: " + std::to_string(skipped_files_counter) +
+		" Errors: " + std::to_string(error_counter) + " daily index files.");
 
 	// TODO: figure our error handling when some files do not get downloaded.
+    // Let's try this for now.
+
+    if (concurrent_copy_list.size() != success_counter)
+        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
 
 	for (const auto& e : concurrent_copy_list)
 		results.push_back(e.second);
@@ -321,6 +334,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 	// Also, here we will create the directory hierarchies for the to-be downloaded files.
 	// Taking the easy way out so we don't have to worry about file system race conditions.
 
+    int skipped_files_counter = 0;
+
 	HTTPS_Downloader::remote_local_list concurrent_copy_list;
 
 	for (const auto& remote_file_name : remote_file_list)
@@ -334,7 +349,10 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 		fs::create_directories(local_daily_index_file_directory);
 
 		if (! replace_files && fs::exists(local_daily_index_file_name))
+		{
 			results.push_back(local_daily_index_file_name);
+			++skipped_files_counter;
+		}
 		else
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
 
@@ -343,6 +361,10 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
+		" Skipped: " + std::to_string(skipped_files_counter) +
+		" Errors: " + std::to_string(error_counter) + " daily index files.");
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.

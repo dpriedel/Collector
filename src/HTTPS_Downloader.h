@@ -40,8 +40,7 @@ namespace fs = boost::filesystem;
 
 #include <Poco/URI.h>
 #include "Poco/Net/Context.h"
-#include "Poco/Net/AcceptCertificateHandler.h"
-#include "Poco/Net/ConsoleCertificateHandler.h"
+#include "Poco/Net/InvalidCertificateHandler.h"
 #include "Poco/SharedPtr.h"
 #include "Poco/Logger.h"
 
@@ -112,8 +111,7 @@ class HTTPS_Downloader
 		std::string server_name_;
 		fs::path path_;
 
-		// Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
-		Poco::SharedPtr<Poco::Net::AcceptCertificateHandler> ptrCert_; // ask the user via console
+		Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
 		Poco::Net::Context::Ptr ptrContext_;
 
 		std::unique_ptr<SSLInitializer> ssl_initializer_;

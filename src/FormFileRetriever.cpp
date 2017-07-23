@@ -326,9 +326,14 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
-	// TODO: figure our error handling when some files do not get downloaded.
-
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(success_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +
 		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
+
+	// TODO: figure our error handling when some files do not get downloaded.
+    // Let's try this for now.
+
+    if (concurrent_copy_list.size() != success_counter)
+        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----

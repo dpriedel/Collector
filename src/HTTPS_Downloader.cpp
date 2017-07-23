@@ -54,6 +54,12 @@
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 
+#ifdef NOCERTTEST
+    #include "Poco/Net/AcceptCertificateHandler.h"
+#else
+    #include "Poco/Net/ConsoleCertificateHandler.h"
+#endif
+
 // for .zip files, we need to use Poco's tools.
 
 #include <Poco/Zip/Decompress.h>
@@ -104,7 +110,12 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger&
 {
 	ssl_initializer_.reset(new SSLInitializer());
 
+#ifdef NOCERTTEST
 	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
+#else
+	ptrCert_ = new Poco::Net::ConsoleCertificateHandler(false); // always accept FOR TESTING ONLY
+#endif
+
 	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
 		9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
@@ -276,6 +287,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
             auto& [remote_file, local_file] = file_list[i];
             tasks.push_back(std::async(&HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
+            // std::cout << "i: " << i << " j: " << j << '\n';
         }
 
         // lastly, throw in our delay just in case we need it.
@@ -287,10 +299,11 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
         for (int count = tasks.size(); count; --count)
         {
-            int i = wait_for_any(tasks, std::chrono::microseconds{100});
+            int k = wait_for_any(tasks, std::chrono::microseconds{100});
+            // std::cout << "k: " << k << '\n';
             try
             {
-                tasks[i].get();
+                tasks[k].get();
                 ++success_counter;
             }
             catch (const std::exception& e)
@@ -310,6 +323,9 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
                 continue;
             }
         }
+
+        // need to subtract 1 from our success_counter because of our timer task.
+        --success_counter;
     }
 
     return std::make_pair(success_counter, error_counter);
