@@ -83,13 +83,13 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 
 	if (! replace_files && fs::exists(local_quarterly_index_file_name))
 	{
-		poco_debug(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.leaf().string());
+		poco_information(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.leaf().string());
 		return local_quarterly_index_file_name;
 	}
 
 	the_server_.DownloadFile(remote_file_name, local_quarterly_index_file_name);
 
-	poco_debug(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: " + local_quarterly_index_file_name.string());
+	poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: " + local_quarterly_index_file_name.string());
 
 	return local_quarterly_index_file_name;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
@@ -161,6 +161,8 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 	// Also, here we will create the directory hierarchies for the to-be downloaded files.
 	// Taking the easy way out so we don't have to worry about file system race conditions.
 
+    int skipped_files_counter = 0;
+
 	HTTPS_Downloader::remote_local_list concurrent_copy_list;
 
 	for (const auto& remote_file_name : remote_file_list)
@@ -170,7 +172,10 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 		fs::create_directories(local_quarterly_index_file_directory);
 
 		if (! replace_files && fs::exists(local_quarterly_index_file_name))
+		{
 			results.push_back(local_quarterly_index_file_name);
+			++skipped_files_counter;
+		}
 		else
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_quarterly_index_file_name));
 
@@ -179,6 +184,10 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+	poco_information(the_logger_, "Q: Downloaded: " + std::to_string(success_counter) +
+		" Skipped: " + std::to_string(skipped_files_counter) +
+		" Errors: " + std::to_string(error_counter) + " quarterly index files.");
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
