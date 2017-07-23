@@ -70,7 +70,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++1z -D_DEBUG -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++1z -D NOCERTTEST -D_DEBUG -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -93,7 +93,9 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++1z -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+# need to figure out cert handling better. Until then, turn off the SSL Cert testing.
+
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++1z -D NOCERTTEST -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
