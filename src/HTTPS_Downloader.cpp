@@ -234,9 +234,11 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
             // errno, however, is set so we'll work with that!
 
             errno = 0;
-			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+            std::ostreambuf_iterator<char> otor{local_file};                //  split this out so we can check its status later.
+
+			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), otor);
             local_file.close();
-            if (errno || ! local_file || ! remote_file)
+            if (otor.failed() || errno)
             {
                 std::error_code err{errno, std::system_category()};
                 throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
@@ -244,12 +246,14 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		}
 		else
 		{
-			// we are going to decompress on the fly...
-
-			std::ofstream expanded_file{local_file_name.string(), std::ios::out | std::ios::binary};
-
 			if (remote_ext == ".gz")
 			{
+                // we are going to decompress on the fly...
+
+    			std::ofstream expanded_file{local_file_name.string(), std::ios::out | std::ios::binary};
+                if (! expanded_file || ! remote_file)
+                    throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+
 				// for gzipped files, we can use boost (which uses zlib)
 
 		    	boost::iostreams::filtering_istream in;
@@ -257,14 +261,15 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		    	in.push(remote_file);
 
                 errno = 0;
-                std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(expanded_file));
+                std::ostreambuf_iterator<char> otor{expanded_file};                //  split this out so we can check its status later.
+
+                std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), otor);
                 expanded_file.close();
-                if (errno || ! expanded_file || ! remote_file)
+                if (otor.failed() || errno)
                 {
                     std::error_code err{errno, std::system_category()};
                     throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
                 }
-		    	// boost::iostreams::copy(in, expanded_file);
 			}
 			else
 			{
@@ -273,27 +278,28 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
                 // see note about errno above.
 
-                errno = 0;
 				fs::path temp_file_name{local_file_name};
 				temp_file_name.replace_extension(remote_ext);
 
 				std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
 
+                errno = 0;
+                std::ostreambuf_iterator<char> otor{local_file};                //  split this out so we can check its status later.
+
 				// avoid stream formatting by using streambufs
 
-				std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
-                local_file.flush();
+				std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), otor);
 				local_file.close();
 
-                if (errno || ! local_file || ! remote_file)
+                if (otor.failed() || errno)
                 {
                     std::error_code err{errno, std::system_category()};
                     throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + temp_file_name.string()};
                 }
 
-                errno = 0;
 				std::ifstream zipped_file(temp_file_name.string(), std::ios_base::in | std::ios_base::binary);
 				Poco::Zip::Decompress expander{zipped_file, local_file_name.parent_path().string(), true};
+                errno = 0;
 				expander.decompressAllFiles();
 
                 if (errno)
