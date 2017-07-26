@@ -32,12 +32,14 @@
 
     // This code is based on sample code from Poco.
 
+#include <cerrno>
 #include <fstream>
 #include <iterator>
 
 #include <chrono>
 #include <future>
 #include <thread>
+#include <system_error>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -198,7 +200,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     auto remote_ext = remote_file_name.extension();
     auto local_ext = local_file_name.extension();
 
-    // we can unzip zipped files but only if the local file name indicates the local file is not zipped.
+    // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
 
 	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
 
@@ -222,10 +224,23 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		if (! need_to_unzip)
 		{
 			std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
+            if (! local_file || ! remote_file)
+                throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
 
 			// avoid stream formatting by using streambufs
 
+            // during testing, I discovered that stream output does not detect a full disk (as far as I can tell).
+            // zero bytes are written and that is just ignored by the stream code -- no bad status bits set.
+            // errno, however, is set so we'll work with that!
+
+            errno = 0;
 			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
+            local_file.close();
+            if (errno || ! local_file || ! remote_file)
+            {
+                std::error_code err{errno, std::system_category()};
+                throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+            }
 		}
 		else
 		{
@@ -240,13 +255,25 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		    	boost::iostreams::filtering_istream in;
 		    	in.push(boost::iostreams::gzip_decompressor());
 		    	in.push(remote_file);
-		    	boost::iostreams::copy(in, expanded_file);
+
+                errno = 0;
+                std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(expanded_file));
+                expanded_file.close();
+                if (errno || ! expanded_file || ! remote_file)
+                {
+                    std::error_code err{errno, std::system_category()};
+                    throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+                }
+		    	// boost::iostreams::copy(in, expanded_file);
 			}
 			else
 			{
 				// zip archives, we need to use Poco.
 				// but, to do that, we need to download the file then expand it.
 
+                // see note about errno above.
+
+                errno = 0;
 				fs::path temp_file_name{local_file_name};
 				temp_file_name.replace_extension(remote_ext);
 
@@ -255,12 +282,25 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 				// avoid stream formatting by using streambufs
 
 				std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(local_file));
-
+                local_file.flush();
 				local_file.close();
 
+                if (errno || ! local_file || ! remote_file)
+                {
+                    std::error_code err{errno, std::system_category()};
+                    throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + temp_file_name.string()};
+                }
+
+                errno = 0;
 				std::ifstream zipped_file(temp_file_name.string(), std::ios_base::in | std::ios_base::binary);
 				Poco::Zip::Decompress expander{zipped_file, local_file_name.parent_path().string(), true};
 				expander.decompressAllFiles();
+
+                if (errno)
+                {
+                    std::error_code err{errno, std::system_category()};
+                    throw std::system_error{err, "Unable to decompress downloaded remote file: " + temp_file_name.string() + " to local file: " + local_file_name.string()};
+                }
 
 				fs::remove(temp_file_name);
 			}
@@ -306,7 +346,19 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
                 tasks[k].get();
                 ++success_counter;
             }
-            catch (const std::exception& e)
+            catch (std::system_error& e)
+            {
+                // any system problems, we abort.
+
+                poco_error(the_logger_, e.what());
+                auto ec = e.code();
+                poco_error(the_logger_, std::string{"category: "} + ec.category().name() + " value: " + std::to_string(ec.value()) + " message: " + ec.message());
+                ++error_counter;
+
+                // OK, we're outta here.
+                throw;
+            }
+            catch (std::exception& e)
             {
                 // any problems, we'll document them and continue.
 
@@ -326,6 +378,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
         // need to subtract 1 from our success_counter because of our timer task.
         --success_counter;
+
     }
 
     return std::make_pair(success_counter, error_counter);
