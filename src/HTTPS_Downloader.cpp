@@ -358,7 +358,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
                 poco_error(the_logger_, e.what());
                 auto ec = e.code();
-                poco_error(the_logger_, std::string{"category: "} + ec.category().name() + " value: " + std::to_string(ec.value()) + " message: " + ec.message());
+                poco_error(the_logger_, std::string{"Category: "} + ec.category().name() + ". Value: " + std::to_string(ec.value()) + ". Message: " + ec.message());
                 ++error_counter;
 
                 // OK, we're outta here.
