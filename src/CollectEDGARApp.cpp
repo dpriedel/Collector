@@ -417,8 +417,20 @@ void CollectEDGARApp::Do_Main(void)
 
 {
 	Do_StartUp();
-	Do_CheckArgs();
-	Do_Run();
+    try
+    {
+        Do_CheckArgs();
+        Do_Run();
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Problem collecting files: " << e.what() << '\n';
+    }
+    catch (...)
+    {
+        std::cout << "Unknown problem collecting files." << '\n';
+    }
+
     Do_Quit();
 }
 
@@ -482,6 +494,9 @@ void CollectEDGARApp::Do_Run (void)
 		Do_Run_DailyIndexFiles();
 	else
 		Do_Run_QuarterlyIndexFiles();
+
+	if (! ticker_cache_file_name_.empty())
+		ticker_converter_.SaveCIKDataToFile();
 
 }		// -----  end of method CollectEDGARApp::Do_Run  -----
 
@@ -634,9 +649,6 @@ void CollectEDGARApp::Do_TickerMap_Setup (void)
 
 void CollectEDGARApp::Do_Quit (void)
 {
-	if (! ticker_cache_file_name_.empty())
-		ticker_converter_.SaveCIKDataToFile();
-
 	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectEDGARApp::Do_Quit  -----
 
