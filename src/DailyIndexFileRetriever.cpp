@@ -226,13 +226,14 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 		local_daily_index_file_name.replace_extension("");
 
 	auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
-	fs::create_directories(local_daily_index_file_directory);
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
 		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
 		return local_daily_index_file_name;
 	}
+
+	fs::create_directories(local_daily_index_file_directory);
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
@@ -345,17 +346,17 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 		if (local_daily_index_file_name.extension() == ".gz")
 			local_daily_index_file_name.replace_extension("");
 
-		auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
-		fs::create_directories(local_daily_index_file_directory);
-
 		if (! replace_files && fs::exists(local_daily_index_file_name))
 		{
 			results.push_back(local_daily_index_file_name);
 			++skipped_files_counter;
 		}
 		else
-			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
-
+        {
+		    auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
+            fs::create_directories(local_daily_index_file_directory);
+    		concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
+        }
 	}
 
 	// now, we expect some magic to happen here...

@@ -168,8 +168,6 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 	for (const auto& remote_file_name : remote_file_list)
 	{
 		auto local_quarterly_index_file_name = this->MakeLocalIndexFilePath(local_directory_name, remote_file_name);
-		auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
-		fs::create_directories(local_quarterly_index_file_directory);
 
 		if (! replace_files && fs::exists(local_quarterly_index_file_name))
 		{
@@ -177,8 +175,11 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 			++skipped_files_counter;
 		}
 		else
+        {
+    		auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
+    		fs::create_directories(local_quarterly_index_file_directory);
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_quarterly_index_file_name));
-
+        }
 	}
 
 	// now, we expect some magic to happen here...

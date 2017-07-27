@@ -233,16 +233,17 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 	{
 		fs::path remote_file{remote_file_name};
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
-		fs::path local_file_name{local_form_directory};
-		local_file_name /= CIK_directory;
-		local_file_name /= form_name;
-		fs::create_directories(local_file_name);
+		fs::path local_dir_name{local_form_directory};
+		local_dir_name /= CIK_directory;
+		local_dir_name /= form_name;
+		auto local_file_name{local_dir_name};
 		local_file_name /= remote_file.leaf();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{
 			try
 			{
+				fs::create_directories(local_dir_name);
 				the_server_.DownloadFile(remote_file_name, local_file_name);
                 ++downloaded_files_counter;
 				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
@@ -306,14 +307,15 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 	{
 		fs::path remote_file{remote_file_name};
 		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
-		fs::path local_file_name{local_form_directory};
-		local_file_name /= CIK_directory;
-		local_file_name /= form_name;
-		fs::create_directories(local_file_name);
+		fs::path local_dir_name{local_form_directory};
+		local_dir_name /= CIK_directory;
+		local_dir_name /= form_name;
+		auto local_file_name{local_dir_name};
 		local_file_name /= remote_file.leaf();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{
+			fs::create_directories(local_dir_name);
 			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_file_name));
 		}
 		else
