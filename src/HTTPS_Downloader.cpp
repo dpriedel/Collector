@@ -35,6 +35,7 @@
 #include <cerrno>
 #include <fstream>
 #include <iterator>
+#include <exception>
 
 #include <chrono>
 #include <future>
@@ -317,6 +318,13 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
 
 {
+    // make exception handling a little bit better (I think).
+    // If some kind of system error occurs, it may affect more than 1
+    // our our tasks so let's check each of them and log any exceptions
+    // which occur. We'll then rethrow our first exception.
+
+    std::exception_ptr ep = nullptr;
+
     int success_counter = 0;
     int error_counter = 0;
 
@@ -361,8 +369,11 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
                 poco_error(the_logger_, std::string{"Category: "} + ec.category().name() + ". Value: " + std::to_string(ec.value()) + ". Message: " + ec.message());
                 ++error_counter;
 
-                // OK, we're outta here.
-                throw;
+                // OK, let's remember our first time here.
+
+                if (! ep)
+                    ep = std::current_exception();
+                continue;
             }
             catch (std::exception& e)
             {
@@ -382,10 +393,16 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
             }
         }
 
+        if (ep)
+            break;
+
         // need to subtract 1 from our success_counter because of our timer task.
         --success_counter;
 
     }
+
+    if (ep)
+        std::rethrow_exception(ep);
 
     return std::make_pair(success_counter, error_counter);
 
