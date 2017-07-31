@@ -32,8 +32,7 @@ endif
 
 OUTFILE := CollectEDGARData
 
-CFG_INC := -I../app_framework/include/ -I./src \
-		-I$(BOOSTDIR) -I/extra/gcc/cpp-json/include/
+CFG_INC := -I./src -I$(BOOSTDIR) -I/extra/gcc/cpp-json/include/
 
 RPATH_LIB := -Wl,-rpath,$(GCCDIR)/lib64 -Wl,-rpath,$(BOOSTDIR)/lib -Wl,-rpath,/usr/local/lib
 
@@ -45,13 +44,9 @@ SRCS2 := $(SDIR2)/HTTPS_Downloader.cpp $(SDIR2)/DailyIndexFileRetriever.cpp \
 		 $(SDIR2)/FormFileRetriever.cpp $(SDIR2)/QuarterlyIndexFileRetriever.cpp \
 		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectEDGARApp.cpp $(SDIR2)/PathNameGenerator.cpp
 
-SDIR3h := ../app_framework/include
-SDIR3 := ../app_framework/src
-#SRCS3 := $(SDIR3)/TException.cpp $(SDIR3)/ErrorHandler.cpp $(SDIR3)/CApplication.cpp
-
 SRCS := $(SRCS1) $(SRCS2)
 
-VPATH := $(SDIR1):$(SDIR2):$(SDIR3h)
+VPATH := $(SDIR1):$(SDIR2)
 
 #
 # Configuration: DEBUG

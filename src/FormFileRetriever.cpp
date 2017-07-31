@@ -42,7 +42,7 @@
 #include <Poco/Net/NetException.h>
 
 #include "FormFileRetriever.h"
-#include "aLine.h"
+// #include "aLine.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  FormFileRetriever
@@ -104,16 +104,35 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 		}
 	}
 
+	// use this unusual approach found in Stack Overflow
+	// https://stackoverflow.com/questions/1567082/how-do-i-iterate-over-cin-line-by-line-in-c/1567703
+
+	struct line_reader: std::ctype<char>
+	{
+    	line_reader(): std::ctype<char>(get_table()) {}
+		static std::ctype_base::mask const* get_table()
+		{
+			static std::vector<std::ctype_base::mask>
+            rc(table_size, std::ctype_base::mask());
+
+        	rc['\n'] = std::ctype_base::space;
+        	return &rc[0];
+    	}
+	};
+
 	std::ifstream form_file{local_index_file_name.string()};
 
-	std::istream_iterator<aLine> itor{form_file};
-	std::istream_iterator<aLine> itor_end;
+	// Tell the stream to use our facet, so only '\n' is treated as a space.
+	form_file.imbue(std::locale(std::locale(), new line_reader()));
+
+	std::istream_iterator<std::string> itor{form_file};
+	std::istream_iterator<std::string> itor_end;
 
 	//	let's skip over the header lines in the file
 
 	for ( ; itor != itor_end; ++itor)
 	{
-		if (boost::algorithm::starts_with(itor->lineData, "----------"))
+		if (boost::algorithm::starts_with(*itor, "----------"))
 		{
 			++itor;
 			break;
@@ -130,23 +149,23 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 		for ( ; itor != itor_end; ++itor)
 		{
-			if (itor->lineData < the_form)
+			if (*itor < the_form)
 				continue;
 
-			if (boost::algorithm::starts_with(itor->lineData, the_form))
+			if (boost::algorithm::starts_with(*itor, the_form))
 			{
 				if (! cik_list.empty())
 				{
-					decltype(auto) pos1 = itor->lineData.find(' ', k_index_CIK_offset);
-					decltype(auto) cik_from_index_file = itor->lineData.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
+					decltype(auto) pos1 = itor->find(' ', k_index_CIK_offset);
+					decltype(auto) cik_from_index_file = itor->substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
 					decltype(auto) pos = cik_list.find(cik_from_index_file);
 					if (pos == cik_list.end())
 						continue;
 				}
 				found_a_form += 1;
-				decltype(auto) pos = itor->lineData.find("edgar/data");
+				decltype(auto) pos = itor->find("edgar/data");
 				poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
-				found_files.push_back("/Archives/" + itor->lineData.substr(pos));
+				found_files.push_back("/Archives/" + itor->substr(pos));
 				boost::algorithm::trim_right(found_files.back());
 			}
 			else
