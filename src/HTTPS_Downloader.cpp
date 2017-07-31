@@ -33,6 +33,7 @@
     // This code is based on sample code from Poco.
 
 #include <cerrno>
+#include <csignal>
 #include <fstream>
 #include <iterator>
 #include <exception>
@@ -72,6 +73,7 @@
 
 #include "cpp-json/json.h"
 
+bool HTTPS_Downloader::had_signal_ = false;
 
 // code from "The C++ Programming Language" 4th Edition. p. 1243.
 
@@ -318,10 +320,26 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
 
 {
+    // since this code can potentially run for hours on end (depending on internet connection throughput)
+    // it's a good idea to provide a way to break into this processing and shut it down cleanly.
+    // so, a little bit of C...(taken from "Advanced Unix Programming" by Warren W. Gay, p. 317)
+
+    struct sigaction sa_old;
+    struct sigaction sa_new;
+
+    sa_new.sa_handler = HTTPS_Downloader::HandleSignal;
+    sigemptyset(&sa_new.sa_mask);
+    sa_new.sa_flags = 0;
+    sigaction(SIGINT, &sa_new, &sa_old);
+
     // make exception handling a little bit better (I think).
     // If some kind of system error occurs, it may affect more than 1
     // our our tasks so let's check each of them and log any exceptions
     // which occur. We'll then rethrow our first exception.
+
+    // ok, get ready to handle keyboard interrupts, if any.
+
+    HTTPS_Downloader::had_signal_ = false;
 
     std::exception_ptr ep = nullptr;
 
@@ -362,7 +380,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
             }
             catch (std::system_error& e)
             {
-                // any system problems, we abort.
+                // any system problems, we eventually abort, but only after finishing work in process.
 
                 poco_error(the_logger_, e.what());
                 auto ec = e.code();
@@ -393,7 +411,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
             }
         }
 
-        if (ep)
+        if (ep || HTTPS_Downloader::had_signal_)
             break;
 
         // need to subtract 1 from our success_counter because of our timer task.
@@ -403,6 +421,13 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
     if (ep)
         std::rethrow_exception(ep);
+
+    if (HTTPS_Downloader::had_signal_)
+        throw std::runtime_error("Received keyboard interrupt.  Processing manually terminated.");
+        
+    // if we return successfully, let's just restore the default
+
+    sigaction(SIGINT, &sa_old, 0);
 
     return std::make_pair(success_counter, error_counter);
 
@@ -416,5 +441,18 @@ void HTTPS_Downloader::Timer(void)
 	// seems unlikely this will have any effect.  But, for
 	// small files it may.
 
-	std::this_thread::sleep_for(std::chrono::seconds{1});
+    using namespace std::literals::chrono_literals;
+
+	std::this_thread::sleep_for(1s);
+}
+
+void HTTPS_Downloader::HandleSignal(int signal)
+
+{
+    std::signal(SIGINT, HTTPS_Downloader::HandleSignal);
+
+    // our only task
+
+    HTTPS_Downloader::had_signal_ = true;
+
 }

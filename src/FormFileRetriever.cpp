@@ -278,8 +278,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 	}
 
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(downloaded_files_counter) +
-		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
+		". Skipped: " + std::to_string(skipped_files_counter) +
+		". Errors: " + std::to_string(error_counter) + ". for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
 
 void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<std::string>& remote_file_names, const std::string& form_type,
@@ -329,8 +329,8 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(success_counter) +
-		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " for files for form type: " + form_type);
+		". Skipped: " + std::to_string(skipped_files_counter) +
+		". Errors: " + std::to_string(error_counter) + ". for files for form type: " + form_type);
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.

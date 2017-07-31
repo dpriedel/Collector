@@ -90,6 +90,7 @@ class HTTPS_Downloader
 		// we use a timer to stay within usage restrictions of EDGAR web site.
 
 		void Timer(void);
+        static void HandleSignal(int signal);
 
 		class SSLInitializer
 		{
@@ -117,6 +118,8 @@ class HTTPS_Downloader
 		std::unique_ptr<SSLInitializer> ssl_initializer_;
 
         Poco::Logger& the_logger_;
+
+        static bool had_signal_;
 }; // -----  end of class HTTPS_Downloader  -----
 
 #endif /* HTTPS_DOWNLOADER_H */
