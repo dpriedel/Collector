@@ -35,6 +35,7 @@
 #include <iterator>
 #include <set>
 #include <thread>
+#include <locale>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -104,26 +105,32 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 		}
 	}
 
-	// use this unusual approach found in Stack Overflow
+	// originally, used this unusual approach found in Stack Overflow
 	// https://stackoverflow.com/questions/1567082/how-do-i-iterate-over-cin-line-by-line-in-c/1567703
 
-	struct line_reader: std::ctype<char>
-	{
-    	line_reader(): std::ctype<char>(get_table()) {}
-		static std::ctype_base::mask const* get_table()
-		{
-			static std::vector<std::ctype_base::mask>
-            rc(table_size, std::ctype_base::mask());
+	// but...ended up going with the below approach as a little more 'obvious'.
+	// modified from example at: http://en.cppreference.com/w/cpp/locale/ctype_char
 
-        	rc['\n'] = std::ctype_base::space;
-        	return &rc[0];
-    	}
+	// This ctype facet does NOT classify spaces and tabs as whitespace
+
+    struct line_only_whitespace : std::ctype<char>
+    {
+	    static const mask* make_table()
+	    {
+	        // make a copy of the "C" locale table
+	        static std::vector<mask> v(classic_table(), classic_table() + table_size);
+	        v['\t'] &= ~space;		// tab will not be classified as whitespace
+	        v[' '] &= ~space;		// space will not be classified as whitespace
+	        return &v[0];
+	    }
+	    line_only_whitespace(std::size_t refs = 0) : ctype(make_table(), false, refs) {}
 	};
 
 	std::ifstream form_file{local_index_file_name.string()};
 
 	// Tell the stream to use our facet, so only '\n' is treated as a space.
-	form_file.imbue(std::locale(std::locale(), new line_reader()));
+
+	form_file.imbue(std::locale(form_file.getloc(), new line_only_whitespace()));
 
 	std::istream_iterator<std::string> itor{form_file};
 	std::istream_iterator<std::string> itor_end;
