@@ -93,11 +93,11 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
             case std::future_status::ready:
                     return i;
 
-                case std::future_status::timeout:
-                    break;
+            case std::future_status::timeout:
+                break;
 
-                case std::future_status::deferred:
-                    throw std::runtime_error("wait_for_all(): deferred future");
+            case std::future_status::deferred:
+                throw std::runtime_error("wait_for_all(): deferred future");
             }
         }
     std::this_thread::sleep_for(d);
@@ -119,7 +119,7 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger&
 #ifdef NOCERTTEST
 	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
 #else
-	ptrCert_ = new Poco::Net::ConsoleCertificateHandler(false); // always accept FOR TESTING ONLY
+	ptrCert_ = new Poco::Net::ConsoleCertificateHandler(false); // ask the user
 #endif
 
 	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
