@@ -37,11 +37,11 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include <boost/filesystem.hpp>
+#include <experimental/filesystem>
+// #include <boost/filesystem.hpp>
 #include "Poco/Logger.h"
 
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 
 
 #include "HTTPS_Downloader.h"

@@ -258,12 +258,12 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 	for (const auto& remote_file_name : remote_file_names)
 	{
 		fs::path remote_file{remote_file_name};
-		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
+		fs::path CIK_directory{remote_file.parent_path().filename()};	//	pull off the CIK directory name
 		fs::path local_dir_name{local_form_directory};
 		local_dir_name /= CIK_directory;
 		local_dir_name /= form_name;
 		auto local_file_name{local_dir_name};
-		local_file_name /= remote_file.leaf();
+		local_file_name /= remote_file.filename();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{
@@ -298,7 +298,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 		}
 		else
 		{
-			poco_debug(the_logger_, "F: File exists and 'replace' is false: skipping download: " + local_file_name.leaf().string());
+			poco_debug(the_logger_, "F: File exists and 'replace' is false: skipping download: " + local_file_name.filename().string());
 			++skipped_files_counter;
 		}
 	}
@@ -332,12 +332,12 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 	for (const auto& remote_file_name : remote_file_names)
 	{
 		fs::path remote_file{remote_file_name};
-		fs::path CIK_directory{remote_file.parent_path().leaf()};	//	pull off the CIK directory name
+		fs::path CIK_directory{remote_file.parent_path().filename()};	//	pull off the CIK directory name
 		fs::path local_dir_name{local_form_directory};
 		local_dir_name /= CIK_directory;
 		local_dir_name /= form_name;
 		auto local_file_name{local_dir_name};
-		local_file_name /= remote_file.leaf();
+		local_file_name /= remote_file.filename();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{

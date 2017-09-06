@@ -150,8 +150,8 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
 		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
 
-	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().leaf().string().substr(5, 8));
-	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().leaf().string().substr(5, 8));
+	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().filename().string().substr(5, 8));
+	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().filename().string().substr(5, 8));
 
 	poco_debug(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list_.size()) + " files for date range.");
 
@@ -196,14 +196,14 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::
 fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name, bool replace_files)
 {
 	auto local_daily_index_file_name = local_directory_name;
-	local_daily_index_file_name /= remote_daily_index_file_name.leaf();
+	local_daily_index_file_name /= remote_daily_index_file_name.filename();
 
 	if (local_daily_index_file_name.extension() == ".gz")
 		local_daily_index_file_name.replace_extension("");
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.filename().string());
 		return local_daily_index_file_name;
 	}
 
@@ -229,7 +229,7 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.leaf().string());
+		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.filename().string());
 		return local_daily_index_file_name;
 	}
 
@@ -275,7 +275,7 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 	for (const auto& remote_file_name : remote_file_list)
 	{
 		auto local_daily_index_file_name = local_directory_name;
-		local_daily_index_file_name /= remote_file_name.leaf();
+		local_daily_index_file_name /= remote_file_name.filename();
 
 		if (local_daily_index_file_name.extension() == ".gz")
 			local_daily_index_file_name.replace_extension("");

@@ -34,9 +34,10 @@
 #ifndef HTTPS_DOWNLOADER_H
 #define HTTPS_DOWNLOADER_H
 
-#include <boost/filesystem.hpp>
+#include <experimental/filesystem>
+// #include <boost/filesystem.hpp>
 
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 
 #include <Poco/URI.h>
 #include "Poco/Net/Context.h"

@@ -35,9 +35,9 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
+#include <regex>
 
-//#include <regex>
-#include <boost/regex.hpp>
+// #include <boost/regex.hpp>
 #include "HTTPS_Downloader.h"
 
 #include "TickerConverter.h"
@@ -120,10 +120,10 @@ std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pa
 
 	std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 
-	boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
+	std::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
 
-	boost::smatch cik;
-	bool found = boost::regex_search(the_html, cik, ex);
+	std::smatch cik;
+	bool found = std::regex_search(the_html, cik, ex);
 
 	std::this_thread::sleep_for(pause_time);
 

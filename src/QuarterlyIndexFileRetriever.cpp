@@ -83,7 +83,7 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 
 	if (! replace_files && fs::exists(local_quarterly_index_file_name))
 	{
-		poco_information(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.leaf().string());
+		poco_information(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.filename().string());
 		return local_quarterly_index_file_name;
 	}
 

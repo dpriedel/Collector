@@ -37,11 +37,12 @@
 
 #include <map>
 #include <string>
+#include <experimental/filesystem>
 
-#include <boost/filesystem.hpp>
+// #include <boost/filesystem.hpp>
 #include "Poco/Logger.h"
 
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 
 // =====================================================================================
 //        Class:  TickerConverter

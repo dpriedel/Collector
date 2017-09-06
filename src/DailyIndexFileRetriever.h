@@ -37,13 +37,14 @@
 
 #include <string>
 #include <vector>
+#include <experimental/filesystem>
 
-#include <boost/filesystem.hpp>
+// #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 
 #include "HTTPS_Downloader.h"
 
