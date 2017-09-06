@@ -34,6 +34,7 @@
 
 #include <cerrno>
 #include <csignal>
+#include <algorithm>
 #include <fstream>
 #include <iterator>
 #include <exception>
@@ -232,16 +233,10 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
 			// avoid stream formatting by using streambufs
 
-            // during testing, I discovered that stream output does not detect a full disk (as far as I can tell).
-            // zero bytes are written and that is just ignored by the stream code -- no bad status bits set.
-            // errno, however, is set so we'll work with that!
-
             errno = 0;
-            std::ostreambuf_iterator<char> otor{local_file};                //  split this out so we can check its status later.
-
-			std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), otor);
+			auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
             local_file.close();
-            if (otor.failed() || errno)
+            if (download_result.failed())
             {
                 std::error_code err{errno, std::system_category()};
                 throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
@@ -264,11 +259,9 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 		    	in.push(remote_file);
 
                 errno = 0;
-                std::ostreambuf_iterator<char> otor{expanded_file};                //  split this out so we can check its status later.
-
-                std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), otor);
+                auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
                 expanded_file.close();
-                if (otor.failed() || errno)
+                if (download_result.failed())
                 {
                     std::error_code err{errno, std::system_category()};
                     throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
@@ -279,22 +272,17 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 				// zip archives, we need to use Poco.
 				// but, to do that, we need to download the file then expand it.
 
-                // see note about errno above.
-
 				fs::path temp_file_name{local_file_name};
 				temp_file_name.replace_extension(remote_ext);
 
 				std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
 
-                errno = 0;
-                std::ostreambuf_iterator<char> otor{local_file};                //  split this out so we can check its status later.
-
 				// avoid stream formatting by using streambufs
 
-				std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), otor);
+                errno = 0;
+				auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
 				local_file.close();
-
-                if (otor.failed() || errno)
+                if (download_result.failed())
                 {
                     std::error_code err{errno, std::system_category()};
                     throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + temp_file_name.string()};
@@ -424,7 +412,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
     if (HTTPS_Downloader::had_signal_)
         throw std::runtime_error("Received keyboard interrupt.  Processing manually terminated.");
-        
+
     // if we return successfully, let's just restore the default
 
     sigaction(SIGINT, &sa_old, 0);
