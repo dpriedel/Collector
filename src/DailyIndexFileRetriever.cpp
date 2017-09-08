@@ -81,9 +81,7 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in
 {
 	input_date_ = CheckDate(day_in_quarter);
 
-	PathNameGenerator p_gen{remote_directory_prefix_, day_in_quarter, day_in_quarter};
-
-	auto remote_index_file_directory = *p_gen;
+	auto remote_index_file_directory = GeneratePath(remote_directory_prefix_, day_in_quarter);
 
 	return remote_index_file_directory;
 
@@ -165,15 +163,11 @@ const std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRa
 
 	std::vector<fs::path> results;
 
-	PathNameGenerator p_gen{remote_directory_prefix_, start_date_, end_date_};
-	PathNameGenerator p_end;
-
-	for (; p_gen != p_end; ++p_gen)
+	for (const auto& quarter_begin : DateRange{start_date_, end_date_})
 	{
-		auto remote_file_name = *p_gen;
+		auto remote_file_name = GeneratePath(remote_directory_prefix_, quarter_begin);
 		results.push_back(remote_file_name);
 	}
-
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
