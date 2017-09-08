@@ -37,51 +37,64 @@
 #include <string>
 #include <experimental/filesystem>
 
-// #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/iterator/iterator_facade.hpp>
 
 namespace bg = boost::gregorian;
 namespace fs = std::experimental::filesystem;
 
-class PathNameGenerator : public boost::iterator_facade
-<
-	PathNameGenerator,
-	fs::path const,
-	boost::forward_traversal_tag
->
+// NOTE: this revised iterator approach with range support now
+// still implements the closed interval type iterators used previously.
+
+class QuarterlyIterator
 {
 public:
 
-	PathNameGenerator(void);
-	PathNameGenerator(const fs::path& prefix, const bg::date& start_date, const bg::date& end_date);
+	explicit QuarterlyIterator(const bg::date& start_date);
+
+	const bg::date& operator*() const { return working_date_; }
+	QuarterlyIterator& operator++();
+	bool operator!=(const QuarterlyIterator& other) const { return working_date_ <= other.working_date_; }
 
 private:
 
-	friend class boost::iterator_core_access;
+	inline static bg::months a_quarter{3};
+	bg::date start_date_;
+	bg::date working_date_;
+	bg::greg_year start_year_;
+	bg::greg_year working_year_;
+	bg::greg_month start_month_;
+	bg::greg_month working_month_;
 
-	void increment();
+};
 
-	bool equal(PathNameGenerator const& other) const
-	{
-		return this->EDGAR_path_ == other.EDGAR_path_;
-	}
+// some traits for our iterator class
 
-	fs::path const& dereference() const { return EDGAR_path_; }
+namespace std
+{
+	template <>
+	struct iterator_traits<QuarterlyIterator>{
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = bg::date;
+	};
+}
+
+class DateRange
+{
+public:
+
+	explicit DateRange(const bg::date& start_date, const bg::date& end_date);
+
+	QuarterlyIterator begin() const { return QuarterlyIterator{start_date_}; }
+	QuarterlyIterator end() const { return QuarterlyIterator{end_date_}; }
+
+private:
 
 	bg::date start_date_;
 	bg::date end_date_;
-	bg::date working_date_;
 
-	bg::greg_year start_year_;
-	bg::greg_year end_year_;
-	bg::greg_year working_year_;
-	bg::greg_month start_month_;
-	bg::greg_month end_month_;
-	bg::greg_month working_month_;
-
-	fs::path remote_directory_prefix_;
-	fs::path EDGAR_path_;
 };
+
+fs::path GeneratePath(const fs::path& prefix, const bg::date& quarter_begin);
+
 
 #endif /* PATHNAMEGENERATOR_H_ */

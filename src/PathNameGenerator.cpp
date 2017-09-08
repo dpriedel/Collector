@@ -32,65 +32,41 @@
 
 #include "PathNameGenerator.h"
 
-//--------------------------------------------------------------------------------------
-//       Class:  PathNameGenerator
-//      Method:  PathNameGenerator
-// Description:  constructor
-//--------------------------------------------------------------------------------------
+DateRange::DateRange(const bg::date& start_date, const bg::date& end_date)
+	: start_date_{start_date}, end_date_{end_date}
 
-//	NOTE:	The range validity edits on greg_year and greg_month don't allow you to use
-//			meaningful default values.
-
-PathNameGenerator::PathNameGenerator (void)
-	: start_year_{2000}, end_year_{2000}, working_year_{2000}, start_month_{1}, end_month_{1}, working_month_{1}
 {
 
-}  // -----  end of method PathNameGenerator  (constructor)  -----
+}
 
+QuarterlyIterator::QuarterlyIterator(const bg::date& start_date)
+	: start_date_{start_date}, start_year_{start_date.year()}, working_year_{start_date.year()},
+	    start_month_{start_date.month()}, working_month_{start_date.month()}
 
-//--------------------------------------------------------------------------------------
-//       Class:  PathNameGenerator
-//      Method:  PathNameGenerator
-// Description:  constructor
-//--------------------------------------------------------------------------------------
-PathNameGenerator::PathNameGenerator (const fs::path& prefix, const bg::date& start_date, const bg::date& end_date)
-	: start_date_{start_date}, end_date_{end_date},
-		start_year_{start_date.year()}, end_year_{end_date.year()}, working_year_{start_date.year()},
-	    start_month_{start_date.month()}, end_month_{end_date.month()}, working_month_{start_date.month()},
-		remote_directory_prefix_{prefix}
 {
 	// compute the first day of the quarter and use that as the base of calculations
 
 	working_date_ = bg::date(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
 	working_month_ = working_date_.month();
+}
 
-	EDGAR_path_ = remote_directory_prefix_;
-	EDGAR_path_ /= std::to_string(working_year_);
-	EDGAR_path_ /= "QTR" + std::to_string(working_month_ / 3 + (working_month_ % 3 == 0 ? 0 : 1));
+QuarterlyIterator& QuarterlyIterator::operator++()
 
-}  // -----  end of method PathNameGenerator::PathNameGenerator  (constructor)  -----
-
-
-void PathNameGenerator::increment (void)
 {
-	bg::months a_quarter{3};
 	working_date_ += a_quarter;
 
-	if (working_date_ > end_date_)
-	{
-		//	we need to become equal to and 'end' iterator
+	return *this;
+}
 
-		working_year_ = start_year_;
-		working_month_ = start_month_;
-		EDGAR_path_.clear();
-	}
-	else
-	{
-		working_year_ = working_date_.year();
-		working_month_ = working_date_.month();
+fs::path GeneratePath(const fs::path& prefix, const bg::date& quarter_begin)
 
-		EDGAR_path_ = remote_directory_prefix_;
-		EDGAR_path_ /= std::to_string(working_year_);
-		EDGAR_path_ /= "QTR" + std::to_string(working_month_ / 3 + (working_month_ % 3 == 0 ? 0 : 1));
-	}
-}		// -----  end of method PathNameGenerator::increment  -----
+{
+	auto working_year = quarter_begin.year();
+	auto working_month = quarter_begin.month();
+
+	auto EDGAR_path = prefix;
+	EDGAR_path /= std::to_string(working_year);
+	EDGAR_path /= "QTR" + std::to_string(working_month / 3 + (working_month % 3 == 0 ? 0 : 1));
+
+	return EDGAR_path;
+}
