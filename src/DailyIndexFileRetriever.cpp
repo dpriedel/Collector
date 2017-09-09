@@ -162,10 +162,11 @@ const std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRa
 	end_date_ = this->CheckDate(end_date);
 
 	std::vector<fs::path> results;
+	DateRange range{start_date_, end_date_};
 
-	for (const auto& quarter_begin : DateRange{start_date_, end_date_})
+	for (auto quarter_begin = std::begin(range); quarter_begin <= std::end(range); ++quarter_begin)
 	{
-		auto remote_file_name = GeneratePath(remote_directory_prefix_, quarter_begin);
+		auto remote_file_name = GeneratePath(remote_directory_prefix_, *quarter_begin);
 		results.push_back(remote_file_name);
 	}
 	return results;

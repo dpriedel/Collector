@@ -53,7 +53,8 @@ public:
 
 	const bg::date& operator*() const { return working_date_; }
 	QuarterlyIterator& operator++();
-	bool operator!=(const QuarterlyIterator& other) const { return working_date_ <= other.working_date_; }
+	bool operator!=(const QuarterlyIterator& other) const { return working_date_ != other.working_date_; }
+	bool operator<=(const QuarterlyIterator& other) const { return working_date_ <= other.working_date_; }
 
 private:
 

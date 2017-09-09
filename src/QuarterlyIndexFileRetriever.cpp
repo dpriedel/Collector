@@ -117,9 +117,11 @@ const std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDa
 
 	std::vector<fs::path> results;
 
-	for (const auto& quarter_begin : DateRange{start_date_, end_date_})
+	DateRange range{start_date_, end_date_};
+
+	for (auto quarter_begin = std::begin(range); quarter_begin <= std::end(range); ++quarter_begin)
 	{
-		auto remote_file_name = GeneratePath(remote_directory_prefix_, quarter_begin);
+		auto remote_file_name = GeneratePath(remote_directory_prefix_, *quarter_begin);
 		remote_file_name /= "form.zip";
 		results.push_back(remote_file_name);
 	}
