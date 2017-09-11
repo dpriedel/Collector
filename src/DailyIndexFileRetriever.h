@@ -66,7 +66,7 @@ class DailyIndexFileRetriever
 
 		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
 		const std::vector<fs::path>& GetfRemoteIndexFileNamesForDateRange(void) const { return remote_daily_index_file_name_list_; }
-		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::make_pair(actual_start_date_, actual_end_date_); }
+		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
 

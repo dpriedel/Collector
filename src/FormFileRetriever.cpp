@@ -342,7 +342,7 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 		if (replace_files || ! fs::exists(local_file_name))
 		{
 			fs::create_directories(local_dir_name);
-			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_file_name));
+			concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_file_name));
 		}
 		else
 		{

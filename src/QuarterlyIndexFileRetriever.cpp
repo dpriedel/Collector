@@ -175,7 +175,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
         {
     		auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
     		fs::create_directories(local_quarterly_index_file_directory);
-			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_quarterly_index_file_name));
+			concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_quarterly_index_file_name));
         }
 	}
 

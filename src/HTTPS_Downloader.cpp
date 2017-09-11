@@ -417,7 +417,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
     sigaction(SIGINT, &sa_old, 0);
 
-    return std::make_pair(success_counter, error_counter);
+    return std::pair(success_counter, error_counter);
 
 }		// -----  end of method HTTPS_Downloader::DownloadFilesConcurrently  -----
 

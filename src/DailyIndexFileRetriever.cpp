@@ -281,7 +281,7 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 			++skipped_files_counter;
 		}
 		else
-			concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
+			concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_daily_index_file_name));
 
 	}
 
@@ -350,7 +350,7 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
         {
 		    auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
             fs::create_directories(local_daily_index_file_directory);
-    		concurrent_copy_list.push_back(std::make_pair(remote_file_name, local_daily_index_file_name));
+    		concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_daily_index_file_name));
         }
 	}
 
