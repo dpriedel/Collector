@@ -1,7 +1,7 @@
 -I/extra/gcc/gcc-7/
--I/extra/gcc/gcc-7/include/c++/7.1.0/
+-I/extra/gcc/gcc-7/include/c++/7.2.0/
 -I/extra/gcc/decNumber/
--I/extra/boost/boost-1.64_gcc-7/
+-I/extra/boost/boost-1.65_gcc-7/
 -I/usr/include/pqxx/
 -I/extra/gcc/cpp-json/include/
 -I/usr/local/include/
