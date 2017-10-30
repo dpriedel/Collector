@@ -47,9 +47,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
 
 #include "Poco/Bugcheck.h"
 
@@ -68,9 +66,6 @@
 // for .zip files, we need to use Poco's tools.
 
 #include <Poco/Zip/Decompress.h>
-#include "Poco/Zip/ZipArchive.h"
-#include "Poco/Zip/ZipStream.h"
-#include "Poco/StreamCopier.h"
 
 #include "cpp-json/json.h"
 
@@ -165,8 +160,6 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 
 std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path& directory_name)
 {
-	poco_assert_msg(ssl_initializer_, "Must initialize SSL before accessing the server.");
-
 	//	we read and store our results so we can end the active connection quickly.
 	// we will ask for the directory listing in JSON format which means we will
 	// have to parse it out.
@@ -182,7 +175,7 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 	std::vector<std::string> results;
 
 	for (auto& e : json::as_array(json_listing["directory"]["item"]))
-		results.push_back(json::as_string(e["name"]));
+		results.emplace_back(json::as_string(e["name"]));
 
 	//	one last thing...let's make sure there's no junk at end of each entry.
 
@@ -269,37 +262,21 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 			}
 			else
 			{
-				// zip archives, we need to use Poco.
-				// but, to do that, we need to download the file then expand it.
+				// zip archives, we need to use Poco because zlib does not handle zip files,
 
-				fs::path temp_file_name{local_file_name};
-				temp_file_name.replace_extension(remote_ext);
-
-				std::ofstream local_file{temp_file_name.string(), std::ios::out | std::ios::binary};
-
-				// avoid stream formatting by using streambufs
-
+				Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
                 errno = 0;
-				auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
-				local_file.close();
-                if (download_result.failed())
+                try
                 {
-                    std::error_code err{errno, std::system_category()};
-                    throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + temp_file_name.string()};
+                    expander.decompressAllFiles();
                 }
-
-				std::ifstream zipped_file(temp_file_name.string(), std::ios_base::in | std::ios_base::binary);
-				Poco::Zip::Decompress expander{zipped_file, local_file_name.parent_path().string(), true};
-                errno = 0;
-				expander.decompressAllFiles();
-
-                if (errno)
+                catch (Poco::IOException& e)
                 {
-                    std::error_code err{errno, std::system_category()};
-                    throw std::system_error{err, "Unable to decompress downloaded remote file: " + temp_file_name.string() + " to local file: " + local_file_name.string()};
-                }
+                    // translate Poco exception to same one we use for gz files.
 
-				fs::remove(temp_file_name);
+                    std::error_code err{errno, std::system_category()};
+                    throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+                }
 			}
 		}
 	}
