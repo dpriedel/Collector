@@ -219,68 +219,78 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 	else
 	{
 		if (! need_to_unzip)
-		{
-			std::ofstream local_file{local_file_name.string(), std::ios::out | std::ios::binary};
-            if (! local_file || ! remote_file)
-                throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
-
-			// avoid stream formatting by using streambufs
-
-            errno = 0;
-			auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
-            local_file.close();
-            if (download_result.failed())
-            {
-                std::error_code err{errno, std::system_category()};
-                throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
-            }
-		}
+            DownloadTextFile(local_file_name, remote_file, remote_file_name);
 		else
 		{
 			if (remote_ext == ".gz")
-			{
-                // we are going to decompress on the fly...
-
-    			std::ofstream expanded_file{local_file_name.string(), std::ios::out | std::ios::binary};
-                if (! expanded_file || ! remote_file)
-                    throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
-
-				// for gzipped files, we can use boost (which uses zlib)
-
-		    	boost::iostreams::filtering_istream in;
-		    	in.push(boost::iostreams::gzip_decompressor());
-		    	in.push(remote_file);
-
-                errno = 0;
-                auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
-                expanded_file.close();
-                if (download_result.failed())
-                {
-                    std::error_code err{errno, std::system_category()};
-                    throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
-                }
-			}
+                DownloadGZipFile(local_file_name, remote_file, remote_file_name);
 			else
-			{
-				// zip archives, we need to use Poco because zlib does not handle zip files,
-
-				Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
-                errno = 0;
-                try
-                {
-                    expander.decompressAllFiles();
-                }
-                catch (Poco::IOException& e)
-                {
-                    // translate Poco exception to same one we use for gz files.
-
-                    std::error_code err{errno, std::system_category()};
-                    throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
-                }
-			}
+                DownloadZipFile(local_file_name, remote_file, remote_file_name);
 		}
 	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
+
+void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+
+{
+    std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
+    if (! local_file || ! remote_file)
+        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+
+    // avoid stream formatting by using streambufs
+
+    errno = 0;
+    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
+    local_file.close();
+    if (download_result.failed())
+    {
+        std::error_code err{errno, std::system_category()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+    }
+}
+void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+
+{
+    // we are going to decompress on the fly...
+
+    std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
+    if (! expanded_file || ! remote_file)
+        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+
+    // for gzipped files, we can use boost (which uses zlib)
+
+    boost::iostreams::filtering_istream in;
+    in.push(boost::iostreams::gzip_decompressor());
+    in.push(remote_file);
+
+    errno = 0;
+    auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
+    expanded_file.close();
+    if (download_result.failed())
+    {
+        std::error_code err{errno, std::system_category()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+    }
+}
+void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+
+{
+    // zip archives, we need to use Poco because zlib does not handle zip files,
+
+    Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
+    errno = 0;
+    try
+    {
+        expander.decompressAllFiles();
+    }
+    catch (Poco::IOException& e)
+    {
+        // translate Poco exception to same one we use for gz files.
+
+        std::error_code err{errno, std::system_category()};
+        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+    }
+}
 
 std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
 

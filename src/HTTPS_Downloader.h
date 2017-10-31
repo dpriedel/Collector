@@ -107,6 +107,10 @@ class HTTPS_Downloader
 			}
 		};
 
+		void DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
+		void DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
+		void DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
+
 		// ====================  DATA MEMBERS  =======================================
 
 		Poco::URI server_uri_;
