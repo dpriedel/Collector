@@ -231,7 +231,6 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
 void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
-
 {
     std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
     if (! local_file || ! remote_file)
@@ -248,8 +247,8 @@ void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::is
         throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
     }
 }
-void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 
+void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 {
     // we are going to decompress on the fly...
 
@@ -272,8 +271,8 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::is
         throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
     }
 }
-void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 
+void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 {
     // zip archives, we need to use Poco because zlib does not handle zip files,
 
