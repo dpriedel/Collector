@@ -338,7 +338,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
         // lastly, throw in our delay just in case we need it.
 
-        tasks.push_back(std::async(&HTTPS_Downloader::Timer, this));
+        tasks.push_back(std::async(std::launch::async, &HTTPS_Downloader::Timer, this));
 
         // now, let's wait till they're all done
         // and then we'll do the next bunch.
@@ -373,6 +373,11 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
                 poco_error(the_logger_, e.what());
                 ++error_counter;
+
+                // OK, let's remember our first time here.
+
+                if (! ep)
+                    ep = std::current_exception();
                 continue;
             }
             catch (...)
@@ -381,6 +386,11 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
                 poco_error(the_logger_, "Unknown problem with an async download process");
                 ++error_counter;
+
+                // OK, let's remember our first time here.
+
+                if (! ep)
+                    ep = std::current_exception();
                 continue;
             }
         }
