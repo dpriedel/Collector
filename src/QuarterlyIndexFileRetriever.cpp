@@ -123,7 +123,7 @@ const std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDa
 	{
 		auto remote_file_name = GeneratePath(remote_directory_prefix_, *quarter_begin);
 		remote_file_name /= "form.zip";
-		results.push_back(remote_file_name);
+		results.push_back(std::move(remote_file_name));
 	}
 
 	return results;
@@ -139,7 +139,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesFor
 	for (const auto& remote_file : remote_file_list)
 	{
 		auto local_file = HierarchicalCopyRemoteIndexFileTo(remote_file, local_directory_name, replace_files);
-		results.push_back(local_file);
+		results.push_back(std::move(local_file));
 	}
 
 	return results;
@@ -168,7 +168,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 
 		if (! replace_files && fs::exists(local_quarterly_index_file_name))
 		{
-			results.push_back(local_quarterly_index_file_name);
+			results.push_back(std::move(local_quarterly_index_file_name));
 			++skipped_files_counter;
 		}
 		else
@@ -193,8 +193,8 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
     if (concurrent_copy_list.size() != success_counter)
         throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
 
-	for (const auto& e : concurrent_copy_list)
-		results.push_back(e.second);
+	for (auto& [remote_name, local_name] : concurrent_copy_list)
+		results.push_back(std::move(local_name));
 
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo  -----

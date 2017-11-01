@@ -332,7 +332,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
             // queue up our tasks up to the limit.
 
             auto& [remote_file, local_file] = file_list[i];
-            tasks.push_back(std::async(std::launch::async, &HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
+            tasks.emplace_back(std::async(std::launch::async, &HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
             // std::cout << "i: " << i << " j: " << j << '\n';
         }
 
