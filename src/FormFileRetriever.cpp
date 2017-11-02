@@ -35,7 +35,7 @@
 #include <iterator>
 #include <set>
 #include <thread>
-#include <locale>
+#include <experimental/string_view>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -43,6 +43,23 @@
 #include <Poco/Net/NetException.h>
 
 #include "FormFileRetriever.h"
+
+// function to split a string on a delimiter and return a vector of string-views
+
+std::vector<std::string_view> split_string(const std::string_view& string_data, char delim)
+{
+    std::vector<std::string_view> results;
+	for (auto it = 0; it != string_data.npos; ++it)
+	{
+		auto pos = string_data.find(delim, it);
+		if (pos == std::string_view::npos)
+			break;
+		results.emplace_back(string_data.substr(it, pos - it));
+		it = pos;
+	}
+    return results;
+}
+
 // #include "aLine.h"
 
 //--------------------------------------------------------------------------------------
@@ -73,6 +90,19 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
     poco_debug(the_logger_, "F: Searching index file: " + local_index_file_name.string());
 
+	// we load our file into memory so we have more flexibility in how we search it.
+
+	std::string index_file_data(fs::file_size(local_index_file_name), '\0');
+	std::ifstream index_file{local_index_file_name, std::ios_base::in | std::ios_base::binary};
+	poco_assert_msg(index_file, ("Unable to open index file: " + local_index_file_name.string()).c_str());
+    index_file.read(&index_file_data[0], index_file_data.size());
+	index_file.close();
+
+	// split into lines
+	// if there is a '\r' at the end of a line, it will be stripped out later.
+
+	auto index_data_lines = split_string(index_file_data, '\n');
+
 	std::vector<std::string> forms_list{the_form_types};
 	std::sort(forms_list.begin(), forms_list.end());
 
@@ -84,69 +114,45 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 	FormsAndFilesList results;
 
-	//	CIKs can have leading zeroes but the leading zeroes are not in the CIK field
-	//	in the index file.
-	//	Also, to avoid matching a substring, append a space to the CIK used in matching.
-	//
-	//	NOTE: we use a set below because the list of symbols(CIKs) that we are matching against
-	//	is potentially large.  As such, search through a set might be faster than searching a vector
-	//	(cache memory prefetch can do wonders for linear searchs)
+	//	We may have been given a list of symbols to filter against.  If so,
+	//	we need to translate the symbol to its CIK.  We have a table with this mapping.
 
-	std::set<std::string> cik_list;
+	//	CIKs can have leading zeroes in the table but the leading zeroes are not in the CIK field
+	//	in the index file.
+
+	std::vector<std::string_view> cik_list;
 	if (! ticker_map.empty())
 	{
-		for (const auto& elem : ticker_map)
-		{
-			std::string search_key;
-			boost::algorithm::trim_left_copy_if(std::back_inserter(search_key), elem.second, boost::is_any_of("0"));
-		//	search_key += ' ';
-			if (search_key != TickerConverter::NotFound)
-				cik_list.insert(search_key);
-		}
+		std::transform(std::begin(ticker_map),
+			std::end(ticker_map),
+			std::back_inserter(cik_list),
+			[](const auto& elem) { std::string_view x{elem.second}; x.remove_prefix(x.find_first_not_of('0')); return x; });
 	}
 
-	// originally, used this unusual approach found in Stack Overflow
-	// https://stackoverflow.com/questions/1567082/how-do-i-iterate-over-cin-line-by-line-in-c/1567703
-
-	// but...ended up going with the below approach as a little more 'obvious'.
-	// modified from example at: http://en.cppreference.com/w/cpp/locale/ctype_char
-
-	// This ctype facet does NOT classify spaces and tabs as whitespace
-
-    struct line_only_whitespace : std::ctype<char>
-    {
-	    static const mask* make_table()
-	    {
-	        // make a copy of the "C" locale table
-	        static std::vector<mask> v(classic_table(), classic_table() + table_size);
-	        v['\t'] &= ~space;		// tab will not be classified as whitespace
-	        v[' '] &= ~space;		// space will not be classified as whitespace
-	        return &v[0];
-	    }
-	    line_only_whitespace(std::size_t refs = 0) : ctype(make_table(), false, refs) {}
-	};
-
-	std::ifstream form_file{local_index_file_name.string()};
-
-	// Tell the stream to use our facet, so only '\n' is treated as a space.
-
-	form_file.imbue(std::locale(form_file.getloc(), new line_only_whitespace()));
-
-	std::istream_iterator<std::string> itor{form_file};
-	std::istream_iterator<std::string> itor_end;
+	auto itor {std::begin(index_data_lines)};
+	auto itor_end {std::end(index_data_lines)};
 
 	//	let's skip over the header lines in the file
 
-	for ( ; itor != itor_end; ++itor)
-	{
-		if (boost::algorithm::starts_with(*itor, "----------"))
-		{
-			++itor;
-			break;
-		}
-	}
+	auto form_itor = std::find_if(itor, itor_end,
+		[] (const auto& line) { return boost::algorithm::starts_with(line, "----------"); });
 
-	poco_assert_msg(itor != itor_end, ("Unable to find start of index entries in file: " + local_index_file_name.string()).c_str());
+	poco_assert_msg(form_itor != itor_end, ("Unable to find start of index entries in file: " + local_index_file_name.string()).c_str());
+
+	++form_itor;
+
+	// some functions to use in our processing.
+
+	auto CIK_is_in_CIK_list = [&] (auto next_line)
+	{
+		if ( cik_list.empty())
+			return true;		//	no filter so pass everything
+
+		auto pos1 = next_line.find_first_of(' ', k_index_CIK_offset);
+		auto cik_from_index_file = next_line.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
+		auto pos = std::find(std::begin(cik_list), std::end(cik_list), cik_from_index_file);
+		return pos == cik_list.end() ? false : true;
+	};
 
 	for (auto& the_form : forms_list)
 	{
@@ -154,40 +160,43 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 		int found_a_form{0};
 		std::vector<std::string> found_files;
 
-		for ( ; itor != itor_end; ++itor)
+		// first, find the entries, if any, for our form.
+
+		auto list_begin = std::lower_bound(form_itor, itor_end, the_form,
+            [] (const auto& the_line, const auto& the_form) { return the_line.compare(0, the_form.size(), the_form.data(), the_form.size()) < 0; } );
+		auto list_end = std::upper_bound(list_begin, itor_end, the_form,
+			[] (const auto& the_form, const auto& the_line) { return the_form.compare(0, the_form.size(), the_line.data(), the_form.size()) < 0; } );
+
+		if (list_begin == list_end)
+			continue;
+
+		for( ; list_begin != list_end; ++list_begin)
 		{
-			if (*itor < the_form)
+			if (! CIK_is_in_CIK_list(*list_begin))
 				continue;
 
-			if (boost::algorithm::starts_with(*itor, the_form))
-			{
-				if (! cik_list.empty())
-				{
-					decltype(auto) pos1 = itor->find(' ', k_index_CIK_offset);
-					decltype(auto) cik_from_index_file = itor->substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
-					decltype(auto) pos = cik_list.find(cik_from_index_file);
-					if (pos == cik_list.end())
-						continue;
-				}
-				found_a_form += 1;
-				decltype(auto) pos = itor->find("edgar/data");
-				poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
-				found_files.push_back("/Archives/" + itor->substr(pos));
-				boost::algorithm::trim_right(found_files.back());
-			}
-			else
-			{
-				if (found_a_form)
-				{
-					//	we've moved beyond our set of forms in the file so we can stop
+			found_a_form += 1;
+			decltype(auto) pos = list_begin->find("edgar/data");
+			poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
+			found_files.push_back("/Archives/" + std::string{list_begin->substr(pos)});
+			boost::algorithm::trim_right(found_files.back());
 
-					poco_debug(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
-					the_form.pop_back();		//	remove trailing space we added at top of loop
-					results[the_form] = found_files;
-				}
-				break;
+			// looking for a short cut
+
+			if (! cik_list.empty())
+			{
+				if (found_a_form == cik_list.size() * forms_list.size())
+					break;
 			}
 		}
+		if (found_a_form)
+		{
+			poco_debug(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
+			the_form.pop_back();		//	remove trailing space we added at top of loop
+			results[the_form] = found_files;
+		}
+
+		form_itor = list_end;
 	}
 
 	int grand_total{0};
