@@ -143,22 +143,30 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 	// some functions to use in our processing.
 
-	auto CIK_is_in_CIK_list = [&] (auto next_line)
+    auto find_CIK_in_line = [&] (const auto& next_line)
+    {
+		auto pos1 = next_line.find_first_of(' ', k_index_CIK_offset);
+		auto cik_from_index_file = next_line.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
+        return cik_from_index_file;
+    };
+
+	auto CIK_is_in_CIK_list = [&] (const auto& next_line)
 	{
 		if ( cik_list.empty())
 			return true;		//	no filter so pass everything
 
-		auto pos1 = next_line.find_first_of(' ', k_index_CIK_offset);
-		auto cik_from_index_file = next_line.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
+		auto cik_from_index_file = find_CIK_in_line(next_line);
 		auto pos = std::find(std::begin(cik_list), std::end(cik_list), cik_from_index_file);
 		return pos == cik_list.end() ? false : true;
 	};
+
+    //  now, search the data for specified forms [for specified CIKs]
 
 	for (auto& the_form : forms_list)
 	{
 		the_form += ' ';
 		int found_a_form{0};
-		std::vector<std::string> found_files;
+		std::vector<fs::path> found_files;
 
 		// first, find the entries, if any, for our form.
 
@@ -168,9 +176,12 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 			[] (const auto& the_form, const auto& the_line) { return the_form.compare(0, the_form.size(), the_line.data(), the_form.size()) < 0; } );
 
 		if (list_begin == list_end)
+        {
+			poco_debug(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
 			continue;
+        }
 
-		for( ; list_begin != list_end; ++list_begin)
+		for( ; list_begin != list_end; ++list_begin   )
 		{
 			if (! CIK_is_in_CIK_list(*list_begin))
 				continue;
@@ -178,16 +189,12 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 			found_a_form += 1;
 			decltype(auto) pos = list_begin->find("edgar/data");
 			poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
-			found_files.push_back("/Archives/" + std::string{list_begin->substr(pos)});
-			boost::algorithm::trim_right(found_files.back());
 
-			// looking for a short cut
-
-			if (! cik_list.empty())
-			{
-				if (found_a_form == cik_list.size() * forms_list.size())
-					break;
-			}
+            auto f_name{list_begin->substr(pos)};
+            f_name.remove_suffix(f_name.size() - f_name.find_last_not_of(" \r\t") - 1);
+            fs::path f_path{"/Archives"};
+            f_path /= f_name;
+            found_files.push_back(f_path);
 		}
 		if (found_a_form)
 		{
@@ -209,22 +216,21 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types, const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map)
 {
+    // separately process each file in our list and accumulate the results
+
 	FormsAndFilesList results;
 
 	for (const auto& index_file : local_index_files)
 	{
 		decltype(auto) single_file_results = FindFilesForForms(the_form_types, index_file, ticker_map);
 
-		for (const auto& elem : single_file_results)
+		for (const auto& [form, files] : single_file_results)
 		{
 			// if we already have found files for the given form type, add them to to the list
 			// otherwise, make a new entry.
+            // this code nicely works in either case.
 
-			decltype(auto) pos = results.find(elem.first);
-			if (pos != results.end())
-				std::move(elem.second.begin(), elem.second.end(), std::back_inserter(results[pos->first]));
-			else
-				results[elem.first] = elem.second;
+            std::move(files.begin(), files.end(), std::back_inserter(results[form]));
 		}
 	}
 
@@ -252,7 +258,7 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const FormsAndFilesL
 		ConcurrentlyRetrieveSpecifiedFiles(form_files, form_type, local_form_directory, max_at_a_time, replace_files);
 }
 
-void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& remote_file_names, const std::string& form_type,
+void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<fs::path>& remote_file_names, const std::string& form_type,
 	const fs::path& local_form_directory, bool replace_files)
 {
     // some forms can have slash in the form local_file_name so...
@@ -266,13 +272,12 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 
 	for (const auto& remote_file_name : remote_file_names)
 	{
-		fs::path remote_file{remote_file_name};
-		fs::path CIK_directory{remote_file.parent_path().filename()};	//	pull off the CIK directory name
-		fs::path local_dir_name{local_form_directory};
-		local_dir_name /= CIK_directory;
-		local_dir_name /= form_name;
-		auto local_file_name{local_dir_name};
-		local_file_name /= remote_file.filename();
+        // we download the remote file to a local directory structure like this
+        // <local_form_directory>/<CIK>/<form_type>/<remote_file_name>
+
+		auto local_dir_name = MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
+        auto local_file_name{local_dir_name};
+        local_file_name /= remote_file_name.filename();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{
@@ -281,7 +286,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				fs::create_directories(local_dir_name);
 				the_server_.DownloadFile(remote_file_name, local_file_name);
                 ++downloaded_files_counter;
-				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name + " to: " + local_file_name.string());
+				poco_debug(the_logger_, "F: Retrieved remote form file: " + remote_file_name.string() + " to: " + local_file_name.string());
 				// std::this_thread::sleep_for(pause_);
 			}
 			catch(Poco::TimeoutException& e)
@@ -289,7 +294,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
 
-				poco_error(the_logger_, "F: !! Timeout retrieving remote form file: " + remote_file_name
+				poco_error(the_logger_, "F: !! Timeout retrieving remote form file: " + remote_file_name.string()
 					+ " to: " + local_file_name.string() + " !!\n" + e.displayText());
 
 				++error_counter;
@@ -300,7 +305,7 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
 
-				poco_error(the_logger_, "F: !! Problem retrieving remote form file: " + remote_file_name
+				poco_error(the_logger_, "F: !! Problem retrieving remote form file: " + remote_file_name.string()
 					+ " to: " + local_file_name.string() + " !!\n" + e.what());
 				++error_counter;
 			}
@@ -317,7 +322,16 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<std::string>& 
 		". Errors: " + std::to_string(error_counter) + ". for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
 
-void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<std::string>& remote_file_names, const std::string& form_type,
+fs::path FormFileRetriever::MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name)
+{
+    auto CIK_directory{remote_file_name.parent_path().filename()};	//	pull off the CIK directory name
+    auto local_dir_name{local_form_directory_name};
+    local_dir_name /= CIK_directory;
+    local_dir_name /= form_name;
+    return local_dir_name;
+}
+
+void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs::path>& remote_file_names, const std::string& form_type,
 	const fs::path& local_form_directory, int max_at_a_time, bool replace_files)
 {
 	if (remote_file_names.size() < max_at_a_time)
@@ -340,13 +354,9 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<st
 
 	for (const auto& remote_file_name : remote_file_names)
 	{
-		fs::path remote_file{remote_file_name};
-		fs::path CIK_directory{remote_file.parent_path().filename()};	//	pull off the CIK directory name
-		fs::path local_dir_name{local_form_directory};
-		local_dir_name /= CIK_directory;
-		local_dir_name /= form_name;
-		auto local_file_name{local_dir_name};
-		local_file_name /= remote_file.filename();
+		auto local_dir_name = MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
+        auto local_file_name{local_dir_name};
+        local_file_name /= remote_file_name.filename();
 
 		if (replace_files || ! fs::exists(local_file_name))
 		{

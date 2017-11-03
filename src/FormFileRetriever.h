@@ -55,7 +55,7 @@ class FormFileRetriever
 {
 	public:
 
-		using FormsAndFilesList = std::map<std::string, std::vector<std::string>>;
+		using FormsAndFilesList = std::map<std::string, std::vector<fs::path>>;
 
 		// ====================  LIFECYCLE     =======================================
 
@@ -87,15 +87,18 @@ class FormFileRetriever
 
 	protected:
 
-		void RetrieveSpecifiedFiles(const std::vector<std::string>& remote_file_names, const std::string& form_type,
+		void RetrieveSpecifiedFiles(const std::vector<fs::path>& remote_file_names, const std::string& form_type,
 				const fs::path& local_form_directory, bool replace_files=false);
 
-		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<std::string>& remote_file_names, const std::string& form_type,
+		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<fs::path>& remote_file_names, const std::string& form_type,
 				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
 
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
+
+		fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name);
+
 		// ====================  DATA MEMBERS  =======================================
 
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
