@@ -161,12 +161,12 @@ private:
 	bg::date begin_date_;
 	bg::date end_date_;
 
-	std::string mode_;
-	std::string form_;
+	std::string mode_{"daily"};
+	std::string form_{"10-Q"};
 	std::string ticker_;
 	// std::string login_ID_;
-    std::string HTTPS_host_;
-    std::string logging_level_;
+    std::string HTTPS_host_{"https://www.sec.gov"};
+    std::string logging_level_{"information"};
 
 	std::vector<std::string> form_list_;
 	std::vector<std::string> ticker_list_;
@@ -179,14 +179,14 @@ private:
 	fs::path ticker_cache_file_name_;
 	fs::path ticker_list_file_name_;
 
-	int pause_;
-    int max_forms_to_download_;     // mainly for testing
-    int max_at_a_time_;             // how many concurrent downloads allowed
+	int pause_{0};
+    int max_forms_to_download_{-1};     // mainly for testing
+    int max_at_a_time_{10};             // how many concurrent downloads allowed
 
-	bool replace_index_files_;
-	bool replace_form_files_;
-	bool index_only_;			//	do no download any form files
-	bool help_requested_;
+	bool replace_index_files_{false};
+	bool replace_form_files_{false};
+	bool index_only_{false};			//	do no download any form files
+	bool help_requested_{false};
 
 }; // -----  end of class CollectEDGARApp  -----
 

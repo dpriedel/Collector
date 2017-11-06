@@ -59,36 +59,14 @@
 
 CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 	: Poco::Util::Application(argc, argv),
-    ticker_converter_{logger()},
-    mode_{"daily"},
-    form_{"10-Q"},
-    HTTPS_host_{"https://www.sec.gov"},
-    logging_level_{"information"},
-    pause_{0},
-    max_forms_to_download_{-1},
-	max_at_a_time_{10},
-    replace_index_files_{false},
-    replace_form_files_{false},
-	index_only_{false},
-    help_requested_{false}
+    ticker_converter_{logger()}
 
 {
 }  // -----  end of method CollectEDGARApp::CollectEDGARApp  (constructor)  -----
 
 CollectEDGARApp::CollectEDGARApp (void)
 	: Poco::Util::Application(),
-    ticker_converter_{logger()},
-    mode_{"daily"},
-    form_{"10-Q"},
-    HTTPS_host_{"https://www.sec.gov"},
-    logging_level_{"information"},
-    pause_{0},
-    max_forms_to_download_{-1},
-	max_at_a_time_{10},
-    replace_index_files_{false},
-    replace_form_files_{false},
-	index_only_{false},
-    help_requested_{false}
+    ticker_converter_{logger()}
 
 {
 }
@@ -118,16 +96,16 @@ void CollectEDGARApp::initialize(Application& self)
 
 	the_logger.information("Command line:");
 	std::ostringstream ostr;
-	for (ArgVec::const_iterator it = argv().begin(); it != argv().end(); ++it)
+	for (const auto it : argv())
 	{
-		ostr << *it << ' ';
+		ostr << it << ' ';
 	}
 	the_logger.information(ostr.str());
 	the_logger.information("Arguments to main():");
     auto args = argv();
-	for (ArgVec::const_iterator it = args.begin(); it != args.end(); ++it)
+	for (const auto it : argv())
 	{
-		the_logger.information(*it);
+		the_logger.information(it);
 	}
 	the_logger.information("Application properties:");
 	printProperties("");
@@ -152,11 +130,11 @@ void CollectEDGARApp::printProperties(const std::string& base)
 	}
 	else
 	{
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = keys.begin(); it != keys.end(); ++it)
+		for (const auto it : keys)
 		{
 			std::string fullKey = base;
 			if (!fullKey.empty()) fullKey += '.';
-			fullKey.append(*it);
+			fullKey.append(it);
 			printProperties(fullKey);
 		}
 	}
@@ -422,6 +400,10 @@ void CollectEDGARApp::Do_Main(void)
         Do_CheckArgs();
         Do_Run();
     }
+	catch (Poco::AssertionViolationException& e)
+	{
+		std::cout << e.displayText() << '\n';
+	}
     catch (std::exception& e)
     {
         std::cout << "Problem collecting files: " << e.what() << '\n';
@@ -533,17 +515,17 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
             if (max_forms_to_download_ > -1)
             {
-    			for (auto& elem : form_file_list)
+    			for (auto& [form, files] : form_file_list)
     			{
-                    // I don't remember why I'm doing this...
+                    // I don't remember why I'm doing this...it's for testing !!
                     // If we are downloading only some of the files possible
                     // to download, then take a random selection of those files.
 
-        			if (elem.second.size() > max_forms_to_download_)
+        			if (files.size() > max_forms_to_download_)
                     {
             			std::default_random_engine dre;
-            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
-        				elem.second.resize(max_forms_to_download_);
+            			std::shuffle(files.begin(), files.end(), dre);
+        				files.resize(max_forms_to_download_);
                     }
     			}
             }
@@ -564,13 +546,13 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
             {
                 // same comment here as above for single file.
 
-    			for (auto& elem : form_file_list)
+    			for (auto& [form, files] : form_file_list)
     			{
-        			if (elem.second.size() > max_forms_to_download_)
+        			if (files.size() > max_forms_to_download_)
                     {
             			std::default_random_engine dre;
-            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
-        				elem.second.resize(max_forms_to_download_);
+            			std::shuffle(files.begin(), files.end(), dre);
+        				files.resize(max_forms_to_download_);
                     }
     			}
             }
@@ -599,13 +581,13 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
             if (max_forms_to_download_ > -1)
             {
-    			for (auto& elem : form_file_list)
+    			for (auto& [form, files] : form_file_list)
     			{
-        			if (elem.second.size() > max_forms_to_download_)
+        			if (files.size() > max_forms_to_download_)
                     {
             			std::default_random_engine dre;
-            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
-        				elem.second.resize(max_forms_to_download_);
+            			std::shuffle(files.begin(), files.end(), dre);
+        				files.resize(max_forms_to_download_);
                     }
     			}
             }
@@ -624,13 +606,13 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
             if (max_forms_to_download_ > -1)
             {
-    			for (auto& elem : form_file_list)
+    			for (auto& [form, files] : form_file_list)
     			{
-        			if (elem.second.size() > max_forms_to_download_)
+        			if (files.size() > max_forms_to_download_)
                     {
             			std::default_random_engine dre;
-            			std::shuffle(elem.second.begin(), elem.second.end(), dre);
-        				elem.second.resize(max_forms_to_download_);
+            			std::shuffle(files.begin(), files.end(), dre);
+        				files.resize(max_forms_to_download_);
                     }
     			}
             }
