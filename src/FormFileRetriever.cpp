@@ -52,9 +52,13 @@ std::vector<std::string_view> split_string(const std::string_view& string_data, 
 	for (auto it = 0; it != string_data.npos; ++it)
 	{
 		auto pos = string_data.find(delim, it);
-		if (pos == std::string_view::npos)
-			break;
-		results.emplace_back(string_data.substr(it, pos - it));
+        if (pos != string_data.npos)
+    		results.emplace_back(string_data.substr(it, pos - it));
+        else
+        {
+    		results.emplace_back(string_data.substr(it));
+            break;
+        }
 		it = pos;
 	}
     return results;
