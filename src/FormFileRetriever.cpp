@@ -211,8 +211,8 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 	}
 
 	int grand_total{0};
-	for (const auto& elem : results)
-		grand_total += elem.second.size();
+	for (const auto& [form, files] : results)
+		grand_total += files.size();
 
 	poco_debug(the_logger_, "F: Found a total of " + std::to_string(grand_total) + " files for specified forms.");
 	return results;
