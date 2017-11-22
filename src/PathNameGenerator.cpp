@@ -36,7 +36,10 @@ DateRange::DateRange(const bg::date& start_date, const bg::date& end_date)
 	: start_date_{start_date}, end_date_{end_date}
 
 {
+	auto working_date1 = bg::date(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+	auto working_date2 = bg::date(end_date.year(), (end_date.month() / 3 + (end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
 
+	end_date_ = *(++QuarterlyIterator{end_date});
 }
 
 QuarterlyIterator::QuarterlyIterator(const bg::date& start_date)

@@ -82,6 +82,8 @@ class QuarterlyIndexFileRetriever
 
 	private:
 
+		auto AddToCopyList(const fs::path& local_directory_name, bool replace_files);
+
 		// ====================  DATA MEMBERS  =======================================
 
 		HTTPS_Downloader& the_server_;

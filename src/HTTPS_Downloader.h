@@ -35,6 +35,8 @@
 #define HTTPS_DOWNLOADER_H
 
 #include <experimental/filesystem>
+#include <optional>
+
 // #include <boost/filesystem.hpp>
 
 namespace fs = std::experimental::filesystem;
@@ -54,7 +56,8 @@ class HTTPS_Downloader
 {
 	public:
 
-		using  remote_local_list = std::vector<std::pair<fs::path, fs::path>>;
+		using  copy_file_names = std::pair<std::optional<fs::path>, fs::path>;
+		using  remote_local_list = std::vector<copy_file_names>;
 
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor

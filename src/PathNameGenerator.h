@@ -68,6 +68,11 @@ private:
 
 };
 
+inline bool operator < (const QuarterlyIterator& lhs, const QuarterlyIterator& rhs)
+{
+	return *lhs < * rhs;
+}
+
 // some traits for our iterator class
 
 namespace std
@@ -78,6 +83,11 @@ namespace std
 	using value_type = bg::date;
 	};
 }
+
+// we want to have a half open range of at least 1 quarter
+// so internally, we add a quarter to the end date
+// so the standard library algorithms will work as expected.
+// This means, the supplied dates will BOTH be included in the range.
 
 class DateRange
 {

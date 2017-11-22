@@ -40,6 +40,25 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+// define our own 'transform_if' for now.
+// don't use the one from boost because it pulls in a
+// whole bunch of math stuff.
+
+template<typename InputIterator, typename OutputIterator, typename Predicate, typename UnaryOperation>
+OutputIterator transform_if(InputIterator first, InputIterator last,
+    OutputIterator result, Predicate pred, UnaryOperation unaryop)
+{
+    for (; first != last; ++first)
+    {
+        if (pred(*first))
+        {
+          *result = unaryop(*first);
+          ++result;
+        }
+    }
+    return result;
+}
+
 #include <Poco/Net/NetException.h>
 
 #include "FormFileRetriever.h"
@@ -78,6 +97,22 @@ FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
 
+auto FormFileRetriever::ExtractFileName(int& found_a_form)
+{
+    return [&found_a_form] (const auto& e)
+    {
+        found_a_form += 1;
+        auto pos = e.find("edgar/data");
+        poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
+
+        auto f_name{e.substr(pos)};
+        f_name.remove_suffix(f_name.size() - f_name.find_last_not_of(" \r\t") - 1);
+        fs::path f_path{"/Archives"};
+        f_path /= f_name;
+        return std::move(f_path);
+    };
+}
+
 FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types,
 		const fs::path& local_index_file_name, const TickerConverter::TickerCIKMap& ticker_map)
 {
@@ -112,7 +147,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 	//	just in case there are duplicates in the forms list
 
-	decltype(auto) pos = std::unique(forms_list.begin(), forms_list.end());
+	auto pos = std::unique(forms_list.begin(), forms_list.end());
 	if (pos != forms_list.end())
 		forms_list.erase(pos);
 
@@ -164,8 +199,6 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 		return pos == cik_list.end() ? false : true;
 	};
 
-    //  now, search the data for specified forms [for specified CIKs]
-
 	for (auto& the_form : forms_list)
 	{
 		the_form += ' ';
@@ -185,21 +218,16 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 			continue;
         }
 
-		for( ; list_begin != list_end; ++list_begin   )
-		{
-			if (! CIK_is_in_CIK_list(*list_begin))
-				continue;
+        // collect list of files to download for our form type
 
-			found_a_form += 1;
-			decltype(auto) pos = list_begin->find("edgar/data");
-			poco_assert_msg(pos != std::string::npos, "Badly formed index file record.");
+        transform_if(
+            list_begin,
+            list_end,
+            std::back_inserter(found_files),
+            [&] (const auto& e) { return CIK_is_in_CIK_list(e); },
+            ExtractFileName(found_a_form)
+        );
 
-            auto f_name{list_begin->substr(pos)};
-            f_name.remove_suffix(f_name.size() - f_name.find_last_not_of(" \r\t") - 1);
-            fs::path f_path{"/Archives"};
-            f_path /= f_name;
-            found_files.push_back(f_path);
-		}
 		if (found_a_form)
 		{
 			poco_debug(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
@@ -335,6 +363,28 @@ fs::path FormFileRetriever::MakeLocalDirNameFromRemoteFileName(const fs::path& l
     return local_dir_name;
 }
 
+auto FormFileRetriever::AddToCopyList(const std::string& form_name, const fs::path& local_form_directory, bool replace_files)
+{
+	//	construct our lambda function here so it doesn't clutter up our code below.
+
+    return [this, &form_name, &local_form_directory, replace_files] (const auto& remote_file_name)
+    {
+        auto local_dir_name = this->MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
+        auto local_file_name{local_dir_name};
+        local_file_name /= remote_file_name.filename();
+
+        if (replace_files || ! fs::exists(local_file_name))
+        {
+            fs::create_directories(local_dir_name);
+            return HTTPS_Downloader::copy_file_names(remote_file_name, local_file_name);
+        }
+        else
+        {
+            return HTTPS_Downloader::copy_file_names({}, local_file_name);
+        }
+	};
+}
+
 void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs::path>& remote_file_names, const std::string& form_type,
 	const fs::path& local_form_directory, int max_at_a_time, bool replace_files)
 {
@@ -352,30 +402,20 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
 	// Also, here we will create the directory hierarchies for the to-be downloaded files.
 	// Taking the easy way out so we don't have to worry about file system race conditions.
 
-    int skipped_files_counter = 0;
-
 	HTTPS_Downloader::remote_local_list concurrent_copy_list;
 
-	for (const auto& remote_file_name : remote_file_names)
-	{
-		auto local_dir_name = MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
-        auto local_file_name{local_dir_name};
-        local_file_name /= remote_file_name.filename();
-
-		if (replace_files || ! fs::exists(local_file_name))
-		{
-			fs::create_directories(local_dir_name);
-			concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_file_name));
-		}
-		else
-		{
-			++ skipped_files_counter;
-		}
-	}
-
+    std::transform(
+        std::begin(remote_file_names),
+        std::end(remote_file_names),
+        std::back_inserter(concurrent_copy_list),
+		AddToCopyList(form_name, local_form_directory, replace_files)
+        );
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+    int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
+		[] (const auto& e) { return ! e.first; });
 
 	poco_information(the_logger_, "F: Downloaded: " + std::to_string(success_counter) +
 		". Skipped: " + std::to_string(skipped_files_counter) +
@@ -384,7 +424,7 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
 
-    if (concurrent_copy_list.size() != success_counter)
+    if (concurrent_copy_list.size() != success_counter + skipped_files_counter)
         throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
 
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----

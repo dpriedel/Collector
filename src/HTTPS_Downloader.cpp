@@ -327,12 +327,13 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
         std::vector<std::future<void>> tasks;
         tasks.reserve(max_at_a_time + 1);
 
-        for (int j = 0; j < max_at_a_time && i < file_list.size(); ++j, ++i)
+        for ( ; tasks.size() < max_at_a_time && i < file_list.size(); ++i)
         {
             // queue up our tasks up to the limit.
 
             auto& [remote_file, local_file] = file_list[i];
-            tasks.emplace_back(std::async(std::launch::async, &HTTPS_Downloader::DownloadFile, this, remote_file, local_file));
+            if (remote_file)
+                tasks.emplace_back(std::async(std::launch::async, &HTTPS_Downloader::DownloadFile, this, *remote_file, local_file));
             // std::cout << "i: " << i << " j: " << j << '\n';
         }
 
@@ -435,7 +436,7 @@ void HTTPS_Downloader::HandleSignal(int signal)
 {
     std::signal(SIGINT, HTTPS_Downloader::HandleSignal);
 
-    // our only task
+    // only thing we need to do
 
     HTTPS_Downloader::had_signal_ = true;
 

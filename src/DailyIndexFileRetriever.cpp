@@ -100,7 +100,7 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const bg::d
 
 	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
-	decltype(auto) pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
+	auto pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
         [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
 	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
 
@@ -122,10 +122,16 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 
 	remote_daily_index_file_name_list_.clear();
 
-	decltype(auto) looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
-	decltype(auto) looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
+	auto looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
+	auto looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
 
 	auto remote_directory_list = MakeIndexFileNamesForDateRange(begin_date, end_date);
+
+	auto is_between{[&looking_for_start, &looking_for_end](const std::string& elem)
+	{
+		return (elem.compare(0, looking_for_end.size(), looking_for_end) <= 0
+		&& elem.compare(0, looking_for_start.size(), looking_for_start) >= 0); }
+	};
 
 	for (const auto& remote_directory : remote_directory_list)
 	{
@@ -135,15 +141,19 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 
 		// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
-		std::copy_if(directory_list.crbegin(), directory_list.crend(), std::back_inserter(found_files),
-				[&looking_for_start, &looking_for_end](const std::string& elem)
-				{ return (elem.compare(0, looking_for_end.size(), looking_for_end) <= 0
-				 	&& elem.compare(0, looking_for_start.size(), looking_for_start) >= 0); });
+		std::copy_if(
+			directory_list.crbegin(),
+			directory_list.crend(),
+			std::back_inserter(found_files),
+			is_between);
 
 		// last thing...prepend directory name
 
-		std::transform(found_files.cbegin(), found_files.cend(), std::back_inserter(remote_daily_index_file_name_list_),
-			[remote_directory](const auto& e){ auto fpath{remote_directory}; return fpath /= e; });
+		std::transform(
+			found_files.cbegin(),
+			found_files.cend(),
+			std::back_inserter(remote_daily_index_file_name_list_),
+				[remote_directory](const auto& e){ auto fpath{remote_directory}; return std::move(fpath /= e); });
 	}
 	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
 		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
@@ -164,22 +174,27 @@ const std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRa
 	std::vector<fs::path> results;
 	DateRange range{start_date_, end_date_};
 
-	for (auto quarter_begin = std::begin(range); quarter_begin <= std::end(range); ++quarter_begin)
-	{
-		auto remote_file_name = GeneratePath(remote_directory_prefix_, *quarter_begin);
-		results.push_back(std::move(remote_file_name));
-	}
+    std::transform(
+        std::begin(range),
+        std::end(range),
+        std::back_inserter(results),
+        [this] (const auto& qtr_begin)
+            {
+                auto remote_file_name = GeneratePath(this->remote_directory_prefix_, qtr_begin);
+                return (std::move(remote_file_name));
+            }
+		);
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
 
 std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::path& remote_directory)
 {
-	decltype(auto) directory_list = the_server_.ListDirectoryContents(remote_directory);
+	auto directory_list = the_server_.ListDirectoryContents(remote_directory);
 
 	//	we need to do some cleanup of the directory listing to simplify our searches.
 
-	decltype(auto) not_form = std::partition(directory_list.begin(), directory_list.end(),
+	auto not_form = std::partition(directory_list.begin(), directory_list.end(),
 			[](std::string& x) {return boost::algorithm::starts_with(x, "form");});
 	directory_list.erase(not_form, directory_list.end());
 
@@ -220,14 +235,13 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 	if (local_daily_index_file_name.extension() == ".gz")
 		local_daily_index_file_name.replace_extension("");
 
-	auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
-
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
 		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.filename().string());
 		return local_daily_index_file_name;
 	}
 
+	auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
 	fs::create_directories(local_daily_index_file_directory);
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
@@ -239,7 +253,8 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
 
-std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files)
+std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list,
+	const fs::path& local_directory_name, bool replace_files)
 {
 	std::vector<fs::path> results;
 
@@ -251,23 +266,11 @@ std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo (con
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, int max_at_a_time, bool replace_files)
+auto DailyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_name, bool replace_files)
 {
-	if (remote_file_list.size() < max_at_a_time)
-		return CopyIndexFilesForDateRangeTo(remote_file_list, local_directory_name, replace_files);
+	//	construct our lambda function here so it doesn't clutter up our code below.
 
-	std::vector<fs::path> results;
-
-	fs::create_directories(local_directory_name);
-
-    int skipped_files_counter = 0;
-
-	// we need to create a list of file name pairs -- remote file name, local file name.
-	// we'll pass that list to the downloader and let it manage to process from there.
-
-	HTTPS_Downloader::remote_local_list concurrent_copy_list;
-
-	for (const auto& remote_file_name : remote_file_list)
+	return [local_directory_name, replace_files](const auto& remote_file_name)
 	{
 		auto local_daily_index_file_name = local_directory_name;
 		local_daily_index_file_name /= remote_file_name.filename();
@@ -276,18 +279,38 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 			local_daily_index_file_name.replace_extension("");
 
 		if (! replace_files && fs::exists(local_daily_index_file_name))
-		{
-			results.push_back(std::move(local_daily_index_file_name));
-			++skipped_files_counter;
-		}
+			return HTTPS_Downloader::copy_file_names({}, local_daily_index_file_name);
 		else
-			concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_daily_index_file_name));
+			return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
+	};
+}
 
-	}
+std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list,
+	const fs::path& local_directory_name, int max_at_a_time, bool replace_files)
+{
+	if (remote_file_list.size() < max_at_a_time)
+		return CopyIndexFilesForDateRangeTo(remote_file_list, local_directory_name, replace_files);
+
+	fs::create_directories(local_directory_name);
+
+	// we need to create a list of file name pairs -- remote file name, local file name.
+	// we'll pass that list to the downloader and let it manage to process from there.
+
+	HTTPS_Downloader::remote_local_list concurrent_copy_list;
+
+	std::transform(
+		std::begin(remote_file_list),
+		std::end(remote_file_list),
+		std::back_inserter(concurrent_copy_list),
+		AddToCopyList(local_directory_name, replace_files)
+		);
 
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+    int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
+		[] (const auto& e) { return ! e.first; });
 
 	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +
@@ -296,8 +319,10 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
 
-    if (concurrent_copy_list.size() != success_counter)
+    if (concurrent_copy_list.size() != success_counter + skipped_files_counter)
         throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+
+	std::vector<fs::path> results;
 
 	for (auto& [remote_file, local_file] : concurrent_copy_list)
 		results.push_back(std::move(local_file));
@@ -317,12 +342,34 @@ std::vector<fs::path> DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDate
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_prefix, int max_at_a_time, bool replace_files)
+auto DailyIndexFileRetriever::AddToConcurrentCopyList(const fs::path& local_directory_prefix, bool replace_files)
+{
+	//	construct our lambda function here so it doesn't clutter up our code below.
+
+	return [this, local_directory_prefix, replace_files](const auto& remote_file_name)
+	{
+		auto local_daily_index_file_name = this->MakeLocalIndexFilePath(local_directory_prefix, remote_file_name);
+		local_daily_index_file_name /= remote_file_name.filename();
+
+		if (local_daily_index_file_name.extension() == ".gz")
+			local_daily_index_file_name.replace_extension("");
+
+		if (! replace_files && fs::exists(local_daily_index_file_name))
+			return HTTPS_Downloader::copy_file_names({}, local_daily_index_file_name);
+		else
+        {
+		    auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
+            fs::create_directories(local_daily_index_file_directory);
+			return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
+        }
+	};
+}
+
+std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list,
+	const fs::path& local_directory_prefix, int max_at_a_time, bool replace_files)
 {
 	if (remote_file_list.size() < max_at_a_time)
 		return HierarchicalCopyIndexFilesForDateRangeTo(remote_file_list, local_directory_prefix, replace_files);
-
-	std::vector<fs::path> results;
 
 	// we need to create a list of file name pairs -- remote file name, local file name.
 	// we'll pass that list to the downloader and let it manage to process from there.
@@ -330,33 +377,21 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 	// Also, here we will create the directory hierarchies for the to-be downloaded files.
 	// Taking the easy way out so we don't have to worry about file system race conditions.
 
-    int skipped_files_counter = 0;
-
 	HTTPS_Downloader::remote_local_list concurrent_copy_list;
 
-	for (const auto& remote_file_name : remote_file_list)
-	{
-		auto local_daily_index_file_name = MakeLocalIndexFilePath(local_directory_prefix, remote_file_name);
-
-		if (local_daily_index_file_name.extension() == ".gz")
-			local_daily_index_file_name.replace_extension("");
-
-		if (! replace_files && fs::exists(local_daily_index_file_name))
-		{
-			results.push_back(std::move(local_daily_index_file_name));
-			++skipped_files_counter;
-		}
-		else
-        {
-		    auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
-            fs::create_directories(local_daily_index_file_directory);
-    		concurrent_copy_list.emplace_back(std::pair(remote_file_name, local_daily_index_file_name));
-        }
-	}
+	std::transform(
+		std::begin(remote_file_list),
+		std::end(remote_file_list),
+		std::back_inserter(concurrent_copy_list),
+		AddToConcurrentCopyList(local_directory_prefix, replace_files)
+		);
 
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+    int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
+		[] (const auto& e) { return ! e.first; });
 
 	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
 		" Skipped: " + std::to_string(skipped_files_counter) +
@@ -367,6 +402,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 
     if (concurrent_copy_list.size() != success_counter)
         throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+
+	std::vector<fs::path> results;
 
 	for (auto& [remote_file, local_file] : concurrent_copy_list)
 		results.push_back(std::move(local_file));

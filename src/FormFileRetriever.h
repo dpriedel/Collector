@@ -99,6 +99,10 @@ class FormFileRetriever
 
 		fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name);
 
+		auto ExtractFileName(int& found_a_form);
+
+		auto AddToCopyList(const std::string& form_name, const fs::path& local_form_directory, bool replace_files);
+
 		// ====================  DATA MEMBERS  =======================================
 
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
