@@ -159,6 +159,8 @@ auto QuarterlyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_
 
 		if (! replace_files && fs::exists(local_quarterly_index_file_name))
 		{
+			// we use an empty remote file name to indicate no copy needed as the local file already exists.
+			
 			return HTTPS_Downloader::copy_file_names({}, local_quarterly_index_file_name);
 		}
 		else
@@ -194,6 +196,8 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 	// now, we expect some magic to happen here...
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+
+    // if the first file name in the pair is empty, there was no download done.
 
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });

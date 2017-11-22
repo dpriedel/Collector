@@ -380,6 +380,8 @@ auto FormFileRetriever::AddToCopyList(const std::string& form_name, const fs::pa
         }
         else
         {
+            // we use an empty remote file name to indicate no copy needed as the local file already exists.
+
             return HTTPS_Downloader::copy_file_names({}, local_file_name);
         }
 	};
@@ -414,6 +416,8 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
 
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
+    // if the first file name in the pair is empty, there was no download done.
+    
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
 
