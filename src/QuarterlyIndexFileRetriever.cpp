@@ -73,7 +73,8 @@ fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (const bg::date
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
 
-fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_file_name, const fs::path& local_directory_name, bool replace_files)
+fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_file_name, const fs::path& local_directory_name,
+    bool replace_files)
 {
 	auto local_quarterly_index_file_name = this->MakeLocalIndexFilePath(local_directory_name, remote_file_name);
 
@@ -88,7 +89,8 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 
 	the_server_.DownloadFile(remote_file_name, local_quarterly_index_file_name);
 
-	poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: " + local_quarterly_index_file_name.string());
+	poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: "
+        + local_quarterly_index_file_name.string());
 
 	return local_quarterly_index_file_name;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
@@ -160,7 +162,7 @@ auto QuarterlyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_
 		if (! replace_files && fs::exists(local_quarterly_index_file_name))
 		{
 			// we use an empty remote file name to indicate no copy needed as the local file already exists.
-			
+
 			return HTTPS_Downloader::copy_file_names({}, local_quarterly_index_file_name);
 		}
 		else

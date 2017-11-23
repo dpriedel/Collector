@@ -239,12 +239,14 @@ void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::is
     // avoid stream formatting by using streambufs
 
     errno = 0;
-    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {local_file});
+    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(),
+        std::ostreambuf_iterator<char> {local_file});
     local_file.close();
     if (download_result.failed())
     {
         std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+            + local_file_name.string()};
     }
 }
 
@@ -268,7 +270,8 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::is
     if (download_result.failed())
     {
         std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+            + local_file_name.string()};
     }
 }
 
@@ -287,7 +290,8 @@ void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::ist
         // translate Poco exception to same one we use for gz files.
 
         std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string()};
+        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: "
+            + local_file_name.string()};
     }
 }
 
@@ -359,7 +363,8 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
                 poco_error(the_logger_, e.what());
                 auto ec = e.code();
-                poco_error(the_logger_, std::string{"Category: "} + ec.category().name() + ". Value: " + std::to_string(ec.value()) + ". Message: " + ec.message());
+                poco_error(the_logger_, std::string{"Category: "} + ec.category().name() + ". Value: " + std::to_string(ec.value()) + ". Message: "
+                    + ec.message());
                 ++error_counter;
 
                 // OK, let's remember our first time here.

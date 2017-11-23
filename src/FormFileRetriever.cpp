@@ -246,7 +246,8 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 	return results;
 }		// -----  end of method FormFileRetriever::FindFilesForForms  -----
 
-FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types, const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map)
+FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const std::vector<std::string>& the_form_types,
+    const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map)
 {
     // separately process each file in our list and accumulate the results
 
@@ -354,7 +355,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<fs::path>& rem
 		". Errors: " + std::to_string(error_counter) + ". for files for form type: " + form_type);
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
 
-fs::path FormFileRetriever::MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name)
+fs::path FormFileRetriever::MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name,
+    const std::string& form_name)
 {
     auto CIK_directory{remote_file_name.parent_path().filename()};	//	pull off the CIK directory name
     auto local_dir_name{local_form_directory_name};
@@ -417,7 +419,7 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
 	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
     // if the first file name in the pair is empty, there was no download done.
-    
+
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
 

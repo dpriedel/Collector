@@ -118,7 +118,8 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
 
-	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: " + bg::to_simple_string(end_date_));
+	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: "
+		+ bg::to_simple_string(end_date_));
 
 	remote_daily_index_file_name_list_.clear();
 
@@ -203,7 +204,8 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::
 	return directory_list;
 }		// -----  end of method DailyIndexFileRetriever::GetRemoteIndexList  -----
 
-fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name, bool replace_files)
+fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name,
+	bool replace_files)
 {
 	auto local_daily_index_file_name = local_directory_name;
 	local_daily_index_file_name /= remote_daily_index_file_name.filename();
@@ -221,14 +223,16 @@ fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
+	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: "
+		+ local_daily_index_file_name.string());
 
 	return local_daily_index_file_name;
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
 
-fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_prefix, bool replace_files)
+fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_prefix,
+	bool replace_files)
 {
 	auto local_daily_index_file_name = MakeLocalIndexFilePath(local_directory_prefix, remote_daily_index_file_name);
 
@@ -246,7 +250,8 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: " + local_daily_index_file_name.string());
+	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: "
+		+ local_daily_index_file_name.string());
 
 	return local_daily_index_file_name;
 
@@ -334,7 +339,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_prefix, bool replace_files)
+std::vector<fs::path> DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo (const std::vector<fs::path>& remote_file_list,
+	const fs::path& local_directory_prefix, bool replace_files)
 {
 	std::vector<fs::path> results;
 
