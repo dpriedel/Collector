@@ -113,7 +113,7 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const bg::d
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
-const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+const std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
@@ -121,12 +121,13 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: "
 		+ bg::to_simple_string(end_date_));
 
-	remote_daily_index_file_name_list_.clear();
-
 	auto looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
 	auto looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
 
 	auto remote_directory_list = MakeIndexFileNamesForDateRange(begin_date, end_date);
+
+    // index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
+    // so this function takes that into account.
 
 	auto is_between{[&looking_for_start, &looking_for_end](const std::string& elem)
 	{
@@ -134,13 +135,13 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 		&& elem.compare(0, looking_for_start.size(), looking_for_start) >= 0); }
 	};
 
+	std::vector<fs::path> remote_daily_index_file_name_list;
+
 	for (const auto& remote_directory : remote_directory_list)
 	{
 		decltype(auto) directory_list = this->GetRemoteIndexList(remote_directory);
 
 		std::vector<std::string> found_files;
-
-		// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
 		std::copy_if(
 			directory_list.crbegin(),
@@ -153,18 +154,18 @@ const std::vector<fs::path>& DailyIndexFileRetriever::FindRemoteIndexFileNamesFo
 		std::transform(
 			found_files.cbegin(),
 			found_files.cend(),
-			std::back_inserter(remote_daily_index_file_name_list_),
+			std::back_inserter(remote_daily_index_file_name_list),
 				[remote_directory](const auto& e){ auto fpath{remote_directory}; return std::move(fpath /= e); });
 	}
-	poco_assert_msg(! remote_daily_index_file_name_list_.empty(), ("Can't find daily index files for date range: "
+	poco_assert_msg(! remote_daily_index_file_name_list.empty(), ("Can't find daily index files for date range: "
 		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
 
-	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.back().filename().string().substr(5, 8));
-	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list_.front().filename().string().substr(5, 8));
+	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.back().filename().string().substr(5, 8));
+	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.front().filename().string().substr(5, 8));
 
-	poco_debug(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list_.size()) + " files for date range.");
+	poco_debug(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list.size()) + " files for date range.");
 
-	return remote_daily_index_file_name_list_;
+	return remote_daily_index_file_name_list;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
 const std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)

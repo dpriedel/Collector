@@ -147,9 +147,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 	//	just in case there are duplicates in the forms list
 
-	auto pos = std::unique(forms_list.begin(), forms_list.end());
-	if (pos != forms_list.end())
-		forms_list.erase(pos);
+    forms_list.erase(std::unique(forms_list.begin(), forms_list.end()), forms_list.end());
 
 	FormsAndFilesList results;
 
@@ -214,6 +212,8 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 		if (list_begin == list_end)
         {
+            // found no lines in index file for our form type.
+
 			poco_debug(the_logger_, "F: Found " + std::to_string(found_a_form) + " files for form: " + the_form);
 			continue;
         }

@@ -43,7 +43,12 @@ namespace fs = std::experimental::filesystem;
 
 #include <Poco/URI.h>
 #include "Poco/Net/Context.h"
-#include "Poco/Net/InvalidCertificateHandler.h"
+// #include "Poco/Net/InvalidCertificateHandler.h"
+#ifdef NOCERTTEST
+    #include "Poco/Net/AcceptCertificateHandler.h"
+#else
+    #include "Poco/Net/ConsoleCertificateHandler.h"
+#endif
 #include "Poco/SharedPtr.h"
 #include "Poco/Logger.h"
 
@@ -120,7 +125,12 @@ class HTTPS_Downloader
 		std::string server_name_;
 		fs::path path_;
 
-		Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
+		#ifdef NOCERTTEST
+			Poco::SharedPtr<Poco::Net::AcceptCertificateHandler> ptrCert_; // ask the user via console
+		#else
+			Poco::SharedPtr<Poco::Net::ConsoleCertificateHandler> ptrCert_; // ask the user via console
+		#endif
+		// Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
 		Poco::Net::Context::Ptr ptrContext_;
 
 		std::unique_ptr<SSLInitializer> ssl_initializer_;

@@ -57,11 +57,11 @@
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 
-#ifdef NOCERTTEST
-    #include "Poco/Net/AcceptCertificateHandler.h"
-#else
-    #include "Poco/Net/ConsoleCertificateHandler.h"
-#endif
+// #ifdef NOCERTTEST
+//     #include "Poco/Net/AcceptCertificateHandler.h"
+// #else
+//     #include "Poco/Net/ConsoleCertificateHandler.h"
+// #endif
 
 // for .zip files, we need to use Poco's tools.
 
@@ -118,7 +118,7 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger&
 #endif
 
 	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
-		9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+		9, true, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
 
 	server_uri_ = server_name_;
@@ -343,7 +343,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
         // lastly, throw in our delay just in case we need it.
 
-        tasks.push_back(std::async(std::launch::async, &HTTPS_Downloader::Timer, this));
+        tasks.emplace_back(std::async(std::launch::async, &HTTPS_Downloader::Timer, this));
 
         // now, let's wait till they're all done
         // and then we'll do the next bunch.
