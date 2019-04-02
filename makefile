@@ -1,17 +1,17 @@
-# This file is part of CollectEDGARData.
+# This file is part of CollectorApp.
 
-# CollectEDGARData is free software: you can redistribute it and/or modify
+# CollectorApp is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-# CollectEDGARData is distributed in the hope that it will be useful,
+# CollectorApp is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>.
+# along with CollectorApp.  If not, see <http://www.gnu.org/licenses/>.
 
 # see link below for make file dependency magic
 #
@@ -30,7 +30,7 @@ endif
 
 #	common definitions
 
-OUTFILE := CollectEDGARData
+OUTFILE := CollectorApp
 
 CFG_INC := -I./src -I$(BOOSTDIR) -I/extra/gcc/cpp-json/include/
 
@@ -42,7 +42,7 @@ SRCS1 := $(SDIR1)/Main.cpp
 SDIR2 := ./src
 SRCS2 := $(SDIR2)/HTTPS_Downloader.cpp $(SDIR2)/DailyIndexFileRetriever.cpp \
 		 $(SDIR2)/FormFileRetriever.cpp $(SDIR2)/QuarterlyIndexFileRetriever.cpp \
-		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectEDGARApp.cpp $(SDIR2)/PathNameGenerator.cpp
+		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectorApp.cpp $(SDIR2)/PathNameGenerator.cpp
 
 
 SRCS := $(SRCS1) $(SRCS2)

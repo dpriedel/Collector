@@ -3,7 +3,7 @@
 //       Filename:  TickerConverter.h
 //
 //    Description:  Header file for class which does file or web based lookup to convert
-//    				a ticker ticker to an EDGAR CIK.
+//    				a ticker ticker to an SEC CIK.
 //
 //        Version:  1.0
 //        Created:  02/06/2014 01:54:27 PM
@@ -19,20 +19,20 @@
 #ifndef TICKERCONVERTER_H_
 #define TICKERCONVERTER_H_
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 #include <map>
@@ -74,7 +74,7 @@ class TickerConverter
 
 		//	NOTE: make this function virtual to run Google MOCK tests for it.
 
-		std::string EDGAR_CIK_Lookup(const std::string& ticker, int pause=1);
+		std::string SEC_CIK_Lookup(const std::string& ticker, int pause=1);
 
 		// ====================  DATA MEMBERS  =======================================
 

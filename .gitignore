@@ -7,12 +7,12 @@
 
 #	our test executable(w)
 
-CollectEDGARData
+CollectorApp
 
 #	log file
 
 *log*
 
-.tag*
-
+tag*
+.tags
 .vscode

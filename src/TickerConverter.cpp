@@ -3,7 +3,7 @@
 //       Filename:  TickerConverter.cpp
 //
 //    Description:  Implementation file for class which does a file or web lookup to
-//    				convert a ticker ticker to an EDGAR CIK.
+//    				convert a ticker ticker to an SEC CIK.
 //
 //        Version:  1.0
 //        Created:  02/06/2014 01:57:16 PM
@@ -16,20 +16,20 @@
 //
 // =====================================================================================
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 #include <chrono>
@@ -69,12 +69,12 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 		return pos->second;
 	}
 
-	decltype(auto) cik = EDGAR_CIK_Lookup(ticker, pause);
+	decltype(auto) cik = SEC_CIK_Lookup(ticker, pause);
 	if (cik.empty())
 		cik = NotFound;
 	ticker_to_CIK_[ticker] = cik;
 
-	poco_debug(the_logger_, "T: Found CIK: " + cik + " via EDGAR query.");
+	poco_debug(the_logger_, "T: Found CIK: " + cik + " via SEC query.");
 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
@@ -106,7 +106,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
-std::string TickerConverter::EDGAR_CIK_Lookup (const std::string& ticker, int pause)
+std::string TickerConverter::SEC_CIK_Lookup (const std::string& ticker, int pause)
 {
     // let's use our HTTPS_Downloader class since it knows how to do what we want to do.
 

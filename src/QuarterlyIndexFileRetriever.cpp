@@ -2,7 +2,7 @@
 //
 //       Filename:  QuarterlyIndexFileRetriever.cpp
 //
-//    Description:  Implements a class which knows how to retrieve EDGAR quarterly index files
+//    Description:  Implements a class which knows how to retrieve SEC quarterly index files
 //
 //        Version:  1.0
 //        Created:  01/30/2014 11:23:18 AM
@@ -15,20 +15,20 @@
 //
 // =====================================================================================
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 #include <fstream>
@@ -147,7 +147,7 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesFor
 {
 	std::vector<fs::path> results;
 
-	//	Remember...we are working with compressed directory files on the EDGAR server
+	//	Remember...we are working with compressed directory files on the SEC server
 
 	for (const auto& remote_file : remote_file_list)
 	{

@@ -1,6 +1,6 @@
 // =====================================================================================
 //
-//       Filename:  CollectEDGARApp.cpp
+//       Filename:  CollectorApp.cpp
 //
 //    Description:  main application
 //
@@ -15,25 +15,25 @@
 //
 // =====================================================================================
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 //--------------------------------------------------------------------------------------
-//       Class:  CollectEDGARApp
-//      Method:  CollectEDGARApp
+//       Class:  CollectorApp
+//      Method:  CollectorApp
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
@@ -49,7 +49,7 @@
 #include "Poco/Util/OptionException.h"
 #include "Poco/Util/AbstractConfiguration.h"
 
-#include "CollectEDGARApp.h"
+#include "CollectorApp.h"
 
 #include "HTTPS_Downloader.h"
 #include "DailyIndexFileRetriever.h"
@@ -57,21 +57,21 @@
 #include "QuarterlyIndexFileRetriever.h"
 
 
-CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
+CollectorApp::CollectorApp (int argc, char* argv[])
 	: Poco::Util::Application(argc, argv),
     ticker_converter_{logger()}
 
 {
-}  // -----  end of method CollectEDGARApp::CollectEDGARApp  (constructor)  -----
+}  // -----  end of method CollectorApp::CollectorApp  (constructor)  -----
 
-CollectEDGARApp::CollectEDGARApp ()
+CollectorApp::CollectorApp ()
 	: Poco::Util::Application(),
     ticker_converter_{logger()}
 
 {
 }
 
-void CollectEDGARApp::initialize(Application& self)
+void CollectorApp::initialize(Application& self)
 {
 	loadConfiguration(); // load default configuration files, if present
 	Application::initialize(self);
@@ -113,7 +113,7 @@ void CollectEDGARApp::initialize(Application& self)
     // set log level here since options will have been parsed before we get here.
 }
 
-void CollectEDGARApp::printProperties(const std::string& base)
+void CollectorApp::printProperties(const std::string& base)
 {
 	Poco::Util::AbstractConfiguration::Keys keys;
 	config().keys(base, keys);
@@ -140,13 +140,13 @@ void CollectEDGARApp::printProperties(const std::string& base)
 	}
 }
 
-void  CollectEDGARApp::uninitialize()
+void  CollectorApp::uninitialize()
 {
 	// add your own uninitialization code here
 	Application::uninitialize();
 }
 
-void  CollectEDGARApp::reinitialize(Application& self)
+void  CollectorApp::reinitialize(Application& self)
 {
 	Application::reinitialize(self);
 	// add your own reinitialization code here
@@ -170,7 +170,7 @@ void  CollectEDGARApp::reinitialize(Application& self)
     setLogger(the_logger);
 }
 
-void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
+void  CollectorApp::defineOptions(Poco::Util::OptionSet& options)
 {
 	Application::defineOptions(options);
 
@@ -178,161 +178,161 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 		Poco::Util::Option("help", "h", "display help information on command line arguments")
 			.required(false)
 			.repeatable(false)
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::handleHelp)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::handleHelp)));
 
 	options.addOption(
 		Poco::Util::Option("gtest_filter", "", "select which tests to run.")
 			.required(false)
 			.repeatable(true)
 			.argument("name=value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::handleDefine)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::handleDefine)));
 
 	options.addOption(
 		Poco::Util::Option("begin-date", "", "retrieve files with dates greater than or equal to.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_begin_date)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_begin_date)));
 
 	options.addOption(
 		Poco::Util::Option("end-date", "", "retrieve files with dates less than or equal to.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_end_date)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_end_date)));
 
 	options.addOption(
 		Poco::Util::Option("index-dir", "", "directory index files are downloaded to.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_index_dir)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_index_dir)));
 
 	options.addOption(
 		Poco::Util::Option("form-dir", "", "directory form files are downloaded to.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_form_dir)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_form_dir)));
 
 	options.addOption(
-		Poco::Util::Option("host", "", "Server address to use for EDGAR.")
+		Poco::Util::Option("host", "", "Server address to use for SEC.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_HTTPS_host)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_HTTPS_host)));
 
 	// options.addOption(
-	// 	Poco::Util::Option("login", "", "email address to use for anonymous login to EDGAR.")
+	// 	Poco::Util::Option("login", "", "email address to use for anonymous login to SEC.")
 	// 		.required(true)
 	// 		.repeatable(false)
 	// 		.argument("value")
-	// 		.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_login_ID)));
+	// 		.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_login_ID)));
 
 	options.addOption(
 		Poco::Util::Option("mode", "", "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_mode)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_mode)));
 
 	options.addOption(
 		Poco::Util::Option("form", "", "name of form type[s] we are downloading. Default is '10-Q'.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_form)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_form)));
 
 	options.addOption(
 		Poco::Util::Option("ticker", "", "ticker[s] to lookup and filter form downloads.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker)));
 
 	options.addOption(
 		Poco::Util::Option("log-path", "", "path name for log file.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_log_path)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_log_path)));
 
 	options.addOption(
 		Poco::Util::Option("ticker-cache", "", "path name for ticker-to-CIK cache file.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker_cache)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker_cache)));
 
 	options.addOption(
 		Poco::Util::Option("ticker-file", "", "path name for file with list of ticker symbols to convert to CIKs.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_ticker_file)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker_file)));
 
 	options.addOption(
 		Poco::Util::Option("replace-index-files", "", "over write local index files if specified. Default is 'false'")
 			.required(false)
 			.repeatable(false)
 			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_replace_index_files)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_replace_index_files)));
 
 	options.addOption(
 		Poco::Util::Option("replace-form-files", "", "over write local form files if specified. Default is 'false'")
 			.required(false)
 			.repeatable(false)
 			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_replace_form_files)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_replace_form_files)));
 
 	options.addOption(
 		Poco::Util::Option("index-only", "", "do not download form files.. Default is 'false'")
 			.required(false)
 			.repeatable(false)
 			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_index_only)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_index_only)));
 
 	options.addOption(
 		Poco::Util::Option("pause", "", "how many seconds to wait between downloads. Default: 1 second.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_pause)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_pause)));
 
 	options.addOption(
 		Poco::Util::Option("max", "", "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_max)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_max)));
 
 	options.addOption(
 		Poco::Util::Option("log-level", "l", "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_log_level)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_log_level)));
 
 	options.addOption(
 		Poco::Util::Option("concurrent", "k", "Maximun number of concurrent downloads. Default of 10.")
 			.required(false)
 			.repeatable(false)
 			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectEDGARApp>(this, &CollectEDGARApp::store_concurrency_limit)));
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_concurrency_limit)));
 
 	/* options.addOption( */
 	/* 	Option("define", "D", "define a configuration property") */
 	/* 		.required(false) */
 	/* 		.repeatable(true) */
 	/* 		.argument("name=value") */
-	/* 		.callback(OptionCallback<EDGAR_UnitTest>(this, &EDGAR_UnitTest::handleDefine))); */
+	/* 		.callback(OptionCallback<SEC_UnitTest>(this, &SEC_UnitTest::handleDefine))); */
 
 	/* options.addOption( */
 	/* 	Option("config-file", "f", "load configuration data from a file") */
 	/* 		.required(false) */
 	/* 		.repeatable(true) */
 	/* 		.argument("file") */
-	/* 		.callback(OptionCallback<EDGAR_UnitTest>(this, &EDGAR_UnitTest::handleConfig))); */
+	/* 		.callback(OptionCallback<SEC_UnitTest>(this, &SEC_UnitTest::handleConfig))); */
 
 	/* options.addOption( */
 	/* 	Option("bind", "b", "bind option value to test.property") */
@@ -342,33 +342,33 @@ void  CollectEDGARApp::defineOptions(Poco::Util::OptionSet& options)
 	/* 		.binding("test.property")); */
 }
 
-void  CollectEDGARApp::handleHelp(const std::string& name, const std::string& value)
+void  CollectorApp::handleHelp(const std::string& name, const std::string& value)
 {
 	help_requested_ = true;
 	displayHelp();
 	stopOptionsProcessing();
 }
 
-void  CollectEDGARApp::handleDefine(const std::string& name, const std::string& value)
+void  CollectorApp::handleDefine(const std::string& name, const std::string& value)
 {
 	defineProperty(value);
 }
 
-void  CollectEDGARApp::handleConfig(const std::string& name, const std::string& value)
+void  CollectorApp::handleConfig(const std::string& name, const std::string& value)
 {
 	loadConfiguration(value);
 }
 
-void CollectEDGARApp::displayHelp()
+void CollectorApp::displayHelp()
 {
 	Poco::Util::HelpFormatter helpFormatter(options());
 	helpFormatter.setCommand(commandName());
 	helpFormatter.setUsage("OPTIONS");
-	helpFormatter.setHeader("Program which manages the download of selected files from the SEC's EDGAR FTP server.");
+	helpFormatter.setHeader("Program which manages the download of selected files from the SEC's SEC FTP server.");
 	helpFormatter.format(std::cout);
 }
 
-void  CollectEDGARApp::defineProperty(const std::string& def)
+void  CollectorApp::defineProperty(const std::string& def)
 {
 	std::string name;
 	std::string value;
@@ -385,7 +385,7 @@ void  CollectEDGARApp::defineProperty(const std::string& def)
 	config().setString(name, value);
 }
 
-int  CollectEDGARApp::main(const ArgVec& args)
+int  CollectorApp::main(const ArgVec& args)
 {
 	if (!help_requested_)
 	{
@@ -394,7 +394,7 @@ int  CollectEDGARApp::main(const ArgVec& args)
 	return Application::EXIT_OK;
 }
 
-void CollectEDGARApp::Do_Main()
+void CollectorApp::Do_Main()
 
 {
 	Do_StartUp();
@@ -420,12 +420,12 @@ void CollectEDGARApp::Do_Main()
 }
 
 
-void CollectEDGARApp::Do_StartUp ()
+void CollectorApp::Do_StartUp ()
 {
 	logger().information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
-}		// -----  end of method CollectEDGARApp::Do_StartUp  -----
+}		// -----  end of method CollectorApp::Do_StartUp  -----
 
-void CollectEDGARApp::Do_CheckArgs ()
+void CollectorApp::Do_CheckArgs ()
 {
 	poco_assert_msg(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", ("Mode must be either 'daily','quarterly' or 'ticker-only' ==> " + mode_).c_str());
 
@@ -463,9 +463,9 @@ void CollectEDGARApp::Do_CheckArgs ()
 		x.parse_string(form_);
 	}
 
-}		// -----  end of method CollectEDGARApp::Do_CheckArgs  -----
+}		// -----  end of method CollectorApp::Do_CheckArgs  -----
 
-void CollectEDGARApp::Do_Run ()
+void CollectorApp::Do_Run ()
 {
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.UseCacheFile(ticker_cache_file_name_);
@@ -483,22 +483,22 @@ void CollectEDGARApp::Do_Run ()
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.SaveCIKDataToFile();
 
-}		// -----  end of method CollectEDGARApp::Do_Run  -----
+}		// -----  end of method CollectorApp::Do_Run  -----
 
-void CollectEDGARApp::Do_Run_TickerLookup ()
+void CollectorApp::Do_Run_TickerLookup ()
 {
 	for (const auto& ticker : ticker_list_)
 		ticker_converter_.ConvertTickerToCIK(ticker);
 
-}		// -----  end of method CollectEDGARApp::Do_Run_tickerLookup  -----
+}		// -----  end of method CollectorApp::Do_Run_tickerLookup  -----
 
-void CollectEDGARApp::Do_Run_TickerFileLookup ()
+void CollectorApp::Do_Run_TickerFileLookup ()
 {
 	ticker_converter_.ConvertTickerFileToCIKs(ticker_list_file_name_, pause_);
 
-}		// -----  end of method CollectEDGARApp::Do_Run_TickerFileLookup  -----
+}		// -----  end of method CollectorApp::Do_Run_TickerFileLookup  -----
 
-void CollectEDGARApp::Do_Run_DailyIndexFiles ()
+void CollectorApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
 	HTTPS_Downloader a_server{HTTPS_host_, logger()};
@@ -563,9 +563,9 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles ()
 		}
 	}
 
-}		// -----  end of method CollectEDGARApp::Do_Run_DailyIndexFiles  -----
+}		// -----  end of method CollectorApp::Do_Run_DailyIndexFiles  -----
 
-void CollectEDGARApp::Do_Run_QuarterlyIndexFiles ()
+void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 {
 	Do_TickerMap_Setup();
 
@@ -623,28 +623,28 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles ()
 		}
 	}
 
-}		// -----  end of method CollectEDGARApp::Do_Run_QuarterlyIndexFiles  -----
+}		// -----  end of method CollectorApp::Do_Run_QuarterlyIndexFiles  -----
 
-void CollectEDGARApp::Do_TickerMap_Setup ()
+void CollectorApp::Do_TickerMap_Setup ()
 {
 	for (const auto& ticker : ticker_list_)
 		ticker_map_[ticker] = ticker_converter_.ConvertTickerToCIK(ticker);
 
-}		// -----  end of method CollectEDGARApp::Do_TickerMap_Setup  -----
+}		// -----  end of method CollectorApp::Do_TickerMap_Setup  -----
 
-void CollectEDGARApp::Do_Quit ()
+void CollectorApp::Do_Quit ()
 {
 	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
-}		// -----  end of method CollectEDGARApp::Do_Quit  -----
+}		// -----  end of method CollectorApp::Do_Quit  -----
 
-void CollectEDGARApp::comma_list_parser::parse_string (const std::string& comma_list)
+void CollectorApp::comma_list_parser::parse_string (const std::string& comma_list)
 {
 	boost::algorithm::split(destination_, comma_list, boost::algorithm::is_any_of(seperator_));
 
 	return ;
 }		// -----  end of method comma_list_parser::parse_string  -----
 
-void CollectEDGARApp::LogLevelValidator::Validate(const Poco::Util::Option& option, const std::string& value)
+void CollectorApp::LogLevelValidator::Validate(const Poco::Util::Option& option, const std::string& value)
 {
     if (value != "error" && value != "none" && value != "information" && value != "debug")
         throw Poco::Util::OptionException("Log level must be: 'none|error|information|debug'");

@@ -1,6 +1,6 @@
 // =====================================================================================
 //
-//       Filename:  CollectEDGARApp.h
+//       Filename:  CollectorApp.h
 //
 //    Description:  main application
 //
@@ -15,29 +15,29 @@
 //
 // =====================================================================================
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 // =====================================================================================
-//        Class:  CollectEDGARApp
+//        Class:  CollectorApp
 //  Description:
 // =====================================================================================
 
-#ifndef COLLECTEDGARAPP_H_
-#define COLLECTEDGARAPP_H_
+#ifndef COLLECTORAPP_H_
+#define COLLECTORAPP_H_
 
 // #include <fstream>
 #include <map>
@@ -62,14 +62,14 @@ namespace fs = std::filesystem;
 
 #include "TickerConverter.h"
 
-class CollectEDGARApp : public Poco::Util::Application
+class CollectorApp : public Poco::Util::Application
 {
 
 public:
 
-	CollectEDGARApp(int argc, char* argv[]);
-	CollectEDGARApp(const CollectEDGARApp& rhs) = delete;
-    CollectEDGARApp();
+	CollectorApp(int argc, char* argv[]);
+	CollectorApp(const CollectorApp& rhs) = delete;
+    CollectorApp();
 
 protected:
 
@@ -188,6 +188,6 @@ private:
 	bool index_only_{false};			//	do no download any form files
 	bool help_requested_{false};
 
-}; // -----  end of class CollectEDGARApp  -----
+}; // -----  end of class CollectorApp  -----
 
-#endif /* COLLECTEDGARAPP_H_ */
+#endif /* COLLECTORAPP_H_ */

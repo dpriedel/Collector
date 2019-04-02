@@ -2,7 +2,7 @@
 //
 //       Filename:  PathNameGenerator.h
 //
-//    Description:  Implements class which knows how to generate EDGAR index file path names
+//    Description:  Implements class which knows how to generate SEC index file path names
 //
 //        Version:  1.0
 //        Created:  06/29/2017 09:14:10 AM
@@ -15,20 +15,20 @@
 //
 // =====================================================================================
 
-	/* This file is part of CollectEDGARData. */
+	/* This file is part of Collector. */
 
-	/* CollectEDGARData is free software: you can redistribute it and/or modify */
+	/* Collector is free software: you can redistribute it and/or modify */
 	/* it under the terms of the GNU General Public License as published by */
 	/* the Free Software Foundation, either version 3 of the License, or */
 	/* (at your option) any later version. */
 
-	/* CollectEDGARData is distributed in the hope that it will be useful, */
+	/* Collector is distributed in the hope that it will be useful, */
 	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
 	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
 	/* GNU General Public License for more details. */
 
 	/* You should have received a copy of the GNU General Public License */
-	/* along with CollectEDGARData.  If not, see <http://www.gnu.org/licenses/>. */
+	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "PathNameGenerator.h"
 
@@ -67,9 +67,9 @@ fs::path GeneratePath(const fs::path& prefix, const bg::date& quarter_begin)
 	auto working_year = quarter_begin.year();
 	auto working_month = quarter_begin.month();
 
-	auto EDGAR_path = prefix;
-	EDGAR_path /= std::to_string(working_year);
-	EDGAR_path /= "QTR" + std::to_string(working_month / 3 + (working_month % 3 == 0 ? 0 : 1));
+	auto SEC_path = prefix;
+	SEC_path /= std::to_string(working_year);
+	SEC_path /= "QTR" + std::to_string(working_month / 3 + (working_month % 3 == 0 ? 0 : 1));
 
-	return EDGAR_path;
+	return SEC_path;
 }

@@ -11,14 +11,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/QuarterlyIndexFileRetriever.o",
             "src/QuarterlyIndexFileRetriever.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/QuarterlyIndexFileRetriever.cpp"
     },
     {
@@ -33,14 +33,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/DailyIndexFileRetriever.o",
             "src/DailyIndexFileRetriever.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/DailyIndexFileRetriever.cpp"
     },
     {
@@ -55,14 +55,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/Main.o",
             "Main.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "Main.cpp"
     },
     {
@@ -77,14 +77,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/HTTPS_Downloader.o",
             "src/HTTPS_Downloader.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/HTTPS_Downloader.cpp"
     },
     {
@@ -99,14 +99,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/PathNameGenerator.o",
             "src/PathNameGenerator.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/PathNameGenerator.cpp"
     },
     {
@@ -121,14 +121,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/TickerConverter.o",
             "src/TickerConverter.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/TickerConverter.cpp"
     },
     {
@@ -143,14 +143,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
             "Release/FormFileRetriever.o",
             "src/FormFileRetriever.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
+        "directory": "/home/dpriedel/projects/github/Collector",
         "file": "src/FormFileRetriever.cpp"
     },
     {
@@ -165,14 +165,14 @@
             "NOCERTTEST",
             "-fPIC",
             "-I./src",
-            "-I/extra/boost/boost-1.67_gcc-8",
+            "-I/extra/boost/boost-1.69_gcc-8",
             "-I/extra/gcc/cpp-json/include/",
             "-march=native",
             "-o",
-            "Release/CollectEDGARApp.o",
-            "src/CollectEDGARApp.cpp"
+            "Release/CollectorApp.o",
+            "src/CollectorApp.cpp"
         ],
-        "directory": "/home/dpriedel/projects/github/CollectEDGARData",
-        "file": "src/CollectEDGARApp.cpp"
+        "directory": "/home/dpriedel/projects/github/Collector",
+        "file": "src/CollectorApp.cpp"
     }
 ]
