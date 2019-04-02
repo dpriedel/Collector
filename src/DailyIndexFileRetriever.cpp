@@ -59,7 +59,7 @@ DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, con
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
 
 
-DailyIndexFileRetriever::~DailyIndexFileRetriever(void)
+DailyIndexFileRetriever::~DailyIndexFileRetriever()
 {
 
 }		// -----  end of method IndexFileRetreiver::~DailyIndexFileRetriever  -----
@@ -437,6 +437,13 @@ fs::path DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 	// (even though we have no edit to enforce that for now.)
 
 	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name.string(), remote_directory_prefix_.string(), "");
+
+    //  there seems to be a change in behaviour.  appending a path starting with '/' actually does an assignment, not an append.
+
+    if (remote_index_name[0] == '/')
+    {
+        remote_index_name.erase(0, 1);
+    }
 	auto local_daily_index_file_name = local_prefix;
 	local_daily_index_file_name /= remote_index_name;
 	return local_daily_index_file_name;

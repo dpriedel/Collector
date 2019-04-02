@@ -104,7 +104,13 @@ fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& lo
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
+    //  there seems to be a change in behaviour.  appending a path starting with '/' actually does an assignment, not an append.
+
 	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_quarterly_index_file_name.string(), remote_directory_prefix_.string(), "");
+    if (remote_index_name[0] == '/')
+    {
+        remote_index_name.erase(0, 1);
+    }
 	auto local_quarterly_index_file_name = local_prefix;
 	local_quarterly_index_file_name /= remote_index_name;
 	local_quarterly_index_file_name.replace_extension("idx");

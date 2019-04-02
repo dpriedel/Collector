@@ -127,7 +127,7 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger&
 }  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
 
 
-HTTPS_Downloader::~HTTPS_Downloader (void)
+HTTPS_Downloader::~HTTPS_Downloader ()
 {
 }		// -----  end of method HTTPS_Downloader::~HTTPS_Downloader  -----
 
@@ -410,10 +410,18 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
     }
 
     if (ep)
+    {
+        poco_error(the_logger_, ("Successes: " + std::to_string(success_counter) + ". Errors: ",
+                    std::to_string(error_counter) + ".").c_str());
         std::rethrow_exception(ep);
+    }
 
     if (HTTPS_Downloader::had_signal_)
+    {
+        poco_error(the_logger_, ("Successes: " + std::to_string(success_counter) + ". Errors: ",
+                    std::to_string(error_counter) + ".").c_str());
         throw std::runtime_error("Received keyboard interrupt.  Processing manually terminated.");
+    }
 
     // if we return successfully, let's just restore the default
 
@@ -424,7 +432,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 }		// -----  end of method HTTPS_Downloader::DownloadFilesConcurrently  -----
 
 
-void HTTPS_Downloader::Timer(void)
+void HTTPS_Downloader::Timer()
 
 {
 	//	given the size of the files we are downloading, it

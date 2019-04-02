@@ -34,12 +34,12 @@
 #ifndef HTTPS_DOWNLOADER_H
 #define HTTPS_DOWNLOADER_H
 
-#include <experimental/filesystem>
+#include <filesystem>
 #include <optional>
 
 // #include <boost/filesystem.hpp>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 #include <Poco/URI.h>
 #include "Poco/Net/Context.h"
@@ -67,7 +67,7 @@ class HTTPS_Downloader
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
 		HTTPS_Downloader(const std::string& server_name, Poco::Logger& the_logger);
-		~HTTPS_Downloader(void);
+		~HTTPS_Downloader();
 
 		// ====================  ACCESSORS     =======================================
 
@@ -98,7 +98,7 @@ class HTTPS_Downloader
 
 		// we use a timer to stay within usage restrictions of EDGAR web site.
 
-		void Timer(void);
+		void Timer();
         static void HandleSignal(int signal);
 
 		class SSLInitializer

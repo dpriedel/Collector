@@ -37,14 +37,14 @@
 
 #include <string>
 #include <vector>
-#include <experimental/filesystem>
+#include <filesystem>
 
 // #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 #include "HTTPS_Downloader.h"
 
@@ -57,15 +57,15 @@ class DailyIndexFileRetriever
 {
 	public:
 		// ====================  LIFECYCLE     =======================================
-		DailyIndexFileRetriever(void) = delete;
+		DailyIndexFileRetriever() = delete;
 		DailyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger);
 
-		~DailyIndexFileRetriever(void);
+		~DailyIndexFileRetriever();
 
 		// ====================  ACCESSORS     =======================================
 
-		const bg::date& GetActualIndexFileDate(void) const { return actual_file_date_; }
-		std::pair<bg::date, bg::date> GetActualDateRange(void) const { return std::pair(actual_start_date_, actual_end_date_); }
+		const bg::date& GetActualIndexFileDate() const { return actual_file_date_; }
+		std::pair<bg::date, bg::date> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
 

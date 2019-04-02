@@ -19,8 +19,8 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.67_gcc-7
-GCCDIR := /extra/gcc/gcc-7
+BOOSTDIR := /extra/boost/boost-1.69_gcc-8
+GCCDIR := /extra/gcc/gcc-8
 CPP := $(GCCDIR)/bin/g++
 
 # If no configuration is specified, "Debug" will be used
@@ -57,7 +57,7 @@ ifeq "$(CFG)" "Debug"
 OUTDIR=Debug
 
 CFG_LIB := -lpthread -lstdc++fs \
-		-L$(BOOSTDIR)/lib -lboost_date_time-mt-d -lboost_iostreams-mt-d \
+		-L$(BOOSTDIR)/lib -lboost_date_time-mt-d-x64 -lboost_iostreams-mt-d-x64 \
 		-L/usr/local/lib -lPocoFoundationd -lPocoUtild -lPocoNetSSLd -lPocoNetd -lPocoZipd
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
@@ -80,7 +80,7 @@ ifeq "$(CFG)" "Release"
 OUTDIR=Release
 
 CFG_LIB := -lpthread -lstdc++fs \
-		-L$(BOOSTDIR)/lib -lboost_date_time-mt -lboost_iostreams-mt \
+		-L$(BOOSTDIR)/lib -lboost_date_time-mt-x64 -lboost_iostreams-mt-x64 \
 		-L/usr/local/lib -lPocoFoundation -lPocoUtil -lPocoNetSSL -lPocoNet -lPocoZip
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
