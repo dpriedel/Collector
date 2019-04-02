@@ -30,7 +30,7 @@ endif
 
 #	common definitions
 
-OUTFILE := CollectorApp
+OUTFILE := Collector
 
 CFG_INC := -I./src -I$(BOOSTDIR) -I/extra/gcc/cpp-json/include/
 
