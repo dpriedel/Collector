@@ -41,13 +41,13 @@
 
 // #include <fstream>
 #include <map>
-#include <experimental/filesystem>
+#include <filesystem>
 
 // #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 namespace bg = boost::gregorian;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 #include "Poco/Util/Application.h"
 #include "Poco/Util/Option.h"
@@ -93,18 +93,18 @@ protected:
 
 	void printProperties(const std::string& base);
 
-	void	Do_Main (void);
-	void	Do_StartUp (void);
-	void	Do_CheckArgs (void);
-	void	Do_Run (void);
-	void	Do_Quit (void);
+	void	Do_Main ();
+	void	Do_StartUp ();
+	void	Do_CheckArgs ();
+	void	Do_Run ();
+	void	Do_Quit ();
 
-	void Do_Run_DailyIndexFiles(void);
-	void Do_Run_QuarterlyIndexFiles(void);
-	void Do_Run_TickerLookup(void);
-	void Do_Run_TickerFileLookup(void);
+	void Do_Run_DailyIndexFiles();
+	void Do_Run_QuarterlyIndexFiles();
+	void Do_Run_TickerLookup();
+	void Do_Run_TickerFileLookup();
 
-	void Do_TickerMap_Setup(void);
+	void Do_TickerMap_Setup();
 
 		// ====================  DATA MEMBERS  =======================================
 
@@ -122,7 +122,7 @@ private:
 	};
     class LogLevelValidator : public Poco::Util::Validator
     {
-        LogLevelValidator(void) : Validator() {}
+        LogLevelValidator() : Validator() {}
 
         virtual void Validate(const Poco::Util::Option& option, const std::string& value);
     };

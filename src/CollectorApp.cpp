@@ -64,7 +64,7 @@ CollectEDGARApp::CollectEDGARApp (int argc, char* argv[])
 {
 }  // -----  end of method CollectEDGARApp::CollectEDGARApp  (constructor)  -----
 
-CollectEDGARApp::CollectEDGARApp (void)
+CollectEDGARApp::CollectEDGARApp ()
 	: Poco::Util::Application(),
     ticker_converter_{logger()}
 
@@ -96,14 +96,14 @@ void CollectEDGARApp::initialize(Application& self)
 
 	the_logger.information("Command line:");
 	std::ostringstream ostr;
-	for (const auto it : argv())
+	for (const auto& it : argv())
 	{
 		ostr << it << ' ';
 	}
 	the_logger.information(ostr.str());
 	the_logger.information("Arguments to main():");
     auto args = argv();
-	for (const auto it : argv())
+	for (const auto& it : argv())
 	{
 		the_logger.information(it);
 	}
@@ -130,7 +130,7 @@ void CollectEDGARApp::printProperties(const std::string& base)
 	}
 	else
 	{
-		for (const auto it : keys)
+		for (const auto& it : keys)
 		{
 			std::string fullKey = base;
 			if (!fullKey.empty()) fullKey += '.';
@@ -378,7 +378,10 @@ void  CollectEDGARApp::defineProperty(const std::string& def)
 		name.assign(def, 0, pos);
 		value.assign(def, pos + 1, def.length() - pos);
 	}
-	else name = def;
+	else
+    {
+        name = def;
+    }
 	config().setString(name, value);
 }
 
@@ -391,7 +394,7 @@ int  CollectEDGARApp::main(const ArgVec& args)
 	return Application::EXIT_OK;
 }
 
-void CollectEDGARApp::Do_Main(void)
+void CollectEDGARApp::Do_Main()
 
 {
 	Do_StartUp();
@@ -417,12 +420,12 @@ void CollectEDGARApp::Do_Main(void)
 }
 
 
-void CollectEDGARApp::Do_StartUp (void)
+void CollectEDGARApp::Do_StartUp ()
 {
 	logger().information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectEDGARApp::Do_StartUp  -----
 
-void CollectEDGARApp::Do_CheckArgs (void)
+void CollectEDGARApp::Do_CheckArgs ()
 {
 	poco_assert_msg(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", ("Mode must be either 'daily','quarterly' or 'ticker-only' ==> " + mode_).c_str());
 
@@ -462,7 +465,7 @@ void CollectEDGARApp::Do_CheckArgs (void)
 
 }		// -----  end of method CollectEDGARApp::Do_CheckArgs  -----
 
-void CollectEDGARApp::Do_Run (void)
+void CollectEDGARApp::Do_Run ()
 {
 	if (! ticker_cache_file_name_.empty())
 		ticker_converter_.UseCacheFile(ticker_cache_file_name_);
@@ -482,20 +485,20 @@ void CollectEDGARApp::Do_Run (void)
 
 }		// -----  end of method CollectEDGARApp::Do_Run  -----
 
-void CollectEDGARApp::Do_Run_TickerLookup (void)
+void CollectEDGARApp::Do_Run_TickerLookup ()
 {
 	for (const auto& ticker : ticker_list_)
 		ticker_converter_.ConvertTickerToCIK(ticker);
 
 }		// -----  end of method CollectEDGARApp::Do_Run_tickerLookup  -----
 
-void CollectEDGARApp::Do_Run_TickerFileLookup (void)
+void CollectEDGARApp::Do_Run_TickerFileLookup ()
 {
 	ticker_converter_.ConvertTickerFileToCIKs(ticker_list_file_name_, pause_);
 
 }		// -----  end of method CollectEDGARApp::Do_Run_TickerFileLookup  -----
 
-void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
+void CollectEDGARApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
 	HTTPS_Downloader a_server{HTTPS_host_, logger()};
@@ -562,7 +565,7 @@ void CollectEDGARApp::Do_Run_DailyIndexFiles (void)
 
 }		// -----  end of method CollectEDGARApp::Do_Run_DailyIndexFiles  -----
 
-void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
+void CollectEDGARApp::Do_Run_QuarterlyIndexFiles ()
 {
 	Do_TickerMap_Setup();
 
@@ -622,14 +625,14 @@ void CollectEDGARApp::Do_Run_QuarterlyIndexFiles (void)
 
 }		// -----  end of method CollectEDGARApp::Do_Run_QuarterlyIndexFiles  -----
 
-void CollectEDGARApp::Do_TickerMap_Setup (void)
+void CollectEDGARApp::Do_TickerMap_Setup ()
 {
 	for (const auto& ticker : ticker_list_)
 		ticker_map_[ticker] = ticker_converter_.ConvertTickerToCIK(ticker);
 
 }		// -----  end of method CollectEDGARApp::Do_TickerMap_Setup  -----
 
-void CollectEDGARApp::Do_Quit (void)
+void CollectEDGARApp::Do_Quit ()
 {
 	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectEDGARApp::Do_Quit  -----
