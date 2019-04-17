@@ -147,7 +147,7 @@ void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 		std::string cik;
 
 		ticker_cache_file >> ticker >> cik;
-		if (! ticker.size() || ! cik.size())
+		if (ticker.empty() || cik.empty())
 			continue;
 
 		ticker_to_CIK_[ticker] = cik;
