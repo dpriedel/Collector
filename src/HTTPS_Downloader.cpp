@@ -44,28 +44,24 @@
 #include <thread>
 #include <system_error>
 
+#include "HTTPS_Downloader.h"
+
 #include <boost/algorithm/string/trim.hpp>
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
-#include "Poco/Bugcheck.h"
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
 
-#include "HTTPS_Downloader.h"
-#include "Poco/Net/HTTPSClientSession.h"
-#include "Poco/Net/SSLManager.h"
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPResponse.h"
+namespace beast = boost::beast; // from <boost/beast.hpp>
+namespace http = beast::http;   // from <boost/beast/http.hpp>
+namespace net = boost::asio;    // from <boost/asio.hpp>
+namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-// #ifdef NOCERTTEST
-//     #include "Poco/Net/AcceptCertificateHandler.h"
-// #else
-//     #include "Poco/Net/ConsoleCertificateHandler.h"
-// #endif
-
-// for .zip files, we need to use Poco's tools.
-
-#include <Poco/Zip/Decompress.h>
 
 #include "cpp-json/json.h"
 
@@ -106,55 +102,66 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, Poco::Logger& the_logger)
-	: server_name_{server_name}, the_logger_{the_logger}
+HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, const std::string& port, Poco::Logger& the_logger)
+	: server_name_{server_name}, port_{port}, ctx{ssl::context::tlsv12_client}, the_logger_{the_logger}
 {
-	ssl_initializer_.reset(new SSLInitializer());
 
-#ifdef NOCERTTEST
-	ptrCert_ = new Poco::Net::AcceptCertificateHandler(false); // always accept FOR TESTING ONLY
-#else
-	ptrCert_ = new Poco::Net::ConsoleCertificateHandler(false); // ask the user
+#ifndef NOCERTTEST
+    load_root_certificates(ctx);
+    ctx.set_verify_mode(ssl::verify_peer);
 #endif
 
-	ptrContext_ = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "", Poco::Net::Context::VERIFY_RELAXED,
-		9, true, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-	Poco::Net::SSLManager::instance().initializeClient(0, ptrCert_, ptrContext_);
-
-	server_uri_ = server_name_;
-	std::string path(server_uri_.getPathAndQuery());
-	if (path.empty()) path = "/";
 }  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
 
 
-HTTPS_Downloader::~HTTPS_Downloader ()
-{
-}		// -----  end of method HTTPS_Downloader::~HTTPS_Downloader  -----
-
 std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
-
 {
-	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
+    tcp::resolver resolver(ioc);
+    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
-	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
+    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
+    {
+        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        throw beast::system_error{ec};
+    }
 
-	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, request.string(), Poco::Net::HTTPMessage::HTTP_1_1);
-	std::ostream& ostr = session.sendRequest(req);
-	req.write(ostr);
+    auto const results = resolver.resolve(server_name_, port_);
 
-	Poco::Net::HTTPResponse res;
-	std::istream& rs = session.receiveResponse(res);
+    beast::get_lowest_layer(stream).connect(results);
 
-	std::string result;
+    stream.handshake(ssl::stream_base::client);
 
-	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
-	{
-		session.reset();
-		throw std::runtime_error(request.string() + ". Result: " + std::to_string(res.getStatus()) +
-			": Unable to complete request with server because: " + res.getReason());
-	}
-	else
-		std::copy(std::istreambuf_iterator<char>(rs), std::istreambuf_iterator<char>(), std::back_inserter(result));
+    http::request<http::string_body> req{http::verb::get, request.c_str(), version_};
+    req.set(http::field::host, server_name_);
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+    http::write(stream, req);
+
+    beast::flat_buffer buffer;
+
+    http::response<http::string_body> res;
+
+    beast::error_code ec;
+
+    http::read(stream, buffer, res, ec);
+    std::cout << "ec: " << ec << '\n';
+    std::string result = res.body();
+
+    // Write the message to standard out
+    std::cout << "whole message: " << res << std::endl;
+    std::cout << "message body: " << result << std::endl;
+
+    stream.shutdown(ec);
+    if(ec == net::error::eof || ec == ssl::error::stream_errors::stream_truncated)
+    {
+        // Rationale:
+        // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+        ec = {};
+    }
+    if(ec)
+    {
+        throw beast::system_error{ec};
+    }
 	return result;
 }
 
@@ -164,90 +171,90 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 	// we will ask for the directory listing in JSON format which means we will
 	// have to parse it out.
 
-	fs::path index_file_name{directory_name};
-	index_file_name /= "index.json";
-	// server_uri_.setPath(directory_name.string());
-
-	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
-
-	auto json_listing = json::parse(index_listing);
-
+//	fs::path index_file_name{directory_name};
+//	index_file_name /= "index.json";
+//	// server_uri_.setPath(directory_name.string());
+//
+//	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
+//
+//	auto json_listing = json::parse(index_listing);
+//
 	std::vector<std::string> results;
 
-	for (auto& e : json::as_array(json_listing["directory"]["item"]))
-		results.emplace_back(json::as_string(e["name"]));
-
-	//	one last thing...let's make sure there's no junk at end of each entry.
-
-	for (auto& x : results)
-		boost::algorithm::trim_right(x);
-
+//	for (auto& e : json::as_array(json_listing["directory"]["item"]))
+//		results.emplace_back(json::as_string(e["name"]));
+//
+//	//	one last thing...let's make sure there's no junk at end of each entry.
+//
+//	for (auto& x : results)
+//		boost::algorithm::trim_right(x);
+//
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
 void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs::path& local_file_name)
 {
-	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
-
-	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
-
-    // but we also need to decompress any zipped files.  Might as well do it here.
-
-    auto remote_ext = remote_file_name.extension();
-    auto local_ext = local_file_name.extension();
-
-    // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
-
-	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
-
-	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
-
-	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
-	std::ostream& ostr = session.sendRequest(req);
-	req.write(ostr);
-
-	Poco::Net::HTTPResponse res;
-	std::istream& remote_file = session.receiveResponse(res);
-
-	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
-	{
-		session.reset();
-		throw std::runtime_error(remote_file_name.string() + ": Result: " + std::to_string(res.getStatus()) +
-			": Unable to download file.");
-	}
-	else
-	{
-		if (! need_to_unzip)
-            DownloadTextFile(local_file_name, remote_file, remote_file_name);
-		else
-		{
-			if (remote_ext == ".gz")
-                DownloadGZipFile(local_file_name, remote_file, remote_file_name);
-			else
-                DownloadZipFile(local_file_name, remote_file, remote_file_name);
-		}
-	}
+//	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
+//
+//	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
+//
+//    // but we also need to decompress any zipped files.  Might as well do it here.
+//
+//    auto remote_ext = remote_file_name.extension();
+//    auto local_ext = local_file_name.extension();
+//
+//    // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
+//
+//	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
+//
+//	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
+//
+//	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
+//	std::ostream& ostr = session.sendRequest(req);
+//	req.write(ostr);
+//
+//	Poco::Net::HTTPResponse res;
+//	std::istream& remote_file = session.receiveResponse(res);
+//
+//	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
+//	{
+//		session.reset();
+//		throw std::runtime_error(remote_file_name.string() + ": Result: " + std::to_string(res.getStatus()) +
+//			": Unable to download file.");
+//	}
+//	else
+//	{
+//		if (! need_to_unzip)
+//            DownloadTextFile(local_file_name, remote_file, remote_file_name);
+//		else
+//		{
+//			if (remote_ext == ".gz")
+//                DownloadGZipFile(local_file_name, remote_file, remote_file_name);
+//			else
+//                DownloadZipFile(local_file_name, remote_file, remote_file_name);
+//		}
+//	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
 void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 {
-    std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
-    if (! local_file || ! remote_file)
-        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
-
-    // avoid stream formatting by using streambufs
-
-    errno = 0;
-    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(),
-        std::ostreambuf_iterator<char> {local_file});
-    local_file.close();
-    if (download_result.failed())
-    {
-        std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
-            + local_file_name.string()};
-    }
+//    std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
+//    if (! local_file || ! remote_file)
+//        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+//
+//    // avoid stream formatting by using streambufs
+//
+//    errno = 0;
+//    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(),
+//        std::ostreambuf_iterator<char> {local_file});
+//    local_file.close();
+//    if (download_result.failed())
+//    {
+//        std::error_code err{errno, std::system_category()};
+//        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+//            + local_file_name.string()};
+//    }
 }
 
 void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
@@ -277,22 +284,22 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::is
 
 void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
 {
-    // zip archives, we need to use Poco because zlib does not handle zip files,
-
-    Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
-    errno = 0;
-    try
-    {
-        expander.decompressAllFiles();
-    }
-    catch (Poco::IOException& e)
-    {
-        // translate Poco exception to same one we use for gz files.
-
-        std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: "
-            + local_file_name.string()};
-    }
+//    // zip archives, we need to use Poco because zlib does not handle zip files,
+//
+//    Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
+//    errno = 0;
+//    try
+//    {
+//        expander.decompressAllFiles();
+//    }
+//    catch (Poco::IOException& e)
+//    {
+//        // translate Poco exception to same one we use for gz files.
+//
+//        std::error_code err{errno, std::system_category()};
+//        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: "
+//            + local_file_name.string()};
+//    }
 }
 
 std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)

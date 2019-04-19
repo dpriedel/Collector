@@ -36,20 +36,18 @@
 
 #include <filesystem>
 #include <optional>
+#include <string>
 
-// #include <boost/filesystem.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/version.hpp>
 
 namespace fs = std::filesystem;
 
-#include <Poco/URI.h>
-#include "Poco/Net/Context.h"
-// #include "Poco/Net/InvalidCertificateHandler.h"
-#ifdef NOCERTTEST
-    #include "Poco/Net/AcceptCertificateHandler.h"
-#else
-    #include "Poco/Net/ConsoleCertificateHandler.h"
+#ifndef NOCERTTEST
+#include "example/common/root_certificates.hpp"
 #endif
-#include "Poco/SharedPtr.h"
 #include "Poco/Logger.h"
 
 
@@ -66,8 +64,8 @@ class HTTPS_Downloader
 
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
-		HTTPS_Downloader(const std::string& server_name, Poco::Logger& the_logger);
-		~HTTPS_Downloader();
+		HTTPS_Downloader(const std::string& server_name, const std::string& port, Poco::Logger& the_logger);
+		~HTTPS_Downloader()=default;
 
 		// ====================  ACCESSORS     =======================================
 
@@ -101,39 +99,20 @@ class HTTPS_Downloader
 		void Timer();
         static void HandleSignal(int signal);
 
-		class SSLInitializer
-		{
-		public:
-			SSLInitializer()
-			{
-				Poco::Net::initializeSSL();
-			}
-
-			~SSLInitializer()
-			{
-				Poco::Net::uninitializeSSL();
-			}
-		};
-
 		void DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
 		void DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
 		void DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
 
 		// ====================  DATA MEMBERS  =======================================
 
-		Poco::URI server_uri_;
 		std::string server_name_;
+        std::string port_ = "443";      // default for SSL
+        int version_ = 11;
+
 		fs::path path_;
-
-		#ifdef NOCERTTEST
-			Poco::SharedPtr<Poco::Net::AcceptCertificateHandler> ptrCert_; // ask the user via console
-		#else
-			Poco::SharedPtr<Poco::Net::ConsoleCertificateHandler> ptrCert_; // ask the user via console
-		#endif
-		// Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> ptrCert_; // ask the user via console
-		Poco::Net::Context::Ptr ptrContext_;
-
-		std::unique_ptr<SSLInitializer> ssl_initializer_;
+        
+        boost::asio::io_context ioc;
+        boost::asio::ssl::context ctx;
 
         Poco::Logger& the_logger_;
 
