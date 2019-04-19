@@ -30,7 +30,7 @@
 	/* You should have received a copy of the GNU General Public License */
 	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
-    // This code is based on sample code from Poco.
+    // This code for basice file retrieval is based on sample code from boost Beast SSL HTTP sync client.
 
 #include <cerrno>
 #include <csignal>
@@ -151,8 +151,12 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
     std::cout << "whole message: " << res << std::endl;
     std::cout << "message body: " << result << std::endl;
 
-    stream.shutdown(ec);
-    if(ec == net::error::eof || ec == ssl::error::stream_errors::stream_truncated)
+    // shutdown without causing a 'stream_truncated' error.
+
+    beast::get_lowest_layer(stream).cancel();
+    beast::get_lowest_layer(stream).close();
+
+    if(ec == net::error::eof)
     {
         // Rationale:
         // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
