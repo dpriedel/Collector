@@ -45,6 +45,9 @@
 
 namespace fs = std::filesystem;
 
+namespace beast = boost::beast; // from <boost/beast.hpp>
+namespace http = beast::http;   // from <boost/beast/http.hpp>
+
 #ifndef NOCERTTEST
 #include "example/common/root_certificates.hpp"
 #endif
@@ -99,9 +102,9 @@ class HTTPS_Downloader
 		void Timer();
         static void HandleSignal(int signal);
 
-		void DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
-		void DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
-		void DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name);
+		void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+		void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+		void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
 
 		// ====================  DATA MEMBERS  =======================================
 

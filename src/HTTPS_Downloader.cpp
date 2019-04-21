@@ -32,17 +32,17 @@
 
     // This code for basice file retrieval is based on sample code from boost Beast SSL HTTP sync client.
 
-#include <cerrno>
-#include <csignal>
 #include <algorithm>
-#include <fstream>
-#include <iterator>
-#include <exception>
-
+#include <cerrno>
 #include <chrono>
+#include <csignal>
+#include <exception>
+#include <fstream>
 #include <future>
-#include <thread>
+#include <iterator>
+#include <sstream>
 #include <system_error>
+#include <thread>
 
 #include "HTTPS_Downloader.h"
 
@@ -141,31 +141,14 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 
     http::response<http::string_body> res;
 
-    beast::error_code ec;
-
-    http::read(stream, buffer, res, ec);
-    std::cout << "ec: " << ec << '\n';
+    http::read(stream, buffer, res);
     std::string result = res.body();
-
-    // Write the message to standard out
-    std::cout << "whole message: " << res << std::endl;
-    std::cout << "message body: " << result << std::endl;
 
     // shutdown without causing a 'stream_truncated' error.
 
     beast::get_lowest_layer(stream).cancel();
     beast::get_lowest_layer(stream).close();
 
-    if(ec == net::error::eof)
-    {
-        // Rationale:
-        // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-        ec = {};
-    }
-    if(ec)
-    {
-        throw beast::system_error{ec};
-    }
 	return result;
 }
 
@@ -175,43 +158,91 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 	// we will ask for the directory listing in JSON format which means we will
 	// have to parse it out.
 
-//	fs::path index_file_name{directory_name};
-//	index_file_name /= "index.json";
-//	// server_uri_.setPath(directory_name.string());
-//
-//	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
-//
-//	auto json_listing = json::parse(index_listing);
-//
+	fs::path index_file_name{directory_name};
+	index_file_name /= "index.json";
+
+	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
+
+	auto json_listing = json::parse(index_listing);
+
 	std::vector<std::string> results;
 
-//	for (auto& e : json::as_array(json_listing["directory"]["item"]))
-//		results.emplace_back(json::as_string(e["name"]));
-//
-//	//	one last thing...let's make sure there's no junk at end of each entry.
-//
-//	for (auto& x : results)
-//		boost::algorithm::trim_right(x);
-//
+	for (auto& e : json::as_array(json_listing["directory"]["item"]))
+    {
+		results.emplace_back(json::as_string(e["name"]));
+    }
+
+	//	one last thing...let's make sure there's no junk at end of each entry.
+
+	for (auto& x : results)
+    {
+		boost::algorithm::trim_right(x);
+    }
+
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
 void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs::path& local_file_name)
 {
-//	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
-//
-//	poco_assert_msg(ssl_initializer_, "Must initialize SSL before interacting with the server.");
-//
-//    // but we also need to decompress any zipped files.  Might as well do it here.
-//
-//    auto remote_ext = remote_file_name.extension();
-//    auto local_ext = local_file_name.extension();
-//
-//    // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
-//
-//	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
-//
+	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
+    // but we also need to decompress any zipped files.  Might as well do it here.
+
+    auto remote_ext = remote_file_name.extension();
+    auto local_ext = local_file_name.extension();
+
+    // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
+
+	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
+
+    tcp::resolver resolver(ioc);
+    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
+
+    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
+    {
+        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        throw beast::system_error{ec};
+    }
+
+    auto const results = resolver.resolve(server_name_, port_);
+
+    beast::get_lowest_layer(stream).connect(results);
+
+    stream.handshake(ssl::stream_base::client);
+
+    http::request<http::string_body> req{http::verb::get, remote_file_name.c_str(), version_};
+    req.set(http::field::host, server_name_);
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+    http::write(stream, req);
+
+    beast::flat_buffer buffer;
+
+    http::response<http::vector_body<char>> res;
+
+    beast::error_code ec;
+    http::read(stream, buffer, res, ec);
+    if (ec != beast::errc::success)
+    {
+		throw std::runtime_error(remote_file_name.string() + ": Result: " + ec.message() +
+			": Unable to download kile.");
+    }
+    std::vector<char> remote_data = res.body();
+
+    // shutdown without causing a 'stream_truncated' error.
+
+    beast::get_lowest_layer(stream).cancel();
+    beast::get_lowest_layer(stream).close();
+
+    if (! need_to_unzip)
+        DownloadTextFile(local_file_name, remote_data, remote_file_name);
+    else
+    {
+        if (remote_ext == ".gz")
+            DownloadGZipFile(local_file_name, remote_data, remote_file_name);
+        else
+            DownloadZipFile(local_file_name, remote_data, remote_file_name);
+    }
 //	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
 //
 //	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
@@ -241,39 +272,42 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 //	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
-void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
-//    std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
-//    if (! local_file || ! remote_file)
-//        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
-//
-//    // avoid stream formatting by using streambufs
-//
-//    errno = 0;
-//    auto download_result = std::copy(std::istreambuf_iterator<char>(remote_file), std::istreambuf_iterator<char>(),
-//        std::ostreambuf_iterator<char> {local_file});
-//    local_file.close();
-//    if (download_result.failed())
-//    {
-//        std::error_code err{errno, std::system_category()};
-//        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
-//            + local_file_name.string()};
-//    }
+    std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
+    if (! local_file || remote_data.empty())
+        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+
+    // we have an array of chars so let's just dump it out.
+
+    errno = 0;
+    decltype(auto) download_result = local_file.write(remote_data.data(), remote_data.size());
+    local_file.close();
+    if (download_result.fail())
+    {
+        std::error_code err{errno, std::system_category()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+            + local_file_name.string()};
+    }
 }
 
-void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     // we are going to decompress on the fly...
 
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
-    if (! expanded_file || ! remote_file)
+    if (! expanded_file || remote_data.empty())
         throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
 
     // for gzipped files, we can use boost (which uses zlib)
+    // we need an appropriate data source.
+    // (expansion filter only seems to work on the input side so some extra steps...)
+
+    boost::iostreams::array_source remote(remote_data.data(), remote_data.size());
 
     boost::iostreams::filtering_istream in;
     in.push(boost::iostreams::gzip_decompressor());
-    in.push(remote_file);
+    in.push(remote);
 
     errno = 0;
     auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
@@ -286,8 +320,33 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, std::is
     }
 }
 
-void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, std::istream& remote_file, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
+    // we are going to decompress on the fly...
+
+    std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
+    if (! expanded_file || remote_data.empty())
+        throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
+
+    // for gzipped files, we can use boost (which uses zlib)
+    // we need an appropriate data source.
+    // (expansion filter only seems to work on the input side so some extra steps...)
+
+    boost::iostreams::array_source remote(remote_data.data(), remote_data.size());
+
+    boost::iostreams::filtering_istream in;
+    in.push(boost::iostreams::zlib_decompressor());
+    in.push(remote);
+
+    errno = 0;
+    auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
+    expanded_file.close();
+    if (download_result.failed())
+    {
+        std::error_code err{errno, std::system_category()};
+        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+            + local_file_name.string()};
+    }
 //    // zip archives, we need to use Poco because zlib does not handle zip files,
 //
 //    Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
