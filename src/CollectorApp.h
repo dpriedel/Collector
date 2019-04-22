@@ -136,6 +136,7 @@ private:
     void inline store_index_dir(const std::string& name, const std::string& value) { local_index_file_directory_ = value; }
     void inline store_form_dir(const std::string& name, const std::string& value) { local_form_file_directory_ = value; }
     void inline store_HTTPS_host(const std::string& name, const std::string& value) { HTTPS_host_ = value; }
+    void inline store_HTTPS_port(const std::string& name, const std::string& value) { HTTPS_port_ = value; }
     // void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
 
     void inline store_log_level(const std::string& name, const std::string& value) { logging_level_ = value; }
@@ -166,6 +167,7 @@ private:
 	std::string ticker_;
 	// std::string login_ID_;
     std::string HTTPS_host_{"https://www.sec.gov"};
+    std::string HTTPS_port_;
     std::string logging_level_{"information"};
 
 	std::vector<std::string> form_list_;

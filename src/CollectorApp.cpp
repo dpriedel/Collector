@@ -222,6 +222,13 @@ void  CollectorApp::defineOptions(Poco::Util::OptionSet& options)
 			.argument("value")
 			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_HTTPS_host)));
 
+	options.addOption(
+		Poco::Util::Option("port", "", "Server port number to use for SEC. Default value is '443'.")
+			.required(false)
+			.repeatable(false)
+			.argument("value")
+			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_HTTPS_port)));
+
 	// options.addOption(
 	// 	Poco::Util::Option("login", "", "email address to use for anonymous login to SEC.")
 	// 		.required(true)
@@ -501,7 +508,7 @@ void CollectorApp::Do_Run_TickerFileLookup ()
 void CollectorApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	HTTPS_Downloader a_server{HTTPS_host_, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_, logger()};
 	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index", logger()};
 
 	Do_TickerMap_Setup();
@@ -569,7 +576,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 {
 	Do_TickerMap_Setup();
 
-	HTTPS_Downloader a_server{HTTPS_host_, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_, logger()};
 	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index", logger()};
 
 	if (begin_date_ == end_date_)

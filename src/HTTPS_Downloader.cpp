@@ -33,6 +33,7 @@
     // This code for basice file retrieval is based on sample code from boost Beast SSL HTTP sync client.
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <chrono>
 #include <csignal>
@@ -55,6 +56,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream.hpp>
+
+#include <zip.h>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>
@@ -218,16 +221,21 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
     beast::flat_buffer buffer;
 
-    http::response<http::vector_body<char>> res;
+    http::response_parser<http::vector_body<char>> res_parser;
+   // Allow for an unlimited body size
+    res_parser.body_limit((std::numeric_limits<std::uint64_t>::max)()); 
 
     beast::error_code ec;
-    http::read(stream, buffer, res, ec);
-    if (ec != beast::errc::success)
+    http::read(stream, buffer, res_parser, ec);
+    auto response_content = res_parser.get();
+//    std::cout << "downloaded: " << ec << '\n';
+//    std:: cout << res.base().result_int() << '\n';
+    if (ec != beast::errc::success || response_content.base().result_int() != 200)
     {
 		throw std::runtime_error(remote_file_name.string() + ": Result: " + ec.message() +
-			": Unable to download kile.");
+			+ "  " + response_content.base().reason().data() + ": Unable to download file.");
     }
-    std::vector<char> remote_data = res.body();
+    std::vector<char> remote_data = response_content.body();
 
     // shutdown without causing a 'stream_truncated' error.
 
@@ -243,33 +251,6 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
         else
             DownloadZipFile(local_file_name, remote_data, remote_file_name);
     }
-//	auto session{Poco::Net::HTTPSClientSession{server_uri_.getHost(), server_uri_.getPort(), ptrContext_}};
-//
-//	Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, remote_file_name.string(), Poco::Net::HTTPMessage::HTTP_1_1);
-//	std::ostream& ostr = session.sendRequest(req);
-//	req.write(ostr);
-//
-//	Poco::Net::HTTPResponse res;
-//	std::istream& remote_file = session.receiveResponse(res);
-//
-//	if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
-//	{
-//		session.reset();
-//		throw std::runtime_error(remote_file_name.string() + ": Result: " + std::to_string(res.getStatus()) +
-//			": Unable to download file.");
-//	}
-//	else
-//	{
-//		if (! need_to_unzip)
-//            DownloadTextFile(local_file_name, remote_file, remote_file_name);
-//		else
-//		{
-//			if (remote_ext == ".gz")
-//                DownloadGZipFile(local_file_name, remote_file, remote_file_name);
-//			else
-//                DownloadZipFile(local_file_name, remote_file, remote_file_name);
-//		}
-//	}
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
 void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
@@ -322,47 +303,85 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, const s
 
 void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
-    // we are going to decompress on the fly...
-
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
     if (! expanded_file || remote_data.empty())
         throw std::runtime_error("Unable to initiate download of remote file: " + remote_file_name.string() + " to local file: " + local_file_name.string());
 
-    // for gzipped files, we can use boost (which uses zlib)
-    // we need an appropriate data source.
-    // (expansion filter only seems to work on the input side so some extra steps...)
+    // for zipped files, we need to use some non-boost code.
+    // we'll try libzip for now.
+    // it's not exactly straight forward to use.  We need to do a buch of setup to work
+    // with an in-memory buffer.
 
-    boost::iostreams::array_source remote(remote_data.data(), remote_data.size());
+    zip_error_t err;
+    zip_error_init(&err);
 
-    boost::iostreams::filtering_istream in;
-    in.push(boost::iostreams::zlib_decompressor());
-    in.push(remote);
+    // we have already downloaded the entire zipped file into a buffer.
+    // now, we need to ziplibify it...
 
-    errno = 0;
-    auto download_result = std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char> {expanded_file});
-    expanded_file.close();
-    if (download_result.failed())
+    zip_source_t* downloaded_raw_zip_data = zip_source_buffer_create(remote_data.data(), remote_data.size(), 0, &err);
+    int err1 = zip_error_code_zip(&err);
+    if (err1)
     {
-        std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
-            + local_file_name.string()};
+        throw std::runtime_error(std::string{"Problem setting up zip data for processing. "} + zip_error_strerror(&err));
     }
-//    // zip archives, we need to use Poco because zlib does not handle zip files,
-//
-//    Poco::Zip::Decompress expander{remote_file, local_file_name.parent_path().string(), true};
-//    errno = 0;
-//    try
-//    {
-//        expander.decompressAllFiles();
-//    }
-//    catch (Poco::IOException& e)
-//    {
-//        // translate Poco exception to same one we use for gz files.
-//
-//        std::error_code err{errno, std::system_category()};
-//        throw std::system_error{err, "Unable to decompress downloaded remote file: " + remote_file_name.string() + " to local file: "
-//            + local_file_name.string()};
-//    }
+
+    zip_t* zip_data_archive = zip_open_from_source(downloaded_raw_zip_data, 0 | ZIP_RDONLY, &err);
+    int err2 = zip_error_code_zip(&err);
+    if (err2)
+    {
+        throw std::runtime_error(std::string{"Problem opening zip data for processing. "} + zip_error_strerror(&err));
+    }
+
+    struct zip_stat st;
+    zip_stat_init(&st);
+    int stat_rc = zip_stat(zip_data_archive, local_file_name.filename().c_str(), 0, &st);
+    if (stat_rc != 0)
+    {
+        auto stat_error = zip_get_error(zip_data_archive);
+        throw std::runtime_error("Unable to find file: " + local_file_name.filename().string() + " in downloaded zip archive.\n"
+                + zip_error_strerror(stat_error));
+    }
+
+    // we're all set now, we've found our data in the archive so
+    // we're just going to chunk through the archive and write the data out.
+    // downloaded files can by 30MB or more in size. Can be smaller too..
+
+    const int buffer_size = 100'000;
+    std::array<char, buffer_size + 100> my_buffer;
+
+    zip_int64_t total_bytes_read = 0;
+    auto downloaded_zip_file = zip_fopen(zip_data_archive, local_file_name.filename().c_str(), ZIP_ER_OK | ZIP_RDONLY);
+    if (downloaded_zip_file == nullptr)
+    {
+        auto stat_error = zip_get_error(zip_data_archive);
+        throw std::runtime_error("Unable to open compressed file: " + local_file_name.string() + 
+                " in archive because: " + zip_error_strerror(stat_error));
+    }
+
+    while (total_bytes_read < st.size)
+    {
+        auto bytes_read = zip_fread(downloaded_zip_file, my_buffer.data(), buffer_size);
+        if (bytes_read == -1)
+        {
+            auto stat_error = zip_get_error(zip_data_archive);
+            throw std::runtime_error(std::string{"Unable to read from zip archive because: "}
+                    + zip_error_strerror(stat_error));
+        }
+        total_bytes_read += bytes_read;
+        
+        decltype(auto) download_result = expanded_file.write(my_buffer.data(), bytes_read);
+        if (download_result.fail())
+        {
+            std::error_code err{errno, std::system_category()};
+            throw std::system_error{err, "Unable to complete download of remote file: " + remote_file_name.string() + " to local file: "
+                + local_file_name.string()};
+        }
+    }
+
+    zip_fclose(downloaded_zip_file);
+    zip_source_close(downloaded_raw_zip_data);
+    zip_error_fini(&err);
+    expanded_file.close();
 }
 
 std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
