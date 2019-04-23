@@ -46,12 +46,10 @@
 namespace fs = std::filesystem;
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
-namespace http = beast::http;   // from <boost/beast/http.hpp>
 
 #ifndef NOCERTTEST
 #include "example/common/root_certificates.hpp"
 #endif
-#include "Poco/Logger.h"
 
 
 // =====================================================================================
@@ -67,7 +65,8 @@ class HTTPS_Downloader
 
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
-		HTTPS_Downloader(const std::string& server_name, const std::string& port, Poco::Logger& the_logger);
+		HTTPS_Downloader (const HTTPS_Downloader& rhs)=delete;                             // constructor
+		HTTPS_Downloader(const std::string& server_name, const std::string& port);
 		~HTTPS_Downloader()=default;
 
 		// ====================  ACCESSORS     =======================================
@@ -116,8 +115,6 @@ class HTTPS_Downloader
         
         boost::asio::io_context ioc;
         boost::asio::ssl::context ctx;
-
-        Poco::Logger& the_logger_;
 
         static bool had_signal_;
 }; // -----  end of class HTTPS_Downloader  -----

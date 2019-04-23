@@ -508,7 +508,7 @@ void CollectorApp::Do_Run_TickerFileLookup ()
 void CollectorApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
 	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index", logger()};
 
 	Do_TickerMap_Setup();
@@ -576,7 +576,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 {
 	Do_TickerMap_Setup();
 
-	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_, logger()};
+	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
 	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index", logger()};
 
 	if (begin_date_ == end_date_)
