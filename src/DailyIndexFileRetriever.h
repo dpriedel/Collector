@@ -58,14 +58,14 @@ class DailyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		DailyIndexFileRetriever() = delete;
-		DailyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger);
+		DailyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix);
 
-		~DailyIndexFileRetriever();
+		~DailyIndexFileRetriever() = default;
 
 		// ====================  ACCESSORS     =======================================
 
-		const bg::date& GetActualIndexFileDate() const { return actual_file_date_; }
-		std::pair<bg::date, bg::date> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
+		[[nodiscard]] const bg::date& GetActualIndexFileDate() const { return actual_file_date_; }
+		[[nodiscard]] std::pair<bg::date, bg::date> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
 
@@ -81,8 +81,8 @@ class DailyIndexFileRetriever
 
 		//	This method treats the date range as a closed interval.
 
-		const std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		const std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
 
 		//	returns the local path name of the downloaded file.
 
@@ -121,8 +121,6 @@ class DailyIndexFileRetriever
 		bg::date end_date_;
 		bg::date actual_start_date_;
 		bg::date actual_end_date_;
-
-        Poco::Logger& the_logger_;
 
 }; // -----  end of class DailyIndexFileRetriever  -----
 

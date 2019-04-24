@@ -509,7 +509,7 @@ void CollectorApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
 	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
-	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index", logger()};
+	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index"};
 
 	Do_TickerMap_Setup();
 
@@ -520,7 +520,7 @@ void CollectorApp::Do_Run_DailyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger()};
+			FormFileRetriever form_file_getter{a_server};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -549,7 +549,7 @@ void CollectorApp::Do_Run_DailyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger()};
+			FormFileRetriever form_file_getter{a_server};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -586,7 +586,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger()};
+			FormFileRetriever form_file_getter{a_server};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -611,7 +611,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server, logger()};
+			FormFileRetriever form_file_getter{a_server};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)

@@ -38,13 +38,17 @@
 #include <exception>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <boost/assert.hpp>
 #include <boost/mp11.hpp>
 
+using sview = std::string_view;
+
 namespace mp11 = boost::mp11;
 
+namespace Collector {
 class AssertionException : public std::invalid_argument
 {
 public:
@@ -54,6 +58,7 @@ public:
     explicit AssertionException(const std::string& what);
 };
 
+}		/* -----  end of namespace Collector  ----- */
 
 // some code to help with putting together error messages,
 
@@ -99,6 +104,28 @@ std::string catenate(Ts&&... ts)
     std::string x;
     ( ... , append_to_string(x, std::forward<Ts>(ts)) );
     return x;
+}
+
+// function to split a string on a delimiter and return a vector of string-views
+
+inline std::vector<sview> split_string(sview string_data, char delim)
+{
+    std::vector<sview> results;
+	for (auto it = 0; it != sview::npos; ++it)
+	{
+		auto pos = string_data.find(delim, it);
+        if (pos != sview::npos)
+        {
+    		results.emplace_back(string_data.substr(it, pos - it));
+        }
+        else
+        {
+    		results.emplace_back(string_data.substr(it));
+            break;
+        }
+		it = pos;
+	}
+    return results;
 }
 
 #endif   /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */

@@ -38,8 +38,6 @@
 #include <string>
 #include <vector>
 #include <filesystem>
-// #include <boost/filesystem.hpp>
-#include "Poco/Logger.h"
 
 namespace fs = std::filesystem;
 
@@ -59,9 +57,9 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (HTTPS_Downloader& a_server, Poco::Logger& the_logger);                   // constructor
+		explicit FormFileRetriever (HTTPS_Downloader& a_server);                   // constructor
 
-		FormFileRetriever(void) = delete;
+		FormFileRetriever() = delete;
 		FormFileRetriever(const FormFileRetriever& rhs) = delete;
 
 		// ====================  ACCESSORS     =======================================
@@ -108,9 +106,6 @@ class FormFileRetriever
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
 		HTTPS_Downloader& the_server_;
-		// fs::path local_form_directory_name_;
-
-        Poco::Logger& the_logger_;
 
 }; // -----  end of class FormFileRetriever  -----
 
