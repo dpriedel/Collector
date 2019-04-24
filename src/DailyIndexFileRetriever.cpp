@@ -38,13 +38,12 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
-//#include <boost/date_time/posix_time/posix_time.hpp>
 
-//namespace bgpt = boost::posix_time;
-
+#include "spdlog/spdlog.h"
 
 #include "DailyIndexFileRetriever.h"
 #include "PathNameGenerator.h"
+#include "Collector_Utils.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  DailyIndexFileRetriever
@@ -52,17 +51,11 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
-	: the_server_{a_server}, remote_directory_prefix_{prefix}, the_logger_{the_logger}
+DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, const fs::path& prefix)
+	: the_server_{a_server}, remote_directory_prefix_{prefix}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
-
-
-DailyIndexFileRetriever::~DailyIndexFileRetriever()
-{
-
-}		// -----  end of method IndexFileRetreiver::~DailyIndexFileRetriever  -----
 
 
 bg::date DailyIndexFileRetriever::CheckDate (const bg::date& aDate)
@@ -72,7 +65,7 @@ bg::date DailyIndexFileRetriever::CheckDate (const bg::date& aDate)
 	//	we can only work with past data.
 
 	bg::date today{bg::day_clock::local_day()};
-	poco_assert_msg(aDate <= today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
+	BOOST_ASSERT_MSG(aDate <= today, catenate("Date must be less than ", bg::to_simple_string(today)).c_str());
 
 	return aDate;
 }		// -----  end of method DailyIndexFileRetriever::CheckDate  -----
@@ -91,35 +84,36 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const bg::d
 {
 	input_date_ = this->CheckDate(aDate);
 
-	poco_debug(the_logger_, "D: Looking for Daily Index File nearest date: " + bg::to_simple_string(aDate));
+	spdlog::debug(catenate("D: Looking for Daily Index File nearest date: ", bg::to_simple_string(aDate)));
 
 	auto remote_diretory_name = MakeDailyIndexPathName(aDate);
 	decltype(auto) directory_list = this->GetRemoteIndexList(remote_diretory_name);
 
-	std::string looking_for = std::string{"form."} + bg::to_iso_string(input_date_) + ".idx";
+	std::string looking_for = catenate("form.", bg::to_iso_string(input_date_), ".idx");
 
 	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
 	auto pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
         [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
-	poco_assert_msg(pos != directory_list.rend(), ("Can't find daily index file for date: " + bg::to_simple_string(input_date_)).c_str());
+	BOOST_ASSERT_MSG(pos != directory_list.rend(), catenate("Can't find daily index file for date: ",
+                bg::to_simple_string(input_date_)).c_str());
 
 	actual_file_date_ = bg::from_undelimited_string((*pos).substr(5, 8));
 
-	poco_debug(the_logger_, "D: Found Daily Index File for date: " + bg::to_simple_string(actual_file_date_));
+	spdlog::debug(catenate("D: Found Daily Index File for date: ", bg::to_simple_string(actual_file_date_)));
 
 	auto remote_daily_index_file_name = remote_diretory_name /= *pos;
 	return remote_daily_index_file_name;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
-const std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
 
-	poco_debug(the_logger_, "D: Looking for Daily Index Files in date range from: " + bg::to_simple_string(start_date_)  + " to: "
-		+ bg::to_simple_string(end_date_));
+	spdlog::debug(catenate("D: Looking for Daily Index Files in date range from: ", bg::to_simple_string(start_date_),
+            " to: ", bg::to_simple_string(end_date_)));
 
 	auto looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
 	auto looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
@@ -157,18 +151,18 @@ const std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesFor
 			std::back_inserter(remote_daily_index_file_name_list),
 				[remote_directory](const auto& e){ auto fpath{remote_directory}; return std::move(fpath /= e); });
 	}
-	poco_assert_msg(! remote_daily_index_file_name_list.empty(), ("Can't find daily index files for date range: "
-		   	+ bg::to_simple_string(start_date_) + " " + bg::to_simple_string(end_date_)).c_str());
+	BOOST_ASSERT_MSG(! remote_daily_index_file_name_list.empty(), catenate("Can't find daily index files for date range: ",
+		   	bg::to_simple_string(start_date_), " ", bg::to_simple_string(end_date_)).c_str());
 
 	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.back().filename().string().substr(5, 8));
 	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.front().filename().string().substr(5, 8));
 
-	poco_debug(the_logger_, "D: Found " + std::to_string(remote_daily_index_file_name_list.size()) + " files for date range.");
+	spdlog::debug(catenate("D: Found ", remote_daily_index_file_name_list.size(), " files for date range."));
 
 	return remote_daily_index_file_name_list;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
-const std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
@@ -205,18 +199,21 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::
 	return directory_list;
 }		// -----  end of method DailyIndexFileRetriever::GetRemoteIndexList  -----
 
-fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_name,
-	bool replace_files)
+fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name,
+        const fs::path& local_directory_name, bool replace_files)
 {
 	auto local_daily_index_file_name = local_directory_name;
 	local_daily_index_file_name /= remote_daily_index_file_name.filename();
 
 	if (local_daily_index_file_name.extension() == ".gz")
+    {
 		local_daily_index_file_name.replace_extension("");
+    }
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.filename().string());
+		spdlog::info(catenate("D: File exists and 'replace' is false: skipping download: ",
+                    local_daily_index_file_name.filename().string()));
 		return local_daily_index_file_name;
 	}
 
@@ -224,25 +221,28 @@ fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: "
-		+ local_daily_index_file_name.string());
+	spdlog::info(catenate("D: Retrieved remote daily index file: ", remote_daily_index_file_name.string(), " to: ",
+		local_daily_index_file_name.string()));
 
 	return local_daily_index_file_name;
 
 }		// -----  end of method DailyIndexFileRetriever::RetrieveIndexFile  -----
 
 
-fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name, const fs::path& local_directory_prefix,
-	bool replace_files)
+fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::path& remote_daily_index_file_name,
+        const fs::path& local_directory_prefix, bool replace_files)
 {
 	auto local_daily_index_file_name = MakeLocalIndexFilePath(local_directory_prefix, remote_daily_index_file_name);
 
 	if (local_daily_index_file_name.extension() == ".gz")
+    {
 		local_daily_index_file_name.replace_extension("");
+    }
 
 	if (! replace_files && fs::exists(local_daily_index_file_name))
 	{
-		poco_information(the_logger_, "D: File exists and 'replace' is false: skipping download: " + local_daily_index_file_name.filename().string());
+		spdlog::info(catenate("D: File exists and 'replace' is false: skipping download: ",
+                    local_daily_index_file_name.filename().string()));
 		return local_daily_index_file_name;
 	}
 
@@ -251,8 +251,8 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 
 	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
-	poco_information(the_logger_, "D: Retrieved remote daily index file: " + remote_daily_index_file_name.string() + " to: "
-		+ local_daily_index_file_name.string());
+	spdlog::info(catenate("D: Retrieved remote daily index file: ", remote_daily_index_file_name.string(), " to: ",
+		local_daily_index_file_name.string()));
 
 	return local_daily_index_file_name;
 
@@ -282,7 +282,9 @@ auto DailyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_name
 		local_daily_index_file_name /= remote_file_name.filename();
 
 		if (local_daily_index_file_name.extension() == ".gz")
+        {
 			local_daily_index_file_name.replace_extension("");
+        }
 
 		if (! replace_files && fs::exists(local_daily_index_file_name))
 		{
@@ -290,8 +292,7 @@ auto DailyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_name
 
 			return HTTPS_Downloader::copy_file_names({}, local_daily_index_file_name);
 		}
-		else
-			return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
+        return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
 	};
 }
 
@@ -299,7 +300,9 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 	const fs::path& local_directory_name, int max_at_a_time, bool replace_files)
 {
 	if (remote_file_list.size() < max_at_a_time)
+    {
 		return CopyIndexFilesForDateRangeTo(remote_file_list, local_directory_name, replace_files);
+    }
 
 	fs::create_directories(local_directory_name);
 
@@ -322,20 +325,23 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
 
-	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
-		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " daily index files.");
+	spdlog::info(catenate("D: Downloaded: ", success_counter, " Skipped: ", skipped_files_counter,
+                " Errors: ", error_counter, " daily index files."));
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
 
     if (concurrent_copy_list.size() != success_counter + skipped_files_counter)
-        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+    {
+        throw std::runtime_error(catenate("Download count = ", success_counter, ". Should be: ", concurrent_copy_list.size()));
+    }
 
 	std::vector<fs::path> results;
 
 	for (auto& [remote_file, local_file] : concurrent_copy_list)
+    {
 		results.push_back(std::move(local_file));
+    }
 
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo  -----
@@ -363,7 +369,9 @@ auto DailyIndexFileRetriever::AddToConcurrentCopyList(const fs::path& local_dire
 		local_daily_index_file_name /= remote_file_name.filename();
 
 		if (local_daily_index_file_name.extension() == ".gz")
+        {
 			local_daily_index_file_name.replace_extension("");
+        }
 
 		if (! replace_files && fs::exists(local_daily_index_file_name))
 		{
@@ -371,12 +379,10 @@ auto DailyIndexFileRetriever::AddToConcurrentCopyList(const fs::path& local_dire
 
 			return HTTPS_Downloader::copy_file_names({}, local_daily_index_file_name);
 		}
-		else
-        {
-		    auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
-            fs::create_directories(local_daily_index_file_directory);
-			return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
-        }
+
+        auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
+        fs::create_directories(local_daily_index_file_directory);
+        return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_daily_index_file_name));
 	};
 }
 
@@ -384,7 +390,9 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 	const fs::path& local_directory_prefix, int max_at_a_time, bool replace_files)
 {
 	if (remote_file_list.size() < max_at_a_time)
+    {
 		return HierarchicalCopyIndexFilesForDateRangeTo(remote_file_list, local_directory_prefix, replace_files);
+    }
 
 	// we need to create a list of file name pairs -- remote file name, local file name.
 	// we'll pass that list to the downloader and let it manage to process from there.
@@ -410,20 +418,23 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
 
-	poco_information(the_logger_, "D: Downloaded: " + std::to_string(success_counter) +
-		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " daily index files.");
+	spdlog::info(catenate("D: Downloaded: ", success_counter, " Skipped: ", skipped_files_counter,
+                " Errors: ", error_counter, " daily index files."));
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
 
     if (concurrent_copy_list.size() != success_counter)
-        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+    {
+        throw std::runtime_error(catenate("Download count = ", success_counter, ". Should be: ", concurrent_copy_list.size()));
+    }
 
 	std::vector<fs::path> results;
 
 	for (auto& [remote_file, local_file] : concurrent_copy_list)
+    {
 		results.push_back(std::move(local_file));
+    }
 
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo  -----
@@ -436,7 +447,8 @@ fs::path DailyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& local_
 	// we will assume there is not trailing delimiter on the stored remote prefix.
 	// (even though we have no edit to enforce that for now.)
 
-	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name.string(), remote_directory_prefix_.string(), "");
+	std::string remote_index_name = boost::algorithm::replace_first_copy(remote_daily_index_file_name.string(),
+            remote_directory_prefix_.string(), "");
 
     //  there seems to be a change in behaviour.  appending a path starting with '/' actually does an assignment, not an append.
 

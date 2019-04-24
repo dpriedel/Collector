@@ -41,12 +41,12 @@
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-AssertionException::AssertionException(const char* text)
+Collector::AssertionException::AssertionException(const char* text)
     : std::invalid_argument(text)
 {
 }  /* -----  end of method AssertionException::AssertionException  (constructor)  ----- */
 
-AssertionException::AssertionException(const std::string& text)
+Collector::AssertionException::AssertionException(const std::string& text)
     : std::invalid_argument(text)
 {
 }  /* -----  end of method AssertionException::AssertionException  (constructor)  ----- */
@@ -67,7 +67,7 @@ namespace boost
 
     void assertion_failed_msg (char const* expr, char const* msg, char const* function, char const* file, long line)
     {
-        throw AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
+        throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                     " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
     }		/* -----  end of function assertion_failed_mgs  ----- */
 
@@ -79,7 +79,7 @@ namespace boost
      */
     void assertion_failed (char const* expr, char const* function, char const* file, long line )
     {
-        throw AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
+        throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                     " from file: ", file, " at line: ", line));
     }		/* -----  end of function assertion_failed  ----- */
 
