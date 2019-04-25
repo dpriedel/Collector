@@ -51,8 +51,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-DailyIndexFileRetriever::DailyIndexFileRetriever(HTTPS_Downloader& a_server, const fs::path& prefix)
-	: the_server_{a_server}, remote_directory_prefix_{prefix}
+DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, const std::string& port, const fs::path& prefix)
+	: the_server_{host, port}, remote_directory_prefix_{prefix}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----

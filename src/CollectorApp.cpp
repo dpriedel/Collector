@@ -506,8 +506,7 @@ void CollectorApp::Do_Run_TickerFileLookup ()
 void CollectorApp::Do_Run_DailyIndexFiles ()
 {
 	//FTP_Server a_server{"localhost", "anonymous", "aaa@bbb.net"};
-	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
-	DailyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/daily-index"};
+	DailyIndexFileRetriever idxFileRet{HTTPS_host_, HTTPS_port_, "/Archives/edgar/daily-index"};
 
 	Do_TickerMap_Setup();
 
@@ -518,7 +517,7 @@ void CollectorApp::Do_Run_DailyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server};
+			FormFileRetriever form_file_getter{HTTPS_host_, HTTPS_port_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -547,7 +546,7 @@ void CollectorApp::Do_Run_DailyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server};
+			FormFileRetriever form_file_getter{HTTPS_host_, HTTPS_port_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_daily_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -574,8 +573,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 {
 	Do_TickerMap_Setup();
 
-	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
-	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index"};
+	QuarterlyIndexFileRetriever idxFileRet{HTTPS_host_, HTTPS_port_, "/Archives/edgar/full-index"};
 
 	if (begin_date_ == end_date_)
 	{
@@ -584,7 +582,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server};
+			FormFileRetriever form_file_getter{HTTPS_host_, HTTPS_port_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_quarterly_index_file_name, ticker_map_);
 
             if (max_forms_to_download_ > -1)
@@ -609,7 +607,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 
 		if (! index_only_)
 		{
-			FormFileRetriever form_file_getter{a_server};
+			FormFileRetriever form_file_getter{HTTPS_host_, HTTPS_port_};
 			decltype(auto) form_file_list = form_file_getter.FindFilesForForms(form_list_, local_index_file_list, ticker_map_);
 
             if (max_forms_to_download_ > -1)

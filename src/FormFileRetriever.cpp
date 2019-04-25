@@ -72,8 +72,8 @@ OutputIterator transform_if(InputIterator first, InputIterator last,
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (HTTPS_Downloader& a_server)
-	: the_server_{a_server}
+FormFileRetriever::FormFileRetriever (const std::string& host, const std::string& port)
+	: the_server_{host, port}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----

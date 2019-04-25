@@ -41,7 +41,6 @@
 
 namespace fs = std::filesystem;
 
-
 #include "HTTPS_Downloader.h"
 #include "TickerConverter.h"
 
@@ -57,14 +56,18 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		explicit FormFileRetriever (HTTPS_Downloader& a_server);                   // constructor
+		FormFileRetriever (const std::string& host, const std::string& port);            // constructor
 
 		FormFileRetriever() = delete;
 		FormFileRetriever(const FormFileRetriever& rhs) = delete;
+		FormFileRetriever(FormFileRetriever&& rhs) = delete;
 
 		// ====================  ACCESSORS     =======================================
 
 		// ====================  MUTATORS      =======================================
+
+        FormFileRetriever& operator=(const FormFileRetriever& rhs) = delete;
+        FormFileRetriever& operator=(FormFileRetriever&& rhs) = delete;
 
 		// ====================  OPERATORS     =======================================
 
@@ -105,7 +108,7 @@ class FormFileRetriever
 
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
-		HTTPS_Downloader& the_server_;
+		HTTPS_Downloader the_server_;
 
 }; // -----  end of class FormFileRetriever  -----
 

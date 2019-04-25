@@ -55,11 +55,17 @@ class QuarterlyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix);                // constructor
+		QuarterlyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);                // constructor
 
+		QuarterlyIndexFileRetriever (const QuarterlyIndexFileRetriever& rhs)=delete;
+		QuarterlyIndexFileRetriever (QuarterlyIndexFileRetriever&& rhs)=delete;
+        //
 		// ====================  ACCESSORS     =======================================
 
 		// ====================  MUTATORS      =======================================
+
+		QuarterlyIndexFileRetriever& operator=(const QuarterlyIndexFileRetriever& rhs)=delete;
+		QuarterlyIndexFileRetriever& operator=(QuarterlyIndexFileRetriever&& rhs)=delete;
 
 		fs::path MakeQuarterlyIndexPathName(const bg::date& day_in_quarter);
 		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name,
@@ -88,7 +94,7 @@ class QuarterlyIndexFileRetriever
 
 		// ====================  DATA MEMBERS  =======================================
 
-		HTTPS_Downloader& the_server_;
+		HTTPS_Downloader the_server_;
         fs::path remote_directory_prefix_;                // top-level directory path
 		bg::date input_date_;
 		bg::date start_date_;

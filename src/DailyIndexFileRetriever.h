@@ -58,7 +58,9 @@ class DailyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		DailyIndexFileRetriever() = delete;
-		DailyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix);
+		DailyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);
+        DailyIndexFileRetriever(const DailyIndexFileRetriever& rhs) = delete;
+        DailyIndexFileRetriever(DailyIndexFileRetriever&& rhs) = delete;
 
 		~DailyIndexFileRetriever() = default;
 
@@ -71,6 +73,9 @@ class DailyIndexFileRetriever
 
 		//	If there is no file for the specified date, this function will return the
 		//	immediately prior file.
+
+        DailyIndexFileRetriever& operator=(const DailyIndexFileRetriever& rhs) = delete;
+        DailyIndexFileRetriever& operator=(DailyIndexFileRetriever&& rhs) = delete;
 
 		fs::path FindRemoteIndexFileNameNearestDate(const bg::date& aDate);
 
@@ -113,7 +118,7 @@ class DailyIndexFileRetriever
 
 		// ====================  DATA MEMBERS  =======================================
 
-		HTTPS_Downloader& the_server_;
+		HTTPS_Downloader the_server_;
         fs::path remote_directory_prefix_;                // top-level directory path
 		bg::date input_date_;
 		bg::date actual_file_date_;
