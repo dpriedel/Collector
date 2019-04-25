@@ -40,7 +40,6 @@
 
 // #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
@@ -56,20 +55,23 @@ class QuarterlyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger);                // constructor
+		QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix);                // constructor
 
 		// ====================  ACCESSORS     =======================================
 
 		// ====================  MUTATORS      =======================================
 
 		fs::path MakeQuarterlyIndexPathName(const bg::date& day_in_quarter);
-		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name, bool replace_files=false);
+		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name,
+                bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
-		const std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, bool replace_files=false);
-		std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list, const fs::path& local_directory_name, int max_at_a_time, bool replace_files=false);
+		std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
+                const fs::path& local_directory_name, bool replace_files=false);
+		std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
+                const fs::path& local_directory_name, int max_at_a_time, bool replace_files=false);
 
 		// ====================  OPERATORS     =======================================
 
@@ -91,7 +93,6 @@ class QuarterlyIndexFileRetriever
 		bg::date input_date_;
 		bg::date start_date_;
 		bg::date end_date_;
-        Poco::Logger& the_logger_;
 
 }; // -----  end of class QuarterlyIndexFileRetriever  -----
 

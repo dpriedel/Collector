@@ -34,17 +34,20 @@
 #include <fstream>
 
 #include <boost/algorithm/string/replace.hpp>
-#include <Poco/Zip/Decompress.h>
+
+#include "spdlog/spdlog.h"
+
 #include "QuarterlyIndexFileRetriever.h"
 #include "PathNameGenerator.h"
+#include "Collector_Utils.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  QuarterlyIndexFileRetriever
 //      Method:  QuarterlyIndexFileRetriever
 // Description:  constructor
 //--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix, Poco::Logger& the_logger)
-	: the_server_{a_server}, remote_directory_prefix_{prefix}, the_logger_{the_logger}
+QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (HTTPS_Downloader& a_server, const fs::path& prefix)
+	: the_server_{a_server}, remote_directory_prefix_{prefix}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
@@ -56,7 +59,7 @@ bg::date QuarterlyIndexFileRetriever::CheckDate (const bg::date& day_in_quarter)
 	//	we can only work with past data.
 
 	bg::date today{bg::day_clock::local_day()};
-	poco_assert_msg(day_in_quarter < today, ("Date must be less than " + bg::to_simple_string(today)).c_str());
+	BOOST_ASSERT_MSG(day_in_quarter < today, catenate("Date must be less than ", bg::to_simple_string(today)).c_str());
 
 	return day_in_quarter;
 }		// -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
@@ -80,7 +83,8 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 
 	if (! replace_files && fs::exists(local_quarterly_index_file_name))
 	{
-		poco_information(the_logger_, "Q: File exists and 'replace' is false: skipping download: " + local_quarterly_index_file_name.filename().string());
+        spdlog::info(catenate("Q: File exists and 'replace' is false: skipping download: ",
+                    local_quarterly_index_file_name.filename().string()));
 		return local_quarterly_index_file_name;
 	}
 
@@ -89,8 +93,8 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 
 	the_server_.DownloadFile(remote_file_name, local_quarterly_index_file_name);
 
-	poco_information(the_logger_, "Q: Retrieved remote quarterly index file: " + remote_file_name.string() + " to: "
-        + local_quarterly_index_file_name.string());
+    spdlog::info(catenate("Q: Retrieved remote quarterly index file: ", remote_file_name.string(), " to: ",
+        local_quarterly_index_file_name.string()));
 
 	return local_quarterly_index_file_name;
 }		// -----  end of method QuarterlyIndexFileRetriever::CopyRemoteIndexFileTo  -----
@@ -119,7 +123,7 @@ fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& lo
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeLocalIndexFilePath  -----
 
 
-const std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
@@ -171,12 +175,9 @@ auto QuarterlyIndexFileRetriever::AddToCopyList(const fs::path& local_directory_
 
 			return HTTPS_Downloader::copy_file_names({}, local_quarterly_index_file_name);
 		}
-		else
-        {
-    		auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
-    		fs::create_directories(local_quarterly_index_file_directory);
-			return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_quarterly_index_file_name));
-        }
+        auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
+        fs::create_directories(local_quarterly_index_file_directory);
+        return HTTPS_Downloader::copy_file_names(remote_file_name, std::move(local_quarterly_index_file_name));
 	};
 }
 
@@ -184,7 +185,9 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
     const fs::path& local_directory_name, int max_at_a_time, bool replace_files)
 {
 	if (remote_file_list.size() < max_at_a_time)
+    {
 		return HierarchicalCopyIndexFilesForDateRangeTo(remote_file_list, local_directory_name, replace_files);
+    }
 
 	// we need to create a list of file name pairs -- remote file name, local file name.
 	// we'll pass that list to the downloader and let it manage to process from there.
@@ -210,20 +213,24 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
 
-	poco_information(the_logger_, "Q: Downloaded: " + std::to_string(success_counter) +
-		" Skipped: " + std::to_string(skipped_files_counter) +
-		" Errors: " + std::to_string(error_counter) + " quarterly index files.");
+    spdlog::info(catenate("Q: Downloaded: ", success_counter, " Skipped: ", skipped_files_counter, " Errors: ",
+                error_counter, " quarterly index files."));
 
 	// TODO: figure our error handling when some files do not get downloaded.
     // Let's try this for now.
 
     if (concurrent_copy_list.size() != success_counter + skipped_files_counter)
-        throw std::runtime_error("Download count = " + std::to_string(success_counter) + ". Should be: " + std::to_string(concurrent_copy_list.size()));
+    {
+        throw std::runtime_error(catenate("Download count = ", success_counter, ". Should be: ",
+                    concurrent_copy_list.size()));
+    }
 
 	std::vector<fs::path> results;
 
 	for (auto& [remote_name, local_name] : concurrent_copy_list)
+    {
 		results.push_back(std::move(local_name));
+    }
 
 	return results;
 }		// -----  end of method DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo  -----

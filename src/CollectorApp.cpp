@@ -577,7 +577,7 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 	Do_TickerMap_Setup();
 
 	HTTPS_Downloader a_server{HTTPS_host_, HTTPS_port_};
-	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index", logger()};
+	QuarterlyIndexFileRetriever idxFileRet{a_server, "/Archives/edgar/full-index"};
 
 	if (begin_date_ == end_date_)
 	{
