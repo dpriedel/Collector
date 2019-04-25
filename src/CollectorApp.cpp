@@ -58,15 +58,13 @@
 
 
 CollectorApp::CollectorApp (int argc, char* argv[])
-	: Poco::Util::Application(argc, argv),
-    ticker_converter_{logger()}
+	: Poco::Util::Application(argc, argv)
 
 {
 }  // -----  end of method CollectorApp::CollectorApp  (constructor)  -----
 
 CollectorApp::CollectorApp ()
-	: Poco::Util::Application(),
-    ticker_converter_{logger()}
+	: Poco::Util::Application()
 
 {
 }

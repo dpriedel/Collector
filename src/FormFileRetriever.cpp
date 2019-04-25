@@ -317,13 +317,13 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<fs::path>& rem
                             local_file_name.string()));
 				// std::this_thread::sleep_for(pause_);
 			}
-			catch(Poco::TimeoutException& e)
+			catch(Collector::TimeOutException& e)
 			{
 				//	we just need to log this and then continue on with the next
 				//	request just assuming the problem was temporary.
 
 				spdlog::error(catenate("F: !! Timeout retrieving remote form file: ", remote_file_name.string(),
-					" to: ", local_file_name.string(), " !!\n", e.displayText()));
+					" to: ", local_file_name.string(), " !!\n", e.what()));
 
 				++error_counter;
                 continue;

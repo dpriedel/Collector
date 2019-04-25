@@ -35,12 +35,9 @@
 	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
+#include <filesystem>
 #include <map>
 #include <string>
-#include <filesystem>
-
-// #include <boost/filesystem.hpp>
-#include "Poco/Logger.h"
 
 namespace fs = std::filesystem;
 
@@ -55,7 +52,6 @@ class TickerConverter
 		using  TickerCIKMap = std::map<std::string, std::string>;
 
 		// ====================  LIFECYCLE     =======================================
-		TickerConverter (Poco::Logger& the_logger);                             // constructor
 
 		// ====================  ACCESSORS     =======================================
 
@@ -64,7 +60,7 @@ class TickerConverter
 		void UseCacheFile(const fs::path& cache_file_name);
 		std::string ConvertTickerToCIK(const std::string& ticker, int pause=1);
 		int ConvertTickerFileToCIKs(const fs::path& ticker_file_name, int pause=1);
-		void SaveCIKDataToFile(void);
+		void SaveCIKDataToFile();
 
 		static constexpr char NotFound[] = "**no_CIK_found**";
 
@@ -85,8 +81,6 @@ class TickerConverter
 
 		fs::path cache_file_name_;
 		fs::path ticker_file_name_;
-
-        Poco::Logger& the_logger_;
 
 		std::size_t ticker_count_start_ = 0;
 		std::size_t ticker_count_end_ = 0;

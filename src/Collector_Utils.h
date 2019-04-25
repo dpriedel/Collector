@@ -48,17 +48,27 @@ using sview = std::string_view;
 
 namespace mp11 = boost::mp11;
 
-namespace Collector {
-class AssertionException : public std::invalid_argument
+namespace Collector
 {
-public:
+    class AssertionException : public std::invalid_argument
+    {
+    public:
 
-    explicit AssertionException(const char* what);
+        explicit AssertionException(const char* what);
 
-    explicit AssertionException(const std::string& what);
-};
+        explicit AssertionException(const std::string& what);
+    };
 
-}		/* -----  end of namespace Collector  ----- */
+    class TimeOutException : public std::runtime_error
+    {
+    public:
+
+        explicit TimeOutException(const char* what);
+
+        explicit TimeOutException(const std::string& what);
+    };
+
+};	/* -----  end of namespace Collector  ----- */
 
 // some code to help with putting together error messages,
 

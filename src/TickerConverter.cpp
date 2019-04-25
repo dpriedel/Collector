@@ -35,12 +35,15 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
-#include <regex>
+//#include <regex>
 
-// #include <boost/regex.hpp>
-#include "HTTPS_Downloader.h"
+#include <boost/regex.hpp>
+
+#include "spdlog/spdlog.h"
 
 #include "TickerConverter.h"
+#include "HTTPS_Downloader.h"
+#include "Collector_Utils.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  TickerConverter
@@ -50,41 +53,37 @@
 
 constexpr char TickerConverter::NotFound[];
 
-TickerConverter::TickerConverter (Poco::Logger& the_logger)
-    : the_logger_{the_logger}
-{
-}  // -----  end of method TickerConverter::TickerConverter  (constructor)  -----
-
-
 std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int pause)
 {
 	//	we have a cache of our already looked up tickers so let's check that first
 
-	poco_debug(the_logger_, "T: Doing CIK lookup for ticker: " + ticker);
+	spdlog::debug(catenate("T: Doing CIK lookup for ticker: ", ticker));
 
 	decltype(auto) pos = ticker_to_CIK_.find(ticker);
 	if (pos != ticker_to_CIK_.end())
 	{
-		poco_debug(the_logger_, "T: Found CIK: " + pos->second + " in cache.");
+		spdlog::debug(catenate("T: Found CIK: ", pos->second, " in cache."));
 		return pos->second;
 	}
 
 	decltype(auto) cik = SEC_CIK_Lookup(ticker, pause);
 	if (cik.empty())
+    {
 		cik = NotFound;
+    }
 	ticker_to_CIK_[ticker] = cik;
 
-	poco_debug(the_logger_, "T: Found CIK: " + cik + " via SEC query.");
+	spdlog::debug(catenate("T: Found CIK: ", cik, " via SEC query."));
 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
 int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, int pause)
 {
-	poco_debug(the_logger_, "T: Doing CIK lookup for tickers in file: " + ticker_file_name.string());
+	spdlog::debug(catenate("T: Doing CIK lookup for tickers in file: ", ticker_file_name.string()));
 
-	std::ifstream tickers_file{ticker_file_name.string()};
-	poco_assert_msg(tickers_file.is_open(), ("Unable to open tickers file: " + ticker_file_name.string()).c_str());
+	std::ifstream tickers_file{ticker_file_name};
+	BOOST_ASSERT_MSG(tickers_file.is_open(), catenate("Unable to open tickers file: ", ticker_file_name.string()).c_str());
 
 	int result{0};
 
@@ -101,7 +100,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 
 	tickers_file.close();
 
-	poco_debug(the_logger_, "T: Did Ticker lookup for: " + std::to_string(result) + " ticker symbols.");
+	spdlog::debug(catenate("T: Did Ticker lookup for: ", result, " ticker symbols."));
 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
@@ -112,34 +111,35 @@ std::string TickerConverter::SEC_CIK_Lookup (const std::string& ticker, int paus
 
 	std::chrono::seconds pause_time{pause};
 
-	std::string uri{"/cgi-bin/browse-edgar?CIK="};
-	uri += ticker;
-	uri += "&Find=Search&owner=exclude&action=getcompany";
+	std::string uri = catenate("/cgi-bin/browse-edgar?CIK=", ticker, "&Find=Search&owner=exclude&action=getcompany");
 
     HTTPS_Downloader edgar_server("www.sec.gov", "443");
 
 	std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 
-	std::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
+	boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
 
-	std::smatch cik;
-	bool found = std::regex_search(the_html, cik, ex);
+	boost::smatch cik;
+	bool found = boost::regex_search(the_html, cik, ex);
 
 	std::this_thread::sleep_for(pause_time);
 
 	if (found)
+    {
 		return cik[1].str();
-	else
-		return std::string();
+    }
+    return {};
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
 void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 {
 	cache_file_name_ = cache_file_name;
 	if (! fs::exists(cache_file_name_))
+    {
 		return ;
+    }
 
-	std::ifstream ticker_cache_file{cache_file_name_.string()};
+	std::ifstream ticker_cache_file{cache_file_name_};
 
 	while (ticker_cache_file)
 	{
@@ -148,27 +148,33 @@ void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 
 		ticker_cache_file >> ticker >> cik;
 		if (ticker.empty() || cik.empty())
+        {
 			continue;
+        }
 
 		ticker_to_CIK_[ticker] = cik;
 	}
 
 	ticker_count_start_ = ticker_to_CIK_.size();
-	poco_debug(the_logger_, "T: Loaded " + std::to_string(ticker_count_start_) + " tickers from file: " + cache_file_name.string());
+	spdlog::debug(catenate("T: Loaded ", ticker_count_start_, " tickers from file: ", cache_file_name.string()));
 
 }		// -----  end of method TickerConverter::UseTickerFile  -----
 
-void TickerConverter::SaveCIKDataToFile (void)
+void TickerConverter::SaveCIKDataToFile ()
 {
 	ticker_count_end_ = ticker_to_CIK_.size();
 
 	if (ticker_count_end_ == 0)
+    {
 		return;
+    }
 
 	std::ofstream ticker_cache_file{cache_file_name_.string()};
 
 	for (const auto& x : ticker_to_CIK_)
+    {
 		ticker_cache_file << x.first << '\t' << x.second << '\n';
+    }
 
-	poco_debug(the_logger_, "T: Saved " + std::to_string(ticker_to_CIK_.size()) + " tickers to file: " + cache_file_name_.string());
+	spdlog::debug(catenate("T: Saved ", ticker_to_CIK_.size(), " tickers to file: ", cache_file_name_.string()));
 }		// -----  end of method TickerConverter::SaveCIKToFile  -----

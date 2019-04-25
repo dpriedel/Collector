@@ -51,6 +51,23 @@ Collector::AssertionException::AssertionException(const std::string& text)
 {
 }  /* -----  end of method AssertionException::AssertionException  (constructor)  ----- */
 
+/*
+ *--------------------------------------------------------------------------------------
+ *       Class:  TimeOutException
+ *      Method:  TimeOutException
+ * Description:  constructor
+ *--------------------------------------------------------------------------------------
+ */
+Collector::TimeOutException::TimeOutException(const char* text)
+    : std::runtime_error(text)
+{
+}  /* -----  end of method TimeOutException::TimeOutException  (constructor)  ----- */
+
+Collector::TimeOutException::TimeOutException(const std::string& text)
+    : std::runtime_error(text)
+{
+}  /* -----  end of method TimeOutException::TimeOutException  (constructor)  ----- */
+
 
 namespace boost
 {
