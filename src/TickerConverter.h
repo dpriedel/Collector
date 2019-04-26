@@ -38,8 +38,11 @@
 #include <filesystem>
 #include <map>
 #include <string>
+#include <string_view>
 
 namespace fs = std::filesystem;
+
+using sview = std::string_view;
 
 // =====================================================================================
 //        Class:  TickerConverter
@@ -70,7 +73,7 @@ class TickerConverter
 
 		//	NOTE: make this function virtual to run Google MOCK tests for it.
 
-		std::string SEC_CIK_Lookup(const std::string& ticker, int pause=1);
+		std::string SEC_CIK_Lookup(sview ticker, int pause=1);
 
 		// ====================  DATA MEMBERS  =======================================
 

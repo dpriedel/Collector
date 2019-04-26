@@ -39,64 +39,53 @@
 #ifndef COLLECTORAPP_H_
 #define COLLECTORAPP_H_
 
-// #include <fstream>
 #include <map>
+#include <memory>
 #include <filesystem>
+#include <string_view>
 
-// #include <boost/filesystem.hpp>
+using sview = std::string_view;
+
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/program_options.hpp>
 
 namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
-
-#include "Poco/Util/Application.h"
-#include "Poco/Util/Option.h"
-#include "Poco/Util/OptionSet.h"
-#include "Poco/Util/HelpFormatter.h"
-#include "Poco/Util/AbstractConfiguration.h"
-#include "Poco/AutoPtr.h"
-#include "Poco/Util/Validator.h"
-
-#include "Poco/Logger.h"
-#include "Poco/Channel.h"
+namespace po = boost::program_options;
 
 #include "TickerConverter.h"
 
-class CollectorApp : public Poco::Util::Application
+class CollectorApp
 {
 
 public:
 
+    // use ctor below for testing with predefined options
+
+    explicit CollectorApp(const std::vector<std::string>& tokens);
+    
+    CollectorApp() = delete;
 	CollectorApp(int argc, char* argv[]);
 	CollectorApp(const CollectorApp& rhs) = delete;
-    CollectorApp();
+	CollectorApp(CollectorApp&& rhs) = delete;
+
+    ~CollectorApp() = default;
+
+    bool Startup();
+    void Run();
+    void Shutdown();
 
 protected:
 
-	void initialize(Application& self) override;
-	void uninitialize() override;
-	void reinitialize(Application& self) override;
+	//	Setup for parsing program options.
 
-	void defineOptions(Poco::Util::OptionSet& options) override;
+	void	SetupProgramOptions();
+	void 	ParseProgramOptions();
+	void 	ParseProgramOptions(const std::vector<std::string>& tokens);
 
-	void handleHelp(const std::string& name, const std::string& value);
+    void    ConfigureLogging();
 
-	void handleDefine(const std::string& name, const std::string& value);
-
-	void handleConfig(const std::string& name, const std::string& value);
-
-	void displayHelp();
-
-	void defineProperty(const std::string& def);
-
-	int main(const ArgVec& args) override;
-
-	void printProperties(const std::string& base);
-
-	void	Do_Main ();
-	void	Do_StartUp ();
-	void	Do_CheckArgs ();
-	void	Do_Run ();
+	bool	CheckArgs ();
 	void	Do_Quit ();
 
 	void Do_Run_DailyIndexFiles();
@@ -110,54 +99,18 @@ protected:
 
 private:
 
-	struct comma_list_parser
-	{
-		std::vector<std::string>& destination_;
-		std::string seperator_;
-
-		comma_list_parser(std::vector<std::string>& destination, const std::string& seperator)
-			: destination_(destination), seperator_{seperator} {}
-
-		void parse_string(const std::string& comma_list);
-	};
-    class LogLevelValidator : public Poco::Util::Validator
-    {
-        LogLevelValidator() : Validator() {}
-
-        virtual void Validate(const Poco::Util::Option& option, const std::string& value);
-    };
-
-    // a set of functions to be used to capture values from the command line.
-    // called from the options handling code.
-    // there should be a better way to do this but this works for now.
-
-    void inline store_begin_date(const std::string& name, const std::string& value) { begin_date_ = bg::from_string(value); }
-    void inline store_end_date(const std::string& name, const std::string& value) { end_date_ = bg::from_string(value); }
-    void inline store_index_dir(const std::string& name, const std::string& value) { local_index_file_directory_ = value; }
-    void inline store_form_dir(const std::string& name, const std::string& value) { local_form_file_directory_ = value; }
-    void inline store_HTTPS_host(const std::string& name, const std::string& value) { HTTPS_host_ = value; }
-    void inline store_HTTPS_port(const std::string& name, const std::string& value) { HTTPS_port_ = value; }
-    // void inline store_login_ID(const std::string& name, const std::string& value) { login_ID_ = value; }
-
-    void inline store_log_level(const std::string& name, const std::string& value) { logging_level_ = value; }
-    void inline store_mode(const std::string& name, const std::string& value) { mode_ = value; }
-    void inline store_form(const std::string& name, const std::string& value) { form_ = value; }
-    void inline store_ticker(const std::string& name, const std::string& value) { ticker_ = value; }
-    void inline store_log_path(const std::string& name, const std::string& value) { log_file_path_name_ = value; }
-    void inline store_ticker_cache(const std::string& name, const std::string& value) { ticker_cache_file_name_ = value; }
-    void inline store_ticker_file(const std::string& name, const std::string& value) { ticker_list_file_name_ = value; }
-    void inline store_replace_index_files(const std::string& name, const std::string& value) { replace_index_files_ = true; }
-    void inline store_replace_form_files(const std::string& name, const std::string& value) { replace_form_files_ = true; }
-    void inline store_index_only(const std::string& name, const std::string& value) { index_only_ = true; }
-    void inline store_pause(const std::string& name, const std::string& value) { pause_ = std::stoi(value); }
-    void inline store_max(const std::string& name, const std::string& value) { max_forms_to_download_ = std::stoi(value); }
-    void inline store_concurrency_limit(const std::string& name, const std::string& value) { max_at_a_time_ = std::stoi(value); }
 
 		// ====================  DATA MEMBERS  =======================================
 
-	TickerConverter ticker_converter_;
+	po::positional_options_description	mPositional;			//	old style options
+    std::unique_ptr<po::options_description> mNewOptions;    	//	new style options (with identifiers)
+	po::variables_map					mVariableMap;
 
-    Poco::AutoPtr<Poco::Channel> logger_file_;
+	int mArgc = 0;
+	char** mArgv = nullptr;
+	const std::vector<std::string> tokens_;
+
+	TickerConverter ticker_converter_;
 
 	bg::date begin_date_;
 	bg::date end_date_;
@@ -166,8 +119,8 @@ private:
 	std::string form_{"10-Q"};
 	std::string ticker_;
 	// std::string login_ID_;
-    std::string HTTPS_host_{"https://www.sec.gov"};
-    std::string HTTPS_port_;
+    std::string HTTPS_host_{"www.sec.gov"};
+    std::string HTTPS_port_{"443"};
     std::string logging_level_{"information"};
 
 	std::vector<std::string> form_list_;

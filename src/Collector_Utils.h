@@ -138,4 +138,26 @@ inline std::vector<sview> split_string(sview string_data, char delim)
     return results;
 }
 
+// function to split a string on a delimiter and return a vector of strings
+
+inline std::vector<std::string> split_string_to_strings(sview string_data, char delim)
+{
+    std::vector<std::string> results;
+	for (auto it = 0; it != std::string::npos; ++it)
+	{
+		auto pos = string_data.find(delim, it);
+        if (pos != std::string::npos)
+        {
+    		results.emplace_back(string_data.substr(it, pos - it));
+        }
+        else
+        {
+    		results.emplace_back(string_data.substr(it));
+            break;
+        }
+		it = pos;
+	}
+    return results;
+}
+
 #endif   /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */

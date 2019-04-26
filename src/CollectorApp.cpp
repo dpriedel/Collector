@@ -43,457 +43,254 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "Poco/ConsoleChannel.h"
-#include "Poco/SimpleFileChannel.h"
-#include "Poco/LogStream.h"
-#include "Poco/Util/OptionException.h"
-#include "Poco/Util/AbstractConfiguration.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 #include "CollectorApp.h"
 
+#include "Collector_Utils.h"
 #include "HTTPS_Downloader.h"
 #include "DailyIndexFileRetriever.h"
 #include "FormFileRetriever.h"
 #include "QuarterlyIndexFileRetriever.h"
 
-
+/*
+ *--------------------------------------------------------------------------------------
+ *       Class:  CollectorApp
+ *      Method:  CollectorApp
+ * Description:  constructor
+ *--------------------------------------------------------------------------------------
+ */
 CollectorApp::CollectorApp (int argc, char* argv[])
-	: Poco::Util::Application(argc, argv)
-
+    : mArgc{argc}, mArgv{argv}
 {
-}  // -----  end of method CollectorApp::CollectorApp  (constructor)  -----
+}  /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
 
-CollectorApp::CollectorApp ()
-	: Poco::Util::Application()
-
+/*
+ *--------------------------------------------------------------------------------------
+ *       Class:  CollectorApp
+ *      Method:  CollectorApp
+ * Description:  constructor
+ *--------------------------------------------------------------------------------------
+ */
+CollectorApp::CollectorApp (const std::vector<std::string>& tokens)
+    : tokens_{tokens}
 {
-}
+}  /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
 
-void CollectorApp::initialize(Application& self)
+void CollectorApp::ConfigureLogging()
 {
-	loadConfiguration(); // load default configuration files, if present
-	Application::initialize(self);
-	// add your own initialization code here
+    // we need to set log level if specified and also log file.
 
-	if (! log_file_path_name_.empty())
-	{
-        logger_file_ = new Poco::SimpleFileChannel;
-        logger_file_->setProperty("path", log_file_path_name_.string());
-        logger_file_->setProperty("rotation", "2 M");
-	}
-    else
+    if (! log_file_path_name_.empty())
     {
-        logger_file_ = new Poco::ConsoleChannel;
+        fs::path log_dir = log_file_path_name_.parent_path();
+        if (! fs::exists(log_dir))
+        {
+            fs::create_directories(log_dir);
+        }
+
+        auto file_logger = spdlog::basic_logger_mt("filelogger", log_file_path_name_.c_str());
+        spdlog::set_default_logger(file_logger);
     }
 
-    decltype(auto) the_logger = Poco::Logger::root();
-    the_logger.setChannel(logger_file_);
-    the_logger.setLevel(logging_level_);
+    // we are running before 'CheckArgs' so we need to do a little editiing ourselves.
 
-    setLogger(the_logger);
+    std::map<std::string, spdlog::level::level_enum> levels{
+        {"none", spdlog::level::off},
+        {"error", spdlog::level::err},
+        {"information", spdlog::level::info},
+        {"debug", spdlog::level::debug}
+    };
 
-	the_logger.information("Command line:");
-	std::ostringstream ostr;
-	for (const auto& it : argv())
-	{
-		ostr << it << ' ';
-	}
-	the_logger.information(ostr.str());
-	the_logger.information("Arguments to main():");
-    auto args = argv();
-	for (const auto& it : argv())
-	{
-		the_logger.information(it);
-	}
-	the_logger.information("Application properties:");
-	printProperties("");
-
-    // set log level here since options will have been parsed before we get here.
-}
-
-void CollectorApp::printProperties(const std::string& base)
-{
-	Poco::Util::AbstractConfiguration::Keys keys;
-	config().keys(base, keys);
-	if (keys.empty())
-	{
-		if (config().hasProperty(base))
-		{
-			std::string msg;
-			msg.append(base);
-			msg.append(" = ");
-			msg.append(config().getString(base));
-			logger().information(msg);
-		}
-	}
-	else
-	{
-		for (const auto& it : keys)
-		{
-			std::string fullKey = base;
-			if (!fullKey.empty()) fullKey += '.';
-			fullKey.append(it);
-			printProperties(fullKey);
-		}
-	}
-}
-
-void  CollectorApp::uninitialize()
-{
-	// add your own uninitialization code here
-	Application::uninitialize();
-}
-
-void  CollectorApp::reinitialize(Application& self)
-{
-	Application::reinitialize(self);
-	// add your own reinitialization code here
-
-	if (! log_file_path_name_.empty())
-	{
-        logger_file_ = new Poco::SimpleFileChannel;
-        logger_file_->setProperty("path", log_file_path_name_.string());
-        logger_file_->setProperty("rotation", "2 M");
-	}
-    else
+    auto which_level = levels.find(logging_level_);
+    if (which_level != levels.end())
     {
-        logger_file_ = new Poco::ConsoleChannel;
+        spdlog::set_level(which_level->second);
     }
+}		/* -----  end of method CollectorApp::ConfigureLogging  ----- */
 
-    decltype(auto) the_logger = Poco::Logger::root();
-    the_logger.setChannel(logger_file_);
-
-	the_logger.information("\n\n*** Restarting run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
-
-    setLogger(the_logger);
-}
-
-void  CollectorApp::defineOptions(Poco::Util::OptionSet& options)
+bool CollectorApp::Startup()
 {
-	Application::defineOptions(options);
-
-	options.addOption(
-		Poco::Util::Option("help", "h", "display help information on command line arguments")
-			.required(false)
-			.repeatable(false)
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::handleHelp)));
-
-	options.addOption(
-		Poco::Util::Option("gtest_filter", "", "select which tests to run.")
-			.required(false)
-			.repeatable(true)
-			.argument("name=value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::handleDefine)));
-
-	options.addOption(
-		Poco::Util::Option("begin-date", "", "retrieve files with dates greater than or equal to.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_begin_date)));
-
-	options.addOption(
-		Poco::Util::Option("end-date", "", "retrieve files with dates less than or equal to.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_end_date)));
-
-	options.addOption(
-		Poco::Util::Option("index-dir", "", "directory index files are downloaded to.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_index_dir)));
-
-	options.addOption(
-		Poco::Util::Option("form-dir", "", "directory form files are downloaded to.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_form_dir)));
-
-	options.addOption(
-		Poco::Util::Option("host", "", "Server address to use for SEC.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_HTTPS_host)));
-
-	options.addOption(
-		Poco::Util::Option("port", "", "Server port number to use for SEC. Default value is '443'.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_HTTPS_port)));
-
-	// options.addOption(
-	// 	Poco::Util::Option("login", "", "email address to use for anonymous login to SEC.")
-	// 		.required(true)
-	// 		.repeatable(false)
-	// 		.argument("value")
-	// 		.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_login_ID)));
-
-	options.addOption(
-		Poco::Util::Option("mode", "", "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_mode)));
-
-	options.addOption(
-		Poco::Util::Option("form", "", "name of form type[s] we are downloading. Default is '10-Q'.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_form)));
-
-	options.addOption(
-		Poco::Util::Option("ticker", "", "ticker[s] to lookup and filter form downloads.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker)));
-
-	options.addOption(
-		Poco::Util::Option("log-path", "", "path name for log file.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_log_path)));
-
-	options.addOption(
-		Poco::Util::Option("ticker-cache", "", "path name for ticker-to-CIK cache file.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker_cache)));
-
-	options.addOption(
-		Poco::Util::Option("ticker-file", "", "path name for file with list of ticker symbols to convert to CIKs.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_ticker_file)));
-
-	options.addOption(
-		Poco::Util::Option("replace-index-files", "", "over write local index files if specified. Default is 'false'")
-			.required(false)
-			.repeatable(false)
-			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_replace_index_files)));
-
-	options.addOption(
-		Poco::Util::Option("replace-form-files", "", "over write local form files if specified. Default is 'false'")
-			.required(false)
-			.repeatable(false)
-			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_replace_form_files)));
-
-	options.addOption(
-		Poco::Util::Option("index-only", "", "do not download form files.. Default is 'false'")
-			.required(false)
-			.repeatable(false)
-			.noArgument()
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_index_only)));
-
-	options.addOption(
-		Poco::Util::Option("pause", "", "how many seconds to wait between downloads. Default: 1 second.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_pause)));
-
-	options.addOption(
-		Poco::Util::Option("max", "", "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_max)));
-
-	options.addOption(
-		Poco::Util::Option("log-level", "l", "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_log_level)));
-
-	options.addOption(
-		Poco::Util::Option("concurrent", "k", "Maximun number of concurrent downloads. Default of 10.")
-			.required(false)
-			.repeatable(false)
-			.argument("value")
-			.callback(Poco::Util::OptionCallback<CollectorApp>(this, &CollectorApp::store_concurrency_limit)));
-
-	/* options.addOption( */
-	/* 	Option("define", "D", "define a configuration property") */
-	/* 		.required(false) */
-	/* 		.repeatable(true) */
-	/* 		.argument("name=value") */
-	/* 		.callback(OptionCallback<SEC_UnitTest>(this, &SEC_UnitTest::handleDefine))); */
-
-	/* options.addOption( */
-	/* 	Option("config-file", "f", "load configuration data from a file") */
-	/* 		.required(false) */
-	/* 		.repeatable(true) */
-	/* 		.argument("file") */
-	/* 		.callback(OptionCallback<SEC_UnitTest>(this, &SEC_UnitTest::handleConfig))); */
-
-	/* options.addOption( */
-	/* 	Option("bind", "b", "bind option value to test.property") */
-	/* 		.required(false) */
-	/* 		.repeatable(false) */
-	/* 		.argument("value") */
-	/* 		.binding("test.property")); */
-}
-
-void  CollectorApp::handleHelp(const std::string& name, const std::string& value)
-{
-	help_requested_ = true;
-	displayHelp();
-	stopOptionsProcessing();
-}
-
-void  CollectorApp::handleDefine(const std::string& name, const std::string& value)
-{
-	defineProperty(value);
-}
-
-void  CollectorApp::handleConfig(const std::string& name, const std::string& value)
-{
-	loadConfiguration(value);
-}
-
-void CollectorApp::displayHelp()
-{
-	Poco::Util::HelpFormatter helpFormatter(options());
-	helpFormatter.setCommand(commandName());
-	helpFormatter.setUsage("OPTIONS");
-	helpFormatter.setHeader("Program which manages the download of selected files from the SEC's SEC FTP server.");
-	helpFormatter.format(std::cout);
-}
-
-void  CollectorApp::defineProperty(const std::string& def)
-{
-	std::string name;
-	std::string value;
-	std::string::size_type pos = def.find('=');
-	if (pos != std::string::npos)
-	{
-		name.assign(def, 0, pos);
-		value.assign(def, pos + 1, def.length() - pos);
+    spdlog::info(("\n\n*** Begin run "
+           + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n"));
+    bool result{true};
+	try
+	{	
+		SetupProgramOptions();
+        if (tokens_.empty())
+        {
+            ParseProgramOptions();
+        }
+        else
+        {
+            ParseProgramOptions(tokens_);
+        }
+        ConfigureLogging();
+		result = CheckArgs ();
 	}
-	else
-    {
-        name = def;
-    }
-	config().setString(name, value);
-}
-
-int  CollectorApp::main(const ArgVec& args)
-{
-	if (!help_requested_)
+	catch(std::exception& e)
 	{
-        Do_Main();
-	}
-	return Application::EXIT_OK;
-}
+        spdlog::error(catenate("Problem in startup: ", e.what(), '\n'));
+		//	we're outta here!
 
-void CollectorApp::Do_Main()
-
-{
-	Do_StartUp();
-    try
-    {
-        Do_CheckArgs();
-        Do_Run();
+		this->Shutdown();
+        result = false;
     }
-	catch (Poco::AssertionViolationException& e)
+	catch(...)
 	{
-		std::cout << e.displayText() << '\n';
+        spdlog::error("Unexpectd problem during Starup processing\n");
+
+		//	we're outta here!
+
+		this->Shutdown();
+        result = false;
 	}
-    catch (std::exception& e)
-    {
-        std::cout << "Problem collecting files: " << e.what() << '\n';
-    }
-    catch (...)
-    {
-        std::cout << "Unknown problem collecting files." << '\n';
-    }
+    return result;
+}		/* -----  end of method CollectorApp::Startup  ----- */
 
-    Do_Quit();
-}
-
-
-void CollectorApp::Do_StartUp ()
+void CollectorApp::SetupProgramOptions()
 {
-	logger().information("\n\n*** Begin run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
-}		// -----  end of method CollectorApp::Do_StartUp  -----
+    mNewOptions = std::make_unique<po::options_description>();
 
-void CollectorApp::Do_CheckArgs ()
+	mNewOptions->add_options()
+        ("help,h",        "produce help message")
+        ("begin-date", po::value<bg::date>(&this->begin_date_), "retrieve files with dates greater than or equal to.")
+        ("end-date", po::value<bg::date>(&this->end_date_), "retrieve files with dates less than or equal to.")
+        ("index-dir",  po::value<fs::path>(&this->local_index_file_directory_), "directory index files are downloaded to.")
+        ("form-dir",  po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded to.")
+        ("host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we download from. Default is 'www.sec.gov'.")
+        ("port", po::value<std::string>(&this->HTTPS_port_)->default_value("44"), "Port number to use for web site. Default is '443' for SSL.")
+        ("mode",   po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
+        ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are downloading. Default is '10-Q'.")
+        ("ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")
+        ("log-path",  po::value<fs::path>(&this->log_file_path_name_), "path name for log file")
+        ("ticker-cache",  po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")
+        ("ticker-file",  po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker symbols to convert to CIKs.")
+        ("replace-index-files",  po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if specified. Default is 'false'.")
+        ("replace-form-files",  po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified. Default is 'false'.")
+        ("index-only",  po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files. Default is 'false'.")
+        ("pause,p",   po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
+        ("max",   po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
+        ("log-level,l",   po::value<std::string>(&this->logging_level_)->default_value("information"), "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
+        ("concurrent,k",   po::value<int>(&this->max_at_a_time_)->default_value(10), "Maximun number of concurrent downloads. Default of 10.")
+        /* ("file,f",    po::value<std::string>(), "name of file containing data for ticker. Default is stdin") */
+        /* ("mode,m",    po::value<std::string>(), "mode: either 'load' new data or 'update' existing data. Default is 'load'") */
+        /* ("output,o",   po::value<std::string>(), "output file name") */
+        /* ("destination,d",  po::value<std::string>(), "send data to file or DB. Default is 'stdout'.") */
+        /* ("boxsize,b",   po::value<DprDecimal::DDecimal<16>>(), "box step size. 'n', 'm.n'") */
+        /* ("reversal,r",   po::value<int>(),   "reversal size in number of boxes. Default is 1") */
+        /* ("scale",    po::value<std::string>(), "'arithmetic', 'log'. Default is 'arithmetic'") */
+	;
+
+}		// -----  end of method CollectorApp::Do_SetupProgramOptions  -----
+
+void CollectorApp::ParseProgramOptions ()
 {
-	poco_assert_msg(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", ("Mode must be either 'daily','quarterly' or 'ticker-only' ==> " + mode_).c_str());
+	auto options = po::parse_command_line(mArgc, mArgv, *mNewOptions);
+	po::store(options, mVariableMap);
+	if (this->mArgc == 1	||	mVariableMap.count("help") == 1)
+	{
+		std::cout << *mNewOptions << "\n";
+		throw std::runtime_error("\nExiting after 'help'.");
+	}
+	po::notify(mVariableMap);    
+
+}		/* -----  end of method CollectorApp::ParseProgramOptions  ----- */
+
+void CollectorApp::ParseProgramOptions (const std::vector<std::string>& tokens)
+{
+	auto options = po::command_line_parser(tokens).options(*mNewOptions).run();
+	po::store(options, mVariableMap);
+	if (mVariableMap.count("help") == 1)
+	{
+		std::cout << *mNewOptions << "\n";
+		throw std::runtime_error("\nExiting after 'help'.");
+	}
+	po::notify(mVariableMap);    
+}		/* -----  end of method CollectorApp::ParseProgramOptions  ----- */
+
+bool CollectorApp::CheckArgs ()
+{
+	BOOST_ASSERT_MSG(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", catenate("Mode must be either 'daily','quarterly' or 'ticker-only' ==> ", mode_).c_str());
 
 	//	the user may specify multiple stock tickers in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
 
 	if (! ticker_.empty())
 	{
-		comma_list_parser x(ticker_list_, ",");
-		x.parse_string(ticker_);
+        ticker_list_ = split_string_to_strings(ticker_, ',');
 	}
 
 	if (! ticker_list_file_name_.empty())
     {
-		poco_assert_msg(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
+		BOOST_ASSERT_MSG(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
     }
 
 	if (mode_ == "ticker-only")
-		return;
+    {
+		return true;
+    }
 
-	poco_assert_msg(begin_date_ != bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
+	BOOST_ASSERT_MSG(begin_date_ != bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
 
 	if (end_date_ == bg::date())
+    {
 		end_date_ = begin_date_;
+    }
 
-	poco_assert_msg(! local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
-	poco_assert_msg(index_only_ || ! local_form_file_directory_.empty(), "Must specify 'form-dir' when not using 'index-only' option.");
+	BOOST_ASSERT_MSG(! local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
+	BOOST_ASSERT_MSG(index_only_ || ! local_form_file_directory_.empty(), "Must specify 'form-dir' when not using 'index-only' option.");
 
 	//	the user may specify multiple form types in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
 
 	if (! form_.empty())
 	{
-		comma_list_parser x(form_list_, ",");
-		x.parse_string(form_);
+        form_list_ = split_string_to_strings(form_, ',');
 	}
 
+    return  true;
 }		// -----  end of method CollectorApp::Do_CheckArgs  -----
 
-void CollectorApp::Do_Run ()
+void CollectorApp::Run ()
 {
 	if (! ticker_cache_file_name_.empty())
+    {
 		ticker_converter_.UseCacheFile(ticker_cache_file_name_);
+    }
 
 	if (! ticker_list_file_name_.empty())
+    {
 		Do_Run_TickerFileLookup();
+    }
 
 	if (mode_ == "ticker-only")
+    {
 		Do_Run_TickerLookup();
+    }
 	else if (mode_ == "daily")
+    {
 		Do_Run_DailyIndexFiles();
+    }
 	else
+    {
 		Do_Run_QuarterlyIndexFiles();
+    }
 
 	if (! ticker_cache_file_name_.empty())
+    {
 		ticker_converter_.SaveCIKDataToFile();
+    }
 
 }		// -----  end of method CollectorApp::Do_Run  -----
 
 void CollectorApp::Do_Run_TickerLookup ()
 {
 	for (const auto& ticker : ticker_list_)
+    {
 		ticker_converter_.ConvertTickerToCIK(ticker);
+    }
 
 }		// -----  end of method CollectorApp::Do_Run_tickerLookup  -----
 
@@ -631,24 +428,14 @@ void CollectorApp::Do_Run_QuarterlyIndexFiles ()
 void CollectorApp::Do_TickerMap_Setup ()
 {
 	for (const auto& ticker : ticker_list_)
+    {
 		ticker_map_[ticker] = ticker_converter_.ConvertTickerToCIK(ticker);
+    }
 
 }		// -----  end of method CollectorApp::Do_TickerMap_Setup  -----
 
-void CollectorApp::Do_Quit ()
+void CollectorApp::Shutdown()
 {
-	logger().information("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
+    spdlog::info("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
 }		// -----  end of method CollectorApp::Do_Quit  -----
 
-void CollectorApp::comma_list_parser::parse_string (const std::string& comma_list)
-{
-	boost::algorithm::split(destination_, comma_list, boost::algorithm::is_any_of(seperator_));
-
-	return ;
-}		// -----  end of method comma_list_parser::parse_string  -----
-
-void CollectorApp::LogLevelValidator::Validate(const Poco::Util::Option& option, const std::string& value)
-{
-    if (value != "error" && value != "none" && value != "information" && value != "debug")
-        throw Poco::Util::OptionException("Log level must be: 'none|error|information|debug'");
-}

@@ -105,7 +105,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
-std::string TickerConverter::SEC_CIK_Lookup (const std::string& ticker, int pause)
+std::string TickerConverter::SEC_CIK_Lookup (sview ticker, int pause)
 {
     // let's use our HTTPS_Downloader class since it knows how to do what we want to do.
 

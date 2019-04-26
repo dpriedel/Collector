@@ -41,7 +41,6 @@
 
 // #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include "Poco/Logger.h"
 
 namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
