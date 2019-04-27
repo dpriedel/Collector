@@ -66,6 +66,7 @@ class HTTPS_Downloader
 		// ====================  LIFECYCLE     =======================================
 		HTTPS_Downloader ()=delete;                             // constructor
 		HTTPS_Downloader (const HTTPS_Downloader& rhs)=delete;                             // constructor
+		HTTPS_Downloader (HTTPS_Downloader&& rhs)=delete;                             // constructor
 		HTTPS_Downloader(const std::string& server_name, const std::string& port);
 		~HTTPS_Downloader()=default;
 

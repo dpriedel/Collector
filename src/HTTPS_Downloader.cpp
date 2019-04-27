@@ -121,6 +121,8 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, const std::st
 
 std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 {
+    // if any problems occur here, we'll just let beast throw an exception.
+
     tcp::resolver resolver(ioc);
     beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
@@ -231,6 +233,11 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     http::read(stream, buffer, res_parser, ec);
     auto response_content = res_parser.get();
 
+    if (http::int_to_status(response_content.base().result_int()) == http::status::request_timeout)
+    {
+		throw Collector::TimeOutException(catenate(remote_file_name.string(), ": Result: ", ec.message(), 
+			"  ", response_content.base().reason().data(), ": Unable to download file."));
+    }
     if (ec != beast::errc::success || http::int_to_status(response_content.base().result_int()) != http::status::ok)
     {
 		throw std::runtime_error(catenate(remote_file_name.string(), ": Result: ", ec.message(), 

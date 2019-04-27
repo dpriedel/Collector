@@ -42,7 +42,8 @@ SRCS1 := $(SDIR1)/Main.cpp
 SDIR2 := ./src
 SRCS2 := $(SDIR2)/HTTPS_Downloader.cpp $(SDIR2)/DailyIndexFileRetriever.cpp \
 		 $(SDIR2)/FormFileRetriever.cpp $(SDIR2)/QuarterlyIndexFileRetriever.cpp \
-		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectorApp.cpp $(SDIR2)/PathNameGenerator.cpp
+		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectorApp.cpp $(SDIR2)/PathNameGenerator.cpp \
+		 $(SDIR2)/Collector_Utils.cpp
 
 
 SRCS := $(SRCS1) $(SRCS2)
@@ -57,8 +58,11 @@ ifeq "$(CFG)" "Debug"
 OUTDIR=Debug
 
 CFG_LIB := -lpthread -lstdc++fs \
+		-lssl -lcrypto -lzip \
 		-L$(BOOSTDIR)/lib -lboost_date_time-mt-d-x64 -lboost_iostreams-mt-d-x64 \
-		-L/usr/local/lib -lPocoFoundationd -lPocoUtild -lPocoNetSSLd -lPocoNetd -lPocoZipd
+		-lboost_regex-mt-d-x64 \
+		-lboost_program_options-mt-x64 
+		
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -66,7 +70,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++17 -D NOCERTTEST -D_DEBUG -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++17 -D NOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -D_DEBUG -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -79,9 +83,10 @@ ifeq "$(CFG)" "Release"
 
 OUTDIR=Release
 
-CFG_LIB := -lpthread -lstdc++fs \
+CFG_LIB := -lpthread -lstdc++fs -lssl -lcrypto -lzip \
 		-L$(BOOSTDIR)/lib -lboost_date_time-mt-x64 -lboost_iostreams-mt-x64 \
-		-L/usr/local/lib -lPocoFoundation -lPocoUtil -lPocoNetSSL -lPocoNet -lPocoZip
+		-lboost_regex-mt-x64 \
+		-lboost_program_options-mt-x64
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -91,7 +96,7 @@ DEPS=$(OBJS:.o=.d)
 
 # need to figure out cert handling better. Until then, turn off the SSL Cert testing.
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++17 -D NOCERTTEST -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++17 -D NOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration

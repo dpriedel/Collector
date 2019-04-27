@@ -33,7 +33,10 @@
 
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+
 #include "CollectorApp.h"
+#include "Collector_Utils.h"
 
 int main(int argc, char** argv)
 {
@@ -44,20 +47,27 @@ int main(int argc, char** argv)
 	int result = 0;
 	try
 	{
-		CollectorApp myApp;
-		myApp.init(argc, argv);
-		result = myApp.run();
+		CollectorApp myApp(argc, argv);
+        bool startup_OK = myApp.Startup();
+        if (startup_OK)
+        {
+            myApp.Run();
+            myApp.Shutdown();
+        }
+        else
+        {
+            std::cout << "Problems starting program.  No processing done.\n";
+        }
 	}
 
 	catch (const std::exception& theProblem)
 	{
-		// poco_fatal(myApp->logger(), theProblem.what());
-		std::clog << "Something fundamental went wrong: " << theProblem.what() << std::endl;
+        spdlog::error(catenate("Something fundamental went wrong: ", theProblem.what()));
 		result = 7;
 	}
 	catch (...)
-	{		// handle exception: unspecified
-        std::clog << "Something totally unexpected happened." << std::endl;
+	{
+        spdlog::error("Something totally unexpected happened.");
 		result = 9;
 	}
 
