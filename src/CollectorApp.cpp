@@ -49,9 +49,9 @@
 #include "CollectorApp.h"
 
 #include "Collector_Utils.h"
-#include "HTTPS_Downloader.h"
 #include "DailyIndexFileRetriever.h"
 #include "FormFileRetriever.h"
+#include "HTTPS_Downloader.h"
 #include "QuarterlyIndexFileRetriever.h"
 
 /*
