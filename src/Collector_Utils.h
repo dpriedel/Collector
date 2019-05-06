@@ -44,8 +44,6 @@
 #include <boost/assert.hpp>
 #include <boost/mp11.hpp>
 
-using sview = std::string_view;
-
 namespace mp11 = boost::mp11;
 
 namespace Collector
@@ -68,7 +66,11 @@ namespace Collector
         explicit TimeOutException(const std::string& what);
     };
 
+    using sview = std::string_view;
+
 };	/* -----  end of namespace Collector  ----- */
+
+namespace COL = Collector;
 
 // some code to help with putting together error messages,
 
@@ -118,13 +120,13 @@ std::string catenate(Ts&&... ts)
 
 // function to split a string on a delimiter and return a vector of string-views
 
-inline std::vector<sview> split_string(sview string_data, char delim)
+inline std::vector<COL::sview> split_string(COL::sview string_data, char delim)
 {
-    std::vector<sview> results;
-	for (auto it = 0; it != sview::npos; ++it)
+    std::vector<COL::sview> results;
+	for (auto it = 0; it != COL::sview::npos; ++it)
 	{
 		auto pos = string_data.find(delim, it);
-        if (pos != sview::npos)
+        if (pos != COL::sview::npos)
         {
     		results.emplace_back(string_data.substr(it, pos - it));
         }
@@ -140,7 +142,7 @@ inline std::vector<sview> split_string(sview string_data, char delim)
 
 // function to split a string on a delimiter and return a vector of strings
 
-inline std::vector<std::string> split_string_to_strings(sview string_data, char delim)
+inline std::vector<std::string> split_string_to_strings(COL::sview string_data, char delim)
 {
     std::vector<std::string> results;
 	for (auto it = 0; it != std::string::npos; ++it)

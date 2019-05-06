@@ -37,9 +37,9 @@
 
 #include "spdlog/spdlog.h"
 
-#include "QuarterlyIndexFileRetriever.h"
-#include "PathNameGenerator.h"
 #include "Collector_Utils.h"
+#include "PathNameGenerator.h"
+#include "QuarterlyIndexFileRetriever.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  QuarterlyIndexFileRetriever
@@ -153,9 +153,10 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesFor
 
 	//	Remember...we are working with compressed directory files on the SEC server
 
+    results.reserve(remote_file_list.size());
 	for (const auto& remote_file : remote_file_list)
 	{
-		results.emplace_back(HierarchicalCopyRemoteIndexFileTo(remote_file, local_directory_name, replace_files));
+		results.push_back(HierarchicalCopyRemoteIndexFileTo(remote_file, local_directory_name, replace_files));
 	}
 
 	return results;

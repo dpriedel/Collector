@@ -41,9 +41,8 @@
 
 #include "spdlog/spdlog.h"
 
-#include "TickerConverter.h"
 #include "HTTPS_Downloader.h"
-#include "Collector_Utils.h"
+#include "TickerConverter.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  TickerConverter
@@ -105,7 +104,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
-std::string TickerConverter::SEC_CIK_Lookup (sview ticker, int pause)
+std::string TickerConverter::SEC_CIK_Lookup (COL::sview ticker, int pause)
 {
     // let's use our HTTPS_Downloader class since it knows how to do what we want to do.
 

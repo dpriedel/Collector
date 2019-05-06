@@ -34,15 +34,14 @@
 #include <fstream>
 #include <iterator>
 #include <set>
-#include <string_view>
 #include <thread>
-
-using sview = std::string_view;
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "spdlog/spdlog.h"
+
+#include "Collector_Utils.h"
 
 // define our own 'transform_if' for now.
 // don't use the one from boost because it pulls in a
@@ -138,13 +137,13 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 	//	CIKs can have leading zeroes in the table but the leading zeroes are not in the CIK field
 	//	in the index file.
 
-	std::vector<sview> cik_list;
+	std::vector<COL::sview> cik_list;
 	if (! ticker_map.empty())
 	{
 		std::transform(std::begin(ticker_map),
 			std::end(ticker_map),
 			std::back_inserter(cik_list),
-			[](const auto& elem) { sview x{elem.second}; x.remove_prefix(x.find_first_not_of('0')); return x; });
+			[](const auto& elem) { COL::sview x{elem.second}; x.remove_prefix(x.find_first_not_of('0')); return x; });
 	}
 
 	auto itor {std::begin(index_data_lines)};

@@ -34,9 +34,9 @@
 	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 
+#include <filesystem>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 // #include <boost/filesystem.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -56,6 +56,8 @@ class QuarterlyIndexFileRetriever
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
 		QuarterlyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);                // constructor
+
+		~QuarterlyIndexFileRetriever ()=default;
 
 		QuarterlyIndexFileRetriever (const QuarterlyIndexFileRetriever& rhs)=delete;
 		QuarterlyIndexFileRetriever (QuarterlyIndexFileRetriever&& rhs)=delete;

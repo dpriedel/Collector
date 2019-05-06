@@ -42,9 +42,6 @@
 #include <map>
 #include <memory>
 #include <filesystem>
-#include <string_view>
-
-using sview = std::string_view;
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
@@ -57,7 +54,6 @@ namespace po = boost::program_options;
 
 class CollectorApp
 {
-
 public:
 
     // use ctor below for testing with predefined options
@@ -70,6 +66,9 @@ public:
 	CollectorApp(CollectorApp&& rhs) = delete;
 
     ~CollectorApp() = default;
+
+    CollectorApp& operator=(const CollectorApp& rhs) = delete;
+    CollectorApp& operator=(CollectorApp&& rhs) = delete;
 
     bool Startup();
     void Run();
