@@ -42,6 +42,7 @@
 #include "spdlog/spdlog.h"
 
 #include "Collector_Utils.h"
+#include "FormFileRetriever.h"
 
 // define our own 'transform_if' for now.
 // don't use the one from boost because it pulls in a
@@ -62,8 +63,6 @@ OutputIterator transform_if(InputIterator first, InputIterator last,
     return result;
 }
 
-#include "FormFileRetriever.h"
-#include "Collector_Utils.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  FormFileRetriever
@@ -177,7 +176,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 
 		auto cik_from_index_file = find_CIK_in_line(next_line);
 		auto pos = std::find(std::begin(cik_list), std::end(cik_list), cik_from_index_file);
-		return (pos == cik_list.end() ? false : true);
+		return (pos != cik_list.end());
 	};
 
 	for (auto& the_form : forms_list)
