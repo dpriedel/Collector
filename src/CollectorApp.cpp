@@ -155,12 +155,12 @@ void CollectorApp::SetupProgramOptions()
 
 	mNewOptions->add_options()
         ("help,h",        "produce help message")
-        ("begin-date", po::value<bg::date>(&this->begin_date_), "retrieve files with dates greater than or equal to.")
-        ("end-date", po::value<bg::date>(&this->end_date_), "retrieve files with dates less than or equal to.")
+        ("begin-date", po::value<std::string>(&this->start_date_), "retrieve files with dates greater than or equal to.")
+        ("end-date", po::value<std::string>(&this->stop_date_), "retrieve files with dates less than or equal to.")
         ("index-dir",  po::value<fs::path>(&this->local_index_file_directory_), "directory index files are downloaded to.")
         ("form-dir",  po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded to.")
         ("host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we download from. Default is 'www.sec.gov'.")
-        ("port", po::value<std::string>(&this->HTTPS_port_)->default_value("44"), "Port number to use for web site. Default is '443' for SSL.")
+        ("port", po::value<std::string>(&this->HTTPS_port_)->default_value("443"), "Port number to use for web site. Default is '443' for SSL.")
         ("mode",   po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
         ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are downloading. Default is '10-Q'.")
         ("ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")
@@ -230,6 +230,15 @@ bool CollectorApp::CheckArgs ()
 	if (mode_ == "ticker-only")
     {
 		return true;
+    }
+
+    if (! start_date_.empty())
+    {
+        begin_date_ = bg::from_string(start_date_);
+    }
+    if (! stop_date_.empty())
+    {
+        end_date_ = bg::from_string(stop_date_);
     }
 
 	BOOST_ASSERT_MSG(begin_date_ != bg::date(), "Must specify 'begin-date' for index and/or form downloads.");

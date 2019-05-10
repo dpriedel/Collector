@@ -114,6 +114,9 @@ private:
 	bg::date begin_date_;
 	bg::date end_date_;
 
+    std::string start_date_;
+    std::string stop_date_;
+
 	std::string mode_{"daily"};
 	std::string form_{"10-Q"};
 	std::string ticker_;
