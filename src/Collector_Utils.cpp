@@ -31,6 +31,8 @@
 	/* You should have received a copy of the GNU General Public License */
 	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <sstream>
+
 #include "Collector_Utils.h"
 
 
@@ -67,6 +69,37 @@ Collector::TimeOutException::TimeOutException(const std::string& text)
     : std::runtime_error(text)
 {
 }  /* -----  end of method TimeOutException::TimeOutException  (constructor)  ----- */
+
+date::year_month_day StringToDateYMD(const std::string& input_format, std::string the_date)
+{
+    std::istringstream in{the_date};
+    date::sys_days tp;
+    in >> date::parse(input_format, tp);
+    BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse given date: ", the_date).c_str());
+    date::year_month_day result = tp;
+    BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
+    return result;
+
+    // TODO: take a list of formats to try
+//
+//    if (! start_date_.empty())
+//    {
+//        std::istringstream in{start_date_};
+//        date::sys_days tp;
+//        in >> date::parse("%F", tp);
+//        if (in.fail())
+//        {
+//            // try an alternate representation
+//
+//            in.clear();
+//            in.rdbuf()->pubseekpos(0);
+//            in >> date::parse("%Y-%b-%d", tp);
+//        }
+//        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse begin date: ", start_date_).c_str());
+//        begin_date_ = tp;
+//        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ", start_date_).c_str());
+//    }
+}		// -----  end of method tringToDateYMD  ----- 
 
 
 namespace boost

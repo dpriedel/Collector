@@ -38,10 +38,12 @@
 #include <iterator>
 #include <string>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
+//#include <boost/date_time/gregorian/gregorian.hpp>
 
-namespace bg = boost::gregorian;
+//namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
+
+#include "Collector_Utils.h"
 
 // NOTE: this revised iterator approach with range support now
 // still implements the closed interval type iterators used previously.
@@ -54,14 +56,14 @@ namespace fs = std::filesystem;
  */
 class QuarterlyIterator: public std::iterator<
                          std::forward_iterator_tag,     // iterator_category
-                         bg::date                       // value_type
+                         date::year_month_day           // value_type
                          >
 {
     public:
         /* ====================  LIFECYCLE     ======================================= */
         
-        QuarterlyIterator ();                             /* constructor */
-        explicit QuarterlyIterator(const bg::date& start_date);
+        QuarterlyIterator () = default;                        /* constructor */
+        explicit QuarterlyIterator(const date::year_month_day& start_date);
 
         QuarterlyIterator(const QuarterlyIterator& rhs) = default;
         QuarterlyIterator(QuarterlyIterator&& rhs) = default;
@@ -70,7 +72,7 @@ class QuarterlyIterator: public std::iterator<
 
         /* ====================  ACCESSORS     ======================================= */
 
-        const bg::date& operator*() const { return working_date_; }
+        const date::year_month_day& operator*() const { return working_date_; }
 
         /* ====================  MUTATORS      ======================================= */
 
@@ -94,19 +96,20 @@ class QuarterlyIterator: public std::iterator<
 
         /* ====================  DATA MEMBERS  ======================================= */
 
-        inline static bg::months a_quarter{3};
-        bg::date start_date_;
-        bg::date working_date_;
-        bg::greg_year start_year_;
-        bg::greg_year working_year_;
-        bg::greg_month start_month_;
-        bg::greg_month working_month_;
+        inline static date::months a_quarter{3};
+
+        date::year_month_day start_date_;
+        date::year_month_day working_date_;
+        date::year start_year_;
+        date::year working_year_;
+        date::month start_month_;
+        date::month working_month_;
 
 }; /* -----  end of class QuarterlyIterator  ----- */
 
 inline bool operator < (const QuarterlyIterator& lhs, const QuarterlyIterator& rhs)
 {
-	return *lhs < * rhs;
+	return *lhs < *rhs;
 }
 
 // we want to have a half open range of at least 1 quarter
@@ -125,7 +128,7 @@ class DateRange
     public:
         /* ====================  LIFECYCLE     ======================================= */
 	
-        DateRange(const bg::date& start_date, const bg::date& end_date);
+        DateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
 
         /* ====================  ACCESSORS     ======================================= */
 
@@ -145,13 +148,13 @@ class DateRange
 
         /* ====================  DATA MEMBERS  ======================================= */
 
-        bg::date start_date_;
-        bg::date end_date_;
+        date::year_month_day start_date_;
+        date::year_month_day end_date_;
 
 }; /* -----  end of class DateRange  ----- */
 
 
-fs::path GeneratePath(const fs::path& prefix, const bg::date& quarter_begin);
+fs::path GeneratePath(const fs::path& prefix, const date::year_month_day& quarter_begin);
 
 
 #endif /* PATHNAMEGENERATOR_H_ */

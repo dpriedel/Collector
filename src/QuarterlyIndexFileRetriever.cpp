@@ -52,19 +52,19 @@ QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const std::string& hos
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
 
-bg::date QuarterlyIndexFileRetriever::CheckDate (const bg::date& day_in_quarter)
+date::year_month_day QuarterlyIndexFileRetriever::CheckDate (const date::year_month_day& day_in_quarter)
 {
-	input_date_ = bg::date();		//	don't know of a better way to clear date field.
+	input_date_ = {};
 
 	//	we can only work with past data.
-
-	bg::date today{bg::day_clock::local_day()};
-	BOOST_ASSERT_MSG(day_in_quarter < today, catenate("Date must be less than ", bg::to_simple_string(today)).c_str());
+    
+    auto today = date::year_month_day{floor<date::days>(std::chrono::system_clock::now())};
+	BOOST_ASSERT_MSG(day_in_quarter < today, catenate("Date must be less than ", date::format("%F", today)).c_str());
 
 	return day_in_quarter;
 }		// -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
 
-fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (const bg::date& day_in_quarter)
+fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (const date::year_month_day& day_in_quarter)
 {
 	input_date_ = CheckDate(day_in_quarter);
 
@@ -123,7 +123,7 @@ fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& lo
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeLocalIndexFilePath  -----
 
 
-std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);

@@ -46,6 +46,8 @@
 
 namespace mp11 = boost::mp11;
 
+#include "date/tz.h"
+
 namespace Collector
 {
     class AssertionException : public std::invalid_argument
@@ -161,5 +163,20 @@ inline std::vector<std::string> split_string_to_strings(COL::sview string_data, 
 	}
     return results;
 }
+
+// replace boost gregorian with new date library.
+
+// utility to convert a date::year_month_day to a string
+// based on code from "The C++ Standard Library 2nd Edition"
+// by Nicolai Josuttis p. 158
+
+inline std::string LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time)
+{
+    auto t = date::make_zoned(date::current_zone(), a_date_time);
+    std::string ts = date::format("%a, %b %d, %Y at %I:%M:%S %p %Z", t);
+    return ts;
+}
+
+date::year_month_day StringToDateYMD(const std::string& input_format, std::string the_date);
 
 #endif   /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */

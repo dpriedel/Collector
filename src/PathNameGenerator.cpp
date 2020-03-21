@@ -40,12 +40,12 @@
  *--------------------------------------------------------------------------------------
  */
 
-DateRange::DateRange(const bg::date& start_date, const bg::date& end_date)
+DateRange::DateRange(const date::year_month_day& start_date, const date::year_month_day& end_date)
 	: start_date_{start_date}, end_date_{end_date}
 
 {
-	auto working_date1 = bg::date(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
-	auto working_date2 = bg::date(end_date.year(), (end_date.month() / 3 + (end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+//	auto working_date1 = date::year_month_day(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+//	auto working_date2 = date::year_month_day(end_date.year(), (end_date.month() / 3 + (end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
 
 	end_date_ = *(++QuarterlyIterator{end_date});
 }  /* -----  end of method DateRange::DateRange  (constructor)  ----- */
@@ -58,22 +58,14 @@ DateRange::DateRange(const bg::date& start_date, const bg::date& end_date)
  *--------------------------------------------------------------------------------------
  */
 
-QuarterlyIterator::QuarterlyIterator()
-    : start_year_{bg::date{}.year()}, working_year_{bg::date{}.year()},
-    start_month_{boost::date_time::NotAMonth}, working_month_{boost::date_time::NotAMonth}
-
-{
-
-}  /* -----  end of method QuarterlyIterator::QuarterlyIterator  (constructor)  ----- */
-
-QuarterlyIterator::QuarterlyIterator(const bg::date& start_date)
+QuarterlyIterator::QuarterlyIterator(const date::year_month_day& start_date)
 	: start_date_{start_date}, start_year_{start_date.year()}, working_year_{start_date.year()},
 	    start_month_{start_date.month()}, working_month_{start_date.month()}
 
 {
 	// compute the first day of the quarter and use that as the base of calculations
 
-	working_date_ = bg::date(start_date.year(), (start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+	working_date_ = date::year_month_day{start_date.year(), date::month{(start_date.month().operator unsigned int() / 3 + (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)) * 3 - 2}, date::day{1}};
 	working_month_ = working_date_.month();
 }  /* -----  end of method QuarterlyIterator::QuarterlyIterator  (constructor)  ----- */
 
@@ -91,15 +83,15 @@ QuarterlyIterator& QuarterlyIterator::operator++()
  *  Description:  
  * =====================================================================================
  */
-fs::path GeneratePath(const fs::path& prefix, const bg::date& quarter_begin)
+fs::path GeneratePath(const fs::path& prefix, const date::year_month_day& quarter_begin)
 
 {
 	auto working_year = quarter_begin.year();
 	auto working_month = quarter_begin.month();
 
 	auto SEC_path = prefix;
-	SEC_path /= std::to_string(working_year);
-	SEC_path /= "QTR" + std::to_string(working_month / 3 + (working_month % 3 == 0 ? 0 : 1));
+	SEC_path /= std::to_string(working_year.operator int());
+	SEC_path /= "QTR" + std::to_string(working_month.operator unsigned int() / 3 + (working_month.operator unsigned int() % 3 == 0 ? 0 : 1));
 
 	return SEC_path;
 }		/* -----  end of function GeneratePath  ----- */

@@ -37,6 +37,7 @@
 #include <fstream>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "spdlog/spdlog.h"
@@ -58,19 +59,19 @@ DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, const 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
 
 
-bg::date DailyIndexFileRetriever::CheckDate (const bg::date& aDate)
+date::year_month_day DailyIndexFileRetriever::CheckDate (const date::year_month_day& aDate)
 {
-	input_date_ = bg::date();		//	don't know of a better way to clear date field.
+	input_date_ = date::year_month_day();		//	don't know of a better way to clear date field.
 
 	//	we can only work with past data.
 
-	bg::date today{bg::day_clock::local_day()};
-	BOOST_ASSERT_MSG(aDate <= today, catenate("Date must be less than ", bg::to_simple_string(today)).c_str());
+	date::year_month_day today{floor<date::days>(std::chrono::system_clock::now())};
+	BOOST_ASSERT_MSG(aDate <= today, catenate("Date must be less than ", date::format("%F", today)).c_str());
 
 	return aDate;
 }		// -----  end of method DailyIndexFileRetriever::CheckDate  -----
 
-fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in_quarter)
+fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const date::year_month_day& day_in_quarter)
 {
 	input_date_ = CheckDate(day_in_quarter);
 
@@ -80,43 +81,43 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const bg::date& day_in
 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
-fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const bg::date& aDate)
+fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const date::year_month_day& aDate)
 {
 	input_date_ = this->CheckDate(aDate);
 
-	spdlog::debug(catenate("D: Looking for Daily Index File nearest date: ", bg::to_simple_string(aDate)));
+	spdlog::debug(catenate("D: Looking for Daily Index File nearest date: ", date::format("%F", aDate)));
 
 	auto remote_diretory_name = MakeDailyIndexPathName(aDate);
 	decltype(auto) directory_list = this->GetRemoteIndexList(remote_diretory_name);
 
-	std::string looking_for = catenate("form.", bg::to_iso_string(input_date_), ".idx");
+	std::string looking_for = catenate("form.", date::format("%Y%m%d", input_date_), ".idx");
 
 	// index files may or may not be gzipped, so we need to exclude possible file name suffix from comparisons
 
 	auto pos = std::find_if(directory_list.crbegin(), directory_list.crend(),
         [&looking_for](const auto& x) {return x.compare(0, looking_for.size(), looking_for) <= 0;});
 	BOOST_ASSERT_MSG(pos != directory_list.rend(), catenate("Can't find daily index file for date: ",
-                bg::to_simple_string(input_date_)).c_str());
+                date::format("%F", input_date_)).c_str());
 
-	actual_file_date_ = bg::from_undelimited_string((*pos).substr(5, 8));
+	actual_file_date_ = StringToDateYMD("%Y%m%d", (*pos).substr(5, 8));
 
-	spdlog::debug(catenate("D: Found Daily Index File for date: ", bg::to_simple_string(actual_file_date_)));
+	spdlog::debug(catenate("D: Found Daily Index File for date: ", date::format("%F", actual_file_date_)));
 
 	auto remote_daily_index_file_name = remote_diretory_name /= *pos;
 	return remote_daily_index_file_name;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
-std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
 
-	spdlog::debug(catenate("D: Looking for Daily Index Files in date range from: ", bg::to_simple_string(start_date_),
-            " to: ", bg::to_simple_string(end_date_)));
+	spdlog::debug(catenate("D: Looking for Daily Index Files in date range from: ", date::format("%F", start_date_),
+            " to: ", date::format("%F", end_date_)));
 
-	auto looking_for_start = std::string{"form."} + bg::to_iso_string(start_date_) + ".idx";
-	auto looking_for_end = std::string{"form."} + bg::to_iso_string(end_date_) + ".idx";
+	auto looking_for_start = std::string{"form."} + date::format("%Y%m%d", start_date_) + ".idx";
+	auto looking_for_end = std::string{"form."} + date::format("%Y%m%d", end_date_) + ".idx";
 
 	auto remote_directory_list = MakeIndexFileNamesForDateRange(begin_date, end_date);
 
@@ -152,17 +153,17 @@ std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRa
 				[remote_directory](const auto& e){ auto fpath{remote_directory}; return std::move(fpath /= e); });
 	}
 	BOOST_ASSERT_MSG(! remote_daily_index_file_name_list.empty(), catenate("Can't find daily index files for date range: ",
-		   	bg::to_simple_string(start_date_), " ", bg::to_simple_string(end_date_)).c_str());
+		   	date::format("%F", start_date_), " ", date::format("%F", end_date_)).c_str());
 
-	actual_start_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.back().filename().string().substr(5, 8));
-	actual_end_date_ = bg::from_undelimited_string(remote_daily_index_file_name_list.front().filename().string().substr(5, 8));
+	actual_start_date_ = StringToDateYMD("%Y%m%d", remote_daily_index_file_name_list.back().filename().string().substr(5, 8));
+	actual_end_date_ = StringToDateYMD("%Y%m%d", remote_daily_index_file_name_list.front().filename().string().substr(5, 8));
 
 	spdlog::debug(catenate("D: Found ", remote_daily_index_file_name_list.size(), " files for date range."));
 
 	return remote_daily_index_file_name_list;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const bg::date& begin_date, const bg::date& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);

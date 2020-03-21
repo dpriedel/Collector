@@ -40,10 +40,12 @@
 #include <vector>
 
 // #include <boost/filesystem.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
-
-namespace bg = boost::gregorian;
+//#include <boost/date_time/gregorian/gregorian.hpp>
+//
+//namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
+
+#include "date/date.h"
 
 #include "HTTPS_Downloader.h"
 
@@ -65,8 +67,8 @@ class DailyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		[[nodiscard]] const bg::date& GetActualIndexFileDate() const { return actual_file_date_; }
-		[[nodiscard]] std::pair<bg::date, bg::date> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
+		[[nodiscard]] const date::year_month_day& GetActualIndexFileDate() const { return actual_file_date_; }
+		[[nodiscard]] std::pair<date::year_month_day, date::year_month_day> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
 
@@ -76,7 +78,7 @@ class DailyIndexFileRetriever
         DailyIndexFileRetriever& operator=(const DailyIndexFileRetriever& rhs) = delete;
         DailyIndexFileRetriever& operator=(DailyIndexFileRetriever&& rhs) = delete;
 
-		fs::path FindRemoteIndexFileNameNearestDate(const bg::date& aDate);
+		fs::path FindRemoteIndexFileNameNearestDate(const date::year_month_day& aDate);
 
 		//	returns the local path name of the downloaded file.
 
@@ -85,8 +87,8 @@ class DailyIndexFileRetriever
 
 		//	This method treats the date range as a closed interval.
 
-		std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
-		std::vector<fs::path> MakeIndexFileNamesForDateRange(const bg::date& start_date, const bg::date& end_date);
+		std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
+		std::vector<fs::path> MakeIndexFileNamesForDateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
 
 		//	returns the local path name of the downloaded file.
 
@@ -98,13 +100,13 @@ class DailyIndexFileRetriever
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
 
-		fs::path MakeDailyIndexPathName(const bg::date& day_in_quarter);
+		fs::path MakeDailyIndexPathName(const date::year_month_day& day_in_quarter);
 
 		// ====================  OPERATORS     =======================================
 
 	protected:
 
-		bg::date CheckDate(const bg::date& aDate);
+		date::year_month_day CheckDate(const date::year_month_day& aDate);
 		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_daily_index_file_name);
 		std::vector<std::string> GetRemoteIndexList(const fs::path& remote_directory);
 
@@ -119,12 +121,12 @@ class DailyIndexFileRetriever
 
 		HTTPS_Downloader the_server_;
         fs::path remote_directory_prefix_;                // top-level directory path
-		bg::date input_date_;
-		bg::date actual_file_date_;
-		bg::date start_date_;
-		bg::date end_date_;
-		bg::date actual_start_date_;
-		bg::date actual_end_date_;
+		date::year_month_day input_date_;
+		date::year_month_day actual_file_date_;
+		date::year_month_day start_date_;
+		date::year_month_day end_date_;
+		date::year_month_day actual_start_date_;
+		date::year_month_day actual_end_date_;
 
 }; // -----  end of class DailyIndexFileRetriever  -----
 
