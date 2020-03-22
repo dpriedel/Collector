@@ -40,7 +40,7 @@
  *--------------------------------------------------------------------------------------
  */
 
-DateRange::DateRange(const date::year_month_day& start_date, const date::year_month_day& end_date)
+DateRange::DateRange(date::year_month_day start_date, date::year_month_day end_date)
 	: start_date_{start_date}, end_date_{end_date}
 
 {
@@ -58,7 +58,7 @@ DateRange::DateRange(const date::year_month_day& start_date, const date::year_mo
  *--------------------------------------------------------------------------------------
  */
 
-QuarterlyIterator::QuarterlyIterator(const date::year_month_day& start_date)
+QuarterlyIterator::QuarterlyIterator(date::year_month_day start_date)
 	: start_date_{start_date}, start_year_{start_date.year()}, working_year_{start_date.year()},
 	    start_month_{start_date.month()}, working_month_{start_date.month()}
 
@@ -83,7 +83,7 @@ QuarterlyIterator& QuarterlyIterator::operator++()
  *  Description:  
  * =====================================================================================
  */
-fs::path GeneratePath(const fs::path& prefix, const date::year_month_day& quarter_begin)
+fs::path GeneratePath(const fs::path& prefix, date::year_month_day quarter_begin)
 
 {
 	auto working_year = quarter_begin.year();

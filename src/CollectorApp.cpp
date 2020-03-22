@@ -37,11 +37,12 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
+#include <iostream>
 #include <random>		//	just for initial development.  used in Quarterly form retrievals
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+//#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -112,8 +113,7 @@ void CollectorApp::ConfigureLogging()
 
 bool CollectorApp::Startup()
 {
-    spdlog::info(("\n\n*** Begin run "
-           + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n"));
+    spdlog::info(catenate("\n\n*** Begin run ", LocalDateTimeAsString(std::chrono::system_clock::now()), " ***\n"));
     bool result{true};
 	try
 	{	
@@ -234,16 +234,42 @@ bool CollectorApp::CheckArgs ()
 
     if (! start_date_.empty())
     {
-        begin_date_ = bg::from_string(start_date_);
+        std::istringstream in{start_date_};
+        date::sys_days tp;
+        in >> date::parse("%F", tp);
+        if (in.fail())
+        {
+            // try an alternate representation
+
+            in.clear();
+            in.rdbuf()->pubseekpos(0);
+            in >> date::parse("%Y-%b-%d", tp);
+        }
+        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse begin date: ", start_date_).c_str());
+        begin_date_ = tp;
+        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ", start_date_).c_str());
     }
     if (! stop_date_.empty())
     {
-        end_date_ = bg::from_string(stop_date_);
+        std::istringstream in{stop_date_};
+        date::sys_days tp;
+        in >> date::parse("%F", tp);
+        if (in.fail())
+        {
+            // try an alternate representation
+
+            in.clear();
+            in.rdbuf()->pubseekpos(0);
+            in >> date::parse("%Y-%b-%d", tp);
+        }
+        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse end date: ", end_date_).c_str());
+        end_date_ = tp;
+        BOOST_ASSERT_MSG(end_date_.ok(), catenate("Invalid end date: ", stop_date_).c_str());
     }
 
-	BOOST_ASSERT_MSG(begin_date_ != bg::date(), "Must specify 'begin-date' for index and/or form downloads.");
+	BOOST_ASSERT_MSG(! start_date_.empty(), "Must specify 'begin-date' for index and/or form downloads.");
 
-	if (end_date_ == bg::date())
+	if (stop_date_.empty())
     {
 		end_date_ = begin_date_;
     }
@@ -445,6 +471,6 @@ void CollectorApp::Do_TickerMap_Setup ()
 
 void CollectorApp::Shutdown()
 {
-    spdlog::info("\n\n*** End run " + boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time()) + " ***\n");
+    spdlog::info(catenate("\n\n*** End run ", LocalDateTimeAsString(std::chrono::system_clock::now()), " ***\n"));
 }		// -----  end of method CollectorApp::Do_Quit  -----
 

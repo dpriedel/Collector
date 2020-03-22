@@ -67,7 +67,7 @@ class DailyIndexFileRetriever
 
 		// ====================  ACCESSORS     =======================================
 
-		[[nodiscard]] const date::year_month_day& GetActualIndexFileDate() const { return actual_file_date_; }
+		[[nodiscard]] date::year_month_day GetActualIndexFileDate() const { return actual_file_date_; }
 		[[nodiscard]] std::pair<date::year_month_day, date::year_month_day> GetActualDateRange() const { return std::pair(actual_start_date_, actual_end_date_); }
 
 		// ====================  MUTATORS      =======================================
@@ -78,7 +78,7 @@ class DailyIndexFileRetriever
         DailyIndexFileRetriever& operator=(const DailyIndexFileRetriever& rhs) = delete;
         DailyIndexFileRetriever& operator=(DailyIndexFileRetriever&& rhs) = delete;
 
-		fs::path FindRemoteIndexFileNameNearestDate(const date::year_month_day& aDate);
+		fs::path FindRemoteIndexFileNameNearestDate(date::year_month_day aDate);
 
 		//	returns the local path name of the downloaded file.
 
@@ -87,8 +87,8 @@ class DailyIndexFileRetriever
 
 		//	This method treats the date range as a closed interval.
 
-		std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
-		std::vector<fs::path> MakeIndexFileNamesForDateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
+		std::vector<fs::path> FindRemoteIndexFileNamesForDateRange(date::year_month_day start_date, date::year_month_day end_date);
+		std::vector<fs::path> MakeIndexFileNamesForDateRange(date::year_month_day start_date, date::year_month_day end_date);
 
 		//	returns the local path name of the downloaded file.
 
@@ -100,13 +100,13 @@ class DailyIndexFileRetriever
 
 		// daily files are now organized in a directory hierarchy the same as quarterly index files.
 
-		fs::path MakeDailyIndexPathName(const date::year_month_day& day_in_quarter);
+		fs::path MakeDailyIndexPathName(date::year_month_day day_in_quarter);
 
 		// ====================  OPERATORS     =======================================
 
 	protected:
 
-		date::year_month_day CheckDate(const date::year_month_day& aDate);
+		date::year_month_day CheckDate(date::year_month_day aDate);
 		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_daily_index_file_name);
 		std::vector<std::string> GetRemoteIndexList(const fs::path& remote_directory);
 

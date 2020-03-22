@@ -59,19 +59,19 @@ DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, const 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
 
 
-date::year_month_day DailyIndexFileRetriever::CheckDate (const date::year_month_day& aDate)
+date::year_month_day DailyIndexFileRetriever::CheckDate (date::year_month_day aDate)
 {
-	input_date_ = date::year_month_day();		//	don't know of a better way to clear date field.
+	input_date_ = {};
 
 	//	we can only work with past data.
 
 	date::year_month_day today{floor<date::days>(std::chrono::system_clock::now())};
-	BOOST_ASSERT_MSG(aDate <= today, catenate("Date must be less than ", date::format("%F", today)).c_str());
+	BOOST_ASSERT_MSG(aDate <= today, catenate(date::format("%F", aDate), ": Date must be less than ", date::format("%F", today)).c_str());
 
 	return aDate;
 }		// -----  end of method DailyIndexFileRetriever::CheckDate  -----
 
-fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const date::year_month_day& day_in_quarter)
+fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (date::year_month_day day_in_quarter)
 {
 	input_date_ = CheckDate(day_in_quarter);
 
@@ -81,7 +81,7 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName (const date::year_month
 
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeQuarterIndexPathName  -----
 
-fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const date::year_month_day& aDate)
+fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(date::year_month_day aDate)
 {
 	input_date_ = this->CheckDate(aDate);
 
@@ -108,7 +108,7 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(const date:
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileDateNearest  -----
 
 
-std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(date::year_month_day begin_date, date::year_month_day end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
@@ -163,7 +163,7 @@ std::vector<fs::path> DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRa
 	return remote_daily_index_file_name_list;
 }		// -----  end of method DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
-std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
+std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(date::year_month_day begin_date, date::year_month_day end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);

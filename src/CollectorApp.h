@@ -43,12 +43,12 @@
 #include <memory>
 #include <filesystem>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
 
-namespace bg = boost::gregorian;
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
+
+#include "date/date.h"
 
 #include "TickerConverter.h"
 
@@ -111,8 +111,8 @@ private:
 
 	TickerConverter ticker_converter_;
 
-	bg::date begin_date_;
-	bg::date end_date_;
+	date::year_month_day begin_date_;
+    date::year_month_day end_date_;
 
     std::string start_date_;
     std::string stop_date_;

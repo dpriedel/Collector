@@ -63,7 +63,7 @@ class QuarterlyIterator: public std::iterator<
         /* ====================  LIFECYCLE     ======================================= */
         
         QuarterlyIterator () = default;                        /* constructor */
-        explicit QuarterlyIterator(const date::year_month_day& start_date);
+        explicit QuarterlyIterator(date::year_month_day start_date);
 
         QuarterlyIterator(const QuarterlyIterator& rhs) = default;
         QuarterlyIterator(QuarterlyIterator&& rhs) = default;
@@ -72,7 +72,7 @@ class QuarterlyIterator: public std::iterator<
 
         /* ====================  ACCESSORS     ======================================= */
 
-        const date::year_month_day& operator*() const { return working_date_; }
+        date::year_month_day operator*() const { return working_date_; }
 
         /* ====================  MUTATORS      ======================================= */
 
@@ -128,7 +128,7 @@ class DateRange
     public:
         /* ====================  LIFECYCLE     ======================================= */
 	
-        DateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
+        DateRange(date::year_month_day start_date, date::year_month_day end_date);
 
         /* ====================  ACCESSORS     ======================================= */
 
@@ -154,7 +154,7 @@ class DateRange
 }; /* -----  end of class DateRange  ----- */
 
 
-fs::path GeneratePath(const fs::path& prefix, const date::year_month_day& quarter_begin);
+fs::path GeneratePath(const fs::path& prefix, date::year_month_day quarter_begin);
 
 
 #endif /* PATHNAMEGENERATOR_H_ */

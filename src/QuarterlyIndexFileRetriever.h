@@ -71,13 +71,13 @@ class QuarterlyIndexFileRetriever
 		QuarterlyIndexFileRetriever& operator=(const QuarterlyIndexFileRetriever& rhs)=delete;
 		QuarterlyIndexFileRetriever& operator=(QuarterlyIndexFileRetriever&& rhs)=delete;
 
-		fs::path MakeQuarterlyIndexPathName(const date::year_month_day& day_in_quarter);
+		fs::path MakeQuarterlyIndexPathName(date::year_month_day day_in_quarter);
 		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name,
                 bool replace_files=false);
 
 		//	This method treats the date range as a closed interval.
 
-		std::vector<fs::path> MakeIndexFileNamesForDateRange(const date::year_month_day& start_date, const date::year_month_day& end_date);
+		std::vector<fs::path> MakeIndexFileNamesForDateRange(date::year_month_day start_date, date::year_month_day end_date);
 		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
                 const fs::path& local_directory_name, bool replace_files=false);
 		std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
@@ -87,7 +87,7 @@ class QuarterlyIndexFileRetriever
 
 	protected:
 
-		date::year_month_day CheckDate(const date::year_month_day& aDate);
+		date::year_month_day CheckDate(date::year_month_day aDate);
 		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_quarterly_index_file_name);
 
 		// ====================  DATA MEMBERS  =======================================

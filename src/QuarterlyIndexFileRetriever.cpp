@@ -52,7 +52,7 @@ QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const std::string& hos
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
 
-date::year_month_day QuarterlyIndexFileRetriever::CheckDate (const date::year_month_day& day_in_quarter)
+date::year_month_day QuarterlyIndexFileRetriever::CheckDate (date::year_month_day day_in_quarter)
 {
 	input_date_ = {};
 
@@ -64,7 +64,7 @@ date::year_month_day QuarterlyIndexFileRetriever::CheckDate (const date::year_mo
 	return day_in_quarter;
 }		// -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
 
-fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (const date::year_month_day& day_in_quarter)
+fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName (date::year_month_day day_in_quarter)
 {
 	input_date_ = CheckDate(day_in_quarter);
 
@@ -123,7 +123,7 @@ fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath (const fs::path& lo
 }		// -----  end of method QuarterlyIndexFileRetriever::MakeLocalIndexFilePath  -----
 
 
-std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(const date::year_month_day& begin_date, const date::year_month_day& end_date)
+std::vector<fs::path> QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(date::year_month_day begin_date, date::year_month_day end_date)
 {
 	start_date_ = this->CheckDate(begin_date);
 	end_date_ = this->CheckDate(end_date);
