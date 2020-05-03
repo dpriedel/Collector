@@ -42,11 +42,11 @@
 #include <type_traits>
 
 #include <boost/assert.hpp>
-#include <boost/mp11.hpp>
 
-namespace mp11 = boost::mp11;
 
 #include "date/tz.h"
+
+using namespace std::string_literals;
 
 namespace Collector
 {
@@ -75,35 +75,72 @@ namespace Collector
 namespace COL = Collector;
 
 // some code to help with putting together error messages,
+// we want to look for things which can be appended to a std::string
+// let's try some concepts
+
+template <typename T>
+concept can_be_appended_to_string = requires(T t)
+{
+    std::declval<std::string>().append(t);
+};
+
+template <typename T>
+concept has_string = requires(T t)
+{
+    t.string();
+};
 
 // suport for concatenation of string-like things
+// let's use some concepts
 
+//template<can_be_appended_to_string T>
+//void append_to_string(std::string& s, const T& t)
+//{
+//    s +=t;
+//}
+//
+//template<has_string T>
+//void append_to_string(std::string& s, const T& t)
+//{
+//    s +=t.to_string();
+//}
+//
+//template<typename T> requires(std::is_arithmetic_v<T>)
+//void append_to_string(std::string& s, const T& t)
+//{
+//    s+= std::to_string(t);
+//}
+//
 template<typename T>
 void append_to_string(std::string& s, const T& t)
 {
-    using text_types_list = mp11::mp_list<std::string, std::string_view, const char*, char>;
-
     // look for things which are 'string like' so we can just append them.
 
-    if constexpr(std::is_same_v<mp11::mp_set_contains<text_types_list, std::remove_cv_t<T>>, mp11::mp_true>)
+    if constexpr(can_be_appended_to_string<T>)
+    {
+        s.append(t);
+    }
+    else if constexpr(std::is_same_v<T, char>)
     {
         s += t;
-    }
-    else if constexpr(std::is_convertible_v<T, const char*>)
-    {
-        s +=t;
     }
     else if constexpr(std::is_arithmetic_v<T>)
     {
         // it's a number so convert it.
 
-        s += std::to_string(t);
+        s.append(std::to_string(t));
+    }
+    else if constexpr(has_string<T>)
+    {
+        // it can look like a string
+
+        s.append(t.string());
     }
     else
     {
         // we don't know what to do with it.
 
-        throw std::invalid_argument("wrong type for 'catenate' function.");
+        throw std::invalid_argument("wrong type for 'catenate' function: "s + typeid(t).name());
     }
 }
 
