@@ -53,19 +53,9 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/ssl/error.hpp>
-#include <boost/asio/ssl/stream.hpp>
-
 #include <zip.h>
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
-namespace http = beast::http;   // from <boost/beast/http.hpp>
-namespace net = boost::asio;    // from <boost/asio.hpp>
-namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
-using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
+#define CA_CERT_FILE "./ca-bundle.crt"
 
 #include "cpp-json/json.h"
 #include "spdlog/spdlog.h"
@@ -107,13 +97,16 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, const std::string& port)
-	: server_name_{server_name}, port_{port}, ctx{ssl::context::tlsv12_client}
+HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, int port)
+	: server_name_{server_name}, port_{port} 
 {
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
 
 #ifndef NOCERTTEST
-    load_root_certificates(ctx);
-    ctx.set_verify_mode(ssl::verify_peer);
+    options.ca_cert_file_path = CA_CERT_FILE;
+    options.server_certificate_verification = true;
+#endif
+
 #endif
 
 }  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
@@ -121,41 +114,37 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, const std::st
 
 std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 {
-    // if any problems occur here, we'll just let beast throw an exception.
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    httplib::SSLClient cli(server_name_, port_);
+#else
+    httplib::Client cli(server_name_, port_);
+#endif
 
-    tcp::resolver resolver(ioc);
-    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
-
-    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
+    std::string result;
+ 
+    if (auto res = cli.Get("/"); res == nullptr)
     {
-        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
-        throw beast::system_error{ec};
+        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_));
     }
+    auto res = cli.Get(request.c_str());
 
-    auto const results = resolver.resolve(server_name_, port_);
+    if (! res)
+    {
+        throw std::runtime_error("Unable to re-contact server.");
+    }
+    if (res && res->status == 408)
+    {
+		throw Collector::TimeOutException("Timeout trying to retrieve data.");
+    }
+    if (res && res->status != 200)
+    {
 
-    beast::get_lowest_layer(stream).connect(results);
-
-    stream.handshake(ssl::stream_base::client);
-
-    http::request<http::string_body> req{http::verb::get, request.c_str(), version_};
-    req.set(http::field::host, server_name_);
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-    http::write(stream, req);
-
-    beast::flat_buffer buffer;
-
-    http::response<http::string_body> res;
-
-    http::read(stream, buffer, res);
-    std::string result = res.body();
-
-    // shutdown without causing a 'stream_truncated' error.
-
-    beast::get_lowest_layer(stream).cancel();
-    beast::get_lowest_layer(stream).close();
-
+        throw std::runtime_error(catenate("problem with server while retrieving data: ", res->status));
+    }
+    if (res && res->status == 200)
+    {
+        result = res->body;
+    }
 	return result;
 }
 
@@ -168,7 +157,7 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 	fs::path index_file_name{directory_name};
 	index_file_name /= "index.json";
 
-	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
+	std::string index_listing = this->RetrieveDataFromServer(index_file_name);
 
 	auto json_listing = json::parse(index_listing);
 
@@ -202,67 +191,51 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
 	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
 
-    tcp::resolver resolver(ioc);
-    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    httplib::SSLClient cli(server_name_, port_);
+#else
+    httplib::Client cli(server_name_, port_);
+#endif
 
-    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
+    std::vector<char> downloaded_data;
+ 
+    if (auto res = cli.Get("/"); res == nullptr)
     {
-        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
-        throw beast::system_error{ec};
+        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_));
     }
 
-    auto const results = resolver.resolve(server_name_, port_);
+    auto res = cli.Get(remote_file_name.c_str(), [&downloaded_data](const char *data, uint64_t data_length)
+        {
+            downloaded_data.insert(downloaded_data.end(), data, data + data_length);
+            return true;
+        });
 
-    beast::get_lowest_layer(stream).connect(results);
-
-    stream.handshake(ssl::stream_base::client);
-
-    http::request<http::string_body> req{http::verb::get, remote_file_name.c_str(), version_};
-    req.set(http::field::host, server_name_);
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-    http::write(stream, req);
-
-    beast::flat_buffer buffer;
-
-    http::response_parser<http::vector_body<char>> res_parser;
-    // Allow for an unlimited body size
-    res_parser.body_limit((std::numeric_limits<std::uint64_t>::max)()); 
-
-    beast::error_code ec;
-    http::read(stream, buffer, res_parser, ec);
-    auto response_content = res_parser.get();
-
-    if (http::int_to_status(response_content.base().result_int()) == http::status::request_timeout)
+    if (! res)
     {
-		throw Collector::TimeOutException(catenate(remote_file_name.string(), ": Result: ", ec.message(), 
-			"  ", response_content.base().reason().data(), ": Unable to download file."));
+        throw std::runtime_error("Unable to re-contact server.");
     }
-    if (ec != beast::errc::success || http::int_to_status(response_content.base().result_int()) != http::status::ok)
+    if (res && res->status == 408)
     {
-		throw std::runtime_error(catenate(remote_file_name.string(), ": Result: ", ec.message(), 
-			"  ", response_content.base().reason().data(), ": Unable to download file."));
+		throw Collector::TimeOutException(catenate("Timeout trying to download file: ", remote_file_name));
     }
-    std::vector<char> remote_data = response_content.body();
+    if (res && res->status != 200)
+    {
 
-    // shutdown without causing a 'stream_truncated' error.
-
-    beast::get_lowest_layer(stream).cancel();
-    beast::get_lowest_layer(stream).close();
-
+        throw std::runtime_error(catenate("problem retreiving data file: ", remote_file_name, ". Result was: ",res->status) );
+    }
     if (! need_to_unzip)
     {
-        DownloadTextFile(local_file_name, remote_data, remote_file_name);
+        DownloadTextFile(local_file_name, downloaded_data, remote_file_name);
     }
     else
     {
         if (remote_ext == ".gz")
         {
-            DownloadGZipFile(local_file_name, remote_data, remote_file_name);
+            DownloadGZipFile(local_file_name, downloaded_data, remote_file_name);
         }
         else
         {
-            DownloadZipFile(local_file_name, remote_data, remote_file_name);
+            DownloadZipFile(local_file_name, downloaded_data, remote_file_name);
         }
     }
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----

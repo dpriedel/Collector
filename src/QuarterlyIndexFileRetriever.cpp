@@ -46,7 +46,7 @@
 //      Method:  QuarterlyIndexFileRetriever
 // Description:  constructor
 //--------------------------------------------------------------------------------------
-QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix)
+QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const std::string& host, int port, const fs::path& prefix)
 	: the_server_{host, port}, remote_directory_prefix_{prefix}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----

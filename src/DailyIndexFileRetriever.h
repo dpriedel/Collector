@@ -59,7 +59,7 @@ class DailyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		DailyIndexFileRetriever() = delete;
-		DailyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);
+		DailyIndexFileRetriever (const std::string& host, int port, const fs::path& prefix);
         DailyIndexFileRetriever(const DailyIndexFileRetriever& rhs) = delete;
         DailyIndexFileRetriever(DailyIndexFileRetriever&& rhs) = delete;
 

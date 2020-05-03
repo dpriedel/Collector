@@ -112,7 +112,7 @@ std::string TickerConverter::SEC_CIK_Lookup (COL::sview ticker, int pause)
 
 	std::string uri = catenate("/cgi-bin/browse-edgar?CIK=", ticker, "&Find=Search&owner=exclude&action=getcompany");
 
-    HTTPS_Downloader edgar_server("www.sec.gov", "443");
+    HTTPS_Downloader edgar_server("www.sec.gov", 443);
 
 	std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 

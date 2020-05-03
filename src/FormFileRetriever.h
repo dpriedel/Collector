@@ -56,7 +56,7 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (const std::string& host, const std::string& port);            // constructor
+		FormFileRetriever (const std::string& host, int port);            // constructor
 
 		FormFileRetriever() = delete;
 		FormFileRetriever(const FormFileRetriever& rhs) = delete;

@@ -52,7 +52,7 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, const std::string& port, const fs::path& prefix)
+DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, int port, const fs::path& prefix)
 	: the_server_{host, port}, remote_directory_prefix_{prefix}
 {
 
