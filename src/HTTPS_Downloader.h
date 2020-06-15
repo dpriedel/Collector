@@ -37,6 +37,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 //#include <boost/beast/core.hpp>
 //#include <boost/beast/http.hpp>
@@ -51,7 +52,6 @@ namespace fs = std::filesystem;
 //#include "example/common/root_certificates.hpp"
 //#endif
 
-#include <httplib.h>
 
 // =====================================================================================
 //        Class:  HTTPS_Downloader
@@ -116,10 +116,6 @@ private:
     
 //        boost::asio::io_context ioc;
 //        boost::asio::ssl::context ctx;
-
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  httplib::url::Options options;
-#endif
 
     static bool had_signal_;
 }; // -----  end of class HTTPS_Downloader  -----
