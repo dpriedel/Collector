@@ -36,8 +36,8 @@
 #include <set>
 #include <thread>
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/trim.hpp>
+//#include <boost/algorithm/string/predicate.hpp>
+//#include <boost/algorithm/string/trim.hpp>
 
 #include "spdlog/spdlog.h"
 
@@ -151,7 +151,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms (const
 	//	let's skip over the header lines in the file
 
 	auto form_itor = std::find_if(itor, itor_end,
-		[] (const auto& line) { return boost::algorithm::starts_with(line, "----------"); });
+		[] (const auto& line) { return line.starts_with("----------"); });
 
 	BOOST_ASSERT_MSG(form_itor != itor_end, catenate("Unable to find start of index entries in file: ",
                 local_index_file_name.string()).c_str());

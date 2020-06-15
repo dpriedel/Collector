@@ -36,9 +36,9 @@
 #include <algorithm>
 #include <fstream>
 
-#include <boost/algorithm/string/predicate.hpp>
+//#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/trim.hpp>
+//#include <boost/algorithm/string/trim.hpp>
 
 #include "spdlog/spdlog.h"
 
@@ -192,7 +192,7 @@ std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::
 	//	we need to do some cleanup of the directory listing to simplify our searches.
 
 	auto not_form = std::partition(directory_list.begin(), directory_list.end(),
-			[](std::string& x) {return boost::algorithm::starts_with(x, "form");});
+			[](std::string& x) {return x.starts_with("form");});
 	directory_list.erase(not_form, directory_list.end());
 
 	std::sort(directory_list.begin(), directory_list.end());
