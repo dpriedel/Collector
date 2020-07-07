@@ -108,18 +108,21 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, int port)
 std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 {
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-#ifndef NOCERTTEST
-    httplib::url::Options options;
-    options.ca_cert_file_path = CA_CERT_FILE;
-    options.server_certificate_verification = true;
-#endif
     httplib::SSLClient cli(server_name_, port_);
+//    cli.set_ca_cert_path("./ca-bundle.crt");
+    cli.enable_server_certificate_verification(false);;
+#ifndef NOCERTTEST
+        cli.enable_server_certificate_verification(true);;
+#endif
 #else
     httplib::Client cli(server_name_, port_);
 #endif
 
-    std::string result;
+    cli.set_connection_timeout(0, 600000); // 600 milliseconds
+    cli.set_read_timeout(5, 0); // 5 seconds
  
+    std::string result;
+
     if (auto res = cli.Get("/"); res == nullptr)
     {
         throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_));
@@ -190,16 +193,19 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 	bool need_to_unzip = ((remote_ext == ".gz" || remote_ext == ".zip") && remote_ext != local_ext);
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-#ifndef NOCERTTEST
-    httplib::url::Options options;
-    options.ca_cert_file_path = CA_CERT_FILE;
-    options.server_certificate_verification = true;
-#endif
     httplib::SSLClient cli(server_name_, port_);
+//    cli.set_ca_cert_path("./ca-bundle.crt");
+    cli.enable_server_certificate_verification(false);;
+#ifndef NOCERTTEST
+        cli.enable_server_certificate_verification(true);;
+#endif
 #else
     httplib::Client cli(server_name_, port_);
 #endif
 
+    cli.set_connection_timeout(0, 600000); // 600 milliseconds
+    cli.set_read_timeout(5, 0); // 5 seconds
+ 
     std::vector<char> downloaded_data;
  
     if (auto res = cli.Get("/"); res == nullptr)
