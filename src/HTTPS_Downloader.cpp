@@ -118,20 +118,20 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
     httplib::Client cli(server_name_, port_);
 #endif
 
-    cli.set_connection_timeout(0, 600000); // 600 milliseconds
-    cli.set_read_timeout(5, 0); // 5 seconds
+    cli.set_connection_timeout(2);      // 2 seconds
+    cli.set_read_timeout(5);            // 5 seconds
  
     std::string result;
 
-    if (auto res = cli.Get("/"); res == nullptr)
+    if (auto res = cli.Get("/"); !res)
     {
-        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_));
+        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_, " : ", (int)res.error()));
     }
     auto res = cli.Get(request.c_str());
 
     if (! res)
     {
-        throw std::runtime_error("Unable to re-contact server.");
+        throw std::runtime_error(catenate("Unable to re-contact server: ", (int)res.error()));
     }
     if (res && res->status == 408)
     {
@@ -203,14 +203,15 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     httplib::Client cli(server_name_, port_);
 #endif
 
-    cli.set_connection_timeout(0, 600000); // 600 milliseconds
-    cli.set_read_timeout(5, 0); // 5 seconds
+    cli.set_connection_timeout(2);      // 2 seconds
+    cli.set_read_timeout(5);            // 5 seconds
+    cli.set_decompress(false);
  
     std::vector<char> downloaded_data;
  
-    if (auto res = cli.Get("/"); res == nullptr)
+    if (auto res = cli.Get("/"); !res)
     {
-        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_));
+        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_, " : ", (int)res.error()));
     }
 
     auto res = cli.Get(remote_file_name.c_str(), [&downloaded_data](const char *data, uint64_t data_length)
@@ -221,7 +222,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
 
     if (! res)
     {
-        throw std::runtime_error("Unable to re-contact server.");
+        throw std::runtime_error(catenate("Unable to re-contact server: ", (int)res.error()));
     }
     if (res && res->status == 408)
     {
