@@ -19,7 +19,7 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.73_gcc-10
+BOOSTDIR := /extra/boost/boost-1.74_gcc-10
 GCCDIR := /extra/gcc/gcc-10
 CPP := $(GCCDIR)/bin/g++
 
