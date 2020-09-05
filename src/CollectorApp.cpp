@@ -44,8 +44,8 @@
 //#include <boost/algorithm/string/split.hpp>
 //#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/async.h"
 
 #include "CollectorApp.h"
 
@@ -81,23 +81,34 @@ CollectorApp::CollectorApp (const std::vector<std::string>& tokens)
 
 void CollectorApp::ConfigureLogging()
 {
+
     // we need to set log level if specified and also log file.
 
     if (! log_file_path_name_.empty())
     {
-        fs::path log_dir = log_file_path_name_.parent_path();
-        if (! fs::exists(log_dir))
-        {
-            fs::create_directories(log_dir);
-        }
+        // if we are running inside our test harness, logging may already by
+        // running so we don't want to clobber it.
+        // different tests may use different names.
 
-        auto file_logger = spdlog::basic_logger_mt("filelogger", log_file_path_name_.c_str());
-        spdlog::set_default_logger(file_logger);
+        auto logger_name = log_file_path_name_.filename();
+        logger_ = spdlog::get(logger_name);
+        if (! logger_)
+        {
+            fs::path log_dir = log_file_path_name_.parent_path();
+            if (! fs::exists(log_dir))
+            {
+                fs::create_directories(log_dir);
+            }
+
+            logger_ = spdlog::basic_logger_mt<spdlog::async_factory>(logger_name, log_file_path_name_.c_str());
+            spdlog::set_default_logger(logger_);
+        }
     }
 
     // we are running before 'CheckArgs' so we need to do a little editiing ourselves.
 
-    std::map<std::string, spdlog::level::level_enum> levels{
+    const std::map<std::string, spdlog::level::level_enum> levels
+    {
         {"none", spdlog::level::off},
         {"error", spdlog::level::err},
         {"information", spdlog::level::info},
@@ -109,6 +120,7 @@ void CollectorApp::ConfigureLogging()
     {
         spdlog::set_level(which_level->second);
     }
+
 }		/* -----  end of method CollectorApp::ConfigureLogging  ----- */
 
 bool CollectorApp::Startup()

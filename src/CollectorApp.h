@@ -48,6 +48,7 @@
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
+#include "spdlog/spdlog.h"
 #include "date/date.h"
 
 #include "TickerConverter.h"
@@ -113,6 +114,8 @@ private:
 
 	date::year_month_day begin_date_;
     date::year_month_day end_date_;
+
+    std::shared_ptr<spdlog::logger> logger_;
 
     std::string start_date_;
     std::string stop_date_;

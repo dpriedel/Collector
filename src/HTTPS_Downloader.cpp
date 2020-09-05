@@ -248,6 +248,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
             DownloadZipFile(local_file_name, downloaded_data, remote_file_name);
         }
     }
+    spdlog::info(catenate("Retrieved remote form file: ", remote_file_name, " to: ", local_file_name));
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
 void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
