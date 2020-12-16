@@ -93,6 +93,10 @@ public:
 
     // ====================  OPERATORS     =======================================
 
+    HTTPS_Downloader& operator=(const HTTPS_Downloader& rhs) = delete;
+    HTTPS_Downloader& operator=(HTTPS_Downloader&& rhs) = delete;
+
+
 protected:
     // ====================  DATA MEMBERS  =======================================
 
