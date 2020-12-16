@@ -47,19 +47,19 @@
 
 #include <httplib.h>
 
-#include "HTTPS_Downloader.h"
 #include "Collector_Utils.h"
+#include "HTTPS_Downloader.h"
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/json.hpp>
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
 #include <zip.h>
 
-#define CA_CERT_FILE "./ca-bundle.crt"
+constexpr const char* CA_CERT_FILE = "./ca-bundle.crt";
 
-#include "cpp-json/json.h"
 #include "spdlog/spdlog.h"
 
 bool HTTPS_Downloader::had_signal_ = false;
@@ -160,13 +160,13 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 
 	std::string index_listing = this->RetrieveDataFromServer(index_file_name);
 
-	auto json_listing = json::parse(index_listing);
+	auto json_listing = boost::json::parse(index_listing);
 
 	std::vector<std::string> results;
 
-	for (auto& e : json::as_array(json_listing["directory"]["item"]))
+	for (auto& e : json_listing.as_object()["directory"].as_object()["item"].as_array())
     {
-		results.emplace_back(json::as_string(e["name"]));
+		results.emplace_back(e.as_object()["name"].get_string().data());
     }
 
 	//	one last thing...let's make sure there's no junk at end of each entry.
