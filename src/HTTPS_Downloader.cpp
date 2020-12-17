@@ -45,8 +45,8 @@
 #include <system_error>
 #include <thread>
 
-#include <httplib.h>
 #include <HttpStatusCodes_C++11.h>
+#include <httplib.h>
 
 #include "Collector_Utils.h"
 #include "HTTPS_Downloader.h"
@@ -254,7 +254,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     spdlog::info(catenate("Retrieved remote form file: ", remote_file_name, " to: ", local_file_name));
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
-void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
     if (! local_file || remote_data.empty())
@@ -276,7 +276,7 @@ void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const s
     }
 }
 
-void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     // we are going to decompress on the fly...
 
@@ -308,7 +308,7 @@ void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, const s
     }
 }
 
-void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
     if (! expanded_file || remote_data.empty())

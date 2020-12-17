@@ -42,9 +42,9 @@
 
 #include "spdlog/spdlog.h"
 
+#include "Collector_Utils.h"
 #include "DailyIndexFileRetriever.h"
 #include "PathNameGenerator.h"
-#include "Collector_Utils.h"
 
 //--------------------------------------------------------------------------------------
 //       Class:  DailyIndexFileRetriever

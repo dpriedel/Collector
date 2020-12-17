@@ -98,8 +98,6 @@ class FormFileRetriever
 
 	private:
 
-		fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name);
-
 		auto ExtractFileName(int& found_a_form);
 
 		auto AddToCopyList(const std::string& form_name, const fs::path& local_form_directory, bool replace_files);
@@ -111,5 +109,7 @@ class FormFileRetriever
 		HTTPS_Downloader the_server_;
 
 }; // -----  end of class FormFileRetriever  -----
+
+fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name);
 
 #endif /* FORMRETRIEVER_H_ */

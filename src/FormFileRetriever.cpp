@@ -348,23 +348,13 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<fs::path>& rem
 		". Errors: ", error_counter, ". for files for form type: ", form_type));
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
 
-fs::path FormFileRetriever::MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name,
-    const std::string& form_name)
-{
-    auto CIK_directory{remote_file_name.parent_path().filename()};	//	pull off the CIK directory name
-    auto local_dir_name{local_form_directory_name};
-    local_dir_name /= CIK_directory;
-    local_dir_name /= form_name;
-    return local_dir_name;
-}
-
 auto FormFileRetriever::AddToCopyList(const std::string& form_name, const fs::path& local_form_directory, bool replace_files)
 {
 	//	construct our lambda function here so it doesn't clutter up our code below.
 
     return [this, &form_name, &local_form_directory, replace_files] (const auto& remote_file_name)
     {
-        auto local_dir_name = this->MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
+        auto local_dir_name = MakeLocalDirNameFromRemoteFileName(local_form_directory, remote_file_name, form_name);
         auto local_file_name{local_dir_name};
         local_file_name /= remote_file_name.filename();
 
@@ -427,3 +417,20 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
     }
 
 }		// -----  end of method FormFileRetriever::RetrieveSpecifiedFiles  -----
+
+fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name,
+    const std::string& form_name)
+{
+//    auto CIK_directory{remote_file_name.parent_path().filename()};	//	pull off the CIK directory name
+    std::string CIK_directory{remote_file_name.parent_path().filename().string()};	//	pull off the CIK directory name
+
+    // pad our CIK component to 10 positions.
+    
+    CIK_directory.insert(0, 10 - CIK_directory.size(), '0');
+
+    auto local_dir_name{local_form_directory_name};
+    local_dir_name /= CIK_directory;
+    local_dir_name /= form_name;
+    return local_dir_name;
+}
+

@@ -52,6 +52,10 @@ namespace fs = std::filesystem;
 //#include "example/common/root_certificates.hpp"
 //#endif
 
+void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+
 
 // =====================================================================================
 //        Class:  HTTPS_Downloader
@@ -106,10 +110,6 @@ private:
 
     void Timer();
     static void HandleSignal(int signal);
-
-    void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
-    void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
-    void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
 
     // ====================  DATA MEMBERS  =======================================
 
