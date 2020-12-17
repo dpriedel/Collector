@@ -19,7 +19,7 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.74_gcc-10
+BOOSTDIR := /extra/boost/boost-1.75_gcc-10
 GCCDIR := /extra/gcc/gcc-10
 CPP := $(GCCDIR)/bin/g++
 
@@ -66,6 +66,7 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_regex-mt-x64 \
+		-lboost_json-mt-x64 \
 		-L/usr/local/lib \
 		-lfmt \
 		-lhttplib \
@@ -77,7 +78,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++2a -DNOCERTTEST -DCPPHTTPLIB_OPENSSL_SUPPORT -DBOOST_ENABLE_ASSERT_HANDLER -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++20 -DNOCERTTEST -DCPPHTTPLIB_OPENSSL_SUPPORT -DBOOST_ENABLE_ASSERT_HANDLER -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -112,7 +113,7 @@ DEPS=$(OBJS:.o=.d)
 
 # need to figure out cert handling better. Until then, turn off the SSL Cert testing.
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++2a -flto -DNOCERTTEST -DCPPHTTPLIB_OPENSSL_SUPPORT -DBOOST_ENABLE_ASSERT_HANDLER -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++20 -flto -DNOCERTTEST -DCPPHTTPLIB_OPENSSL_SUPPORT -DBOOST_ENABLE_ASSERT_HANDLER -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
