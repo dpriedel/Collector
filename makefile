@@ -70,7 +70,7 @@ CFG_LIB := -lpthread \
 		-L/usr/local/lib \
 		-lfmt \
 		-lhttplib \
-		-ltz
+		-ldate-tz 
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -100,10 +100,11 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-d-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_regex-mt-d-x64 \
+		-lboost_json-mt-d-x64 \
 		-L/usr/local/lib \
 		-lfmt \
 		-lhttplib \
-		-ltz
+		-ldate-tz 
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
