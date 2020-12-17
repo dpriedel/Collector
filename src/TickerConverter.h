@@ -70,10 +70,6 @@ class TickerConverter
 
 	protected:
 
-		//	NOTE: make this function virtual to run Google MOCK tests for it.
-
-		std::string SEC_CIK_Lookup(COL::sview ticker, int pause=1);
-
 		// ====================  DATA MEMBERS  =======================================
 
 	private:
@@ -89,5 +85,7 @@ class TickerConverter
 
 
 }; // -----  end of class TickerConverter  -----
+
+std::string SEC_CIK_Lookup(COL::sview ticker, int pause=1);
 
 #endif /* TICKERCONVERTER_H_ */

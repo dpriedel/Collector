@@ -82,7 +82,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	spdlog::debug(catenate("T: Doing CIK lookup for tickers in file: ", ticker_file_name.string()));
 
 	std::ifstream tickers_file{ticker_file_name};
-	BOOST_ASSERT_MSG(tickers_file.is_open(), catenate("Unable to open tickers file: ", ticker_file_name.string()).c_str());
+	BOOST_ASSERT_MSG(tickers_file.is_open(), catenate("Unable to open tickers file: ", ticker_file_name).c_str());
 
 	int result{0};
 
@@ -104,7 +104,7 @@ int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, 
 	return result;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
-std::string TickerConverter::SEC_CIK_Lookup (COL::sview ticker, int pause)
+std::string SEC_CIK_Lookup (COL::sview ticker, int pause)
 {
     // let's use our HTTPS_Downloader class since it knows how to do what we want to do.
 
@@ -128,7 +128,7 @@ std::string TickerConverter::SEC_CIK_Lookup (COL::sview ticker, int pause)
 		return cik[1].str();
     }
     return {};
-}		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
+}		// -----  end of method ConvertTickerToCIK  -----
 
 void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 {

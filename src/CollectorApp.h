@@ -48,8 +48,8 @@
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
-#include "spdlog/spdlog.h"
 #include "date/date.h"
+#include "spdlog/spdlog.h"
 
 #include "TickerConverter.h"
 

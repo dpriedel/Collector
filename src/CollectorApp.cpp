@@ -44,8 +44,8 @@
 //#include <boost/algorithm/string/split.hpp>
 //#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/async.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 #include "CollectorApp.h"
 
