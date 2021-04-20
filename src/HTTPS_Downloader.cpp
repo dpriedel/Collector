@@ -108,7 +108,7 @@ HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, int port)
 }  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
 
 
-std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
+std::string HTTPS_Downloader::RetrieveDataFromServer(fs::path request)
 {
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     httplib::SSLClient cli(server_name_, port_);
@@ -121,8 +121,9 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
     httplib::Client cli(server_name_, port_);
 #endif
 
-    cli.set_connection_timeout(2);      // 2 seconds
-    cli.set_read_timeout(5);            // 5 seconds
+    cli.set_connection_timeout(10s);
+    cli.set_read_timeout(5s);
+    cli.set_decompress(false);
  
     std::string result;
 
@@ -152,7 +153,7 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 	return result;
 }
 
-std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path& directory_name)
+std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (fs::path directory_name)
 {
 	//	we read and store our results so we can end the active connection quickly.
 	// we will ask for the directory listing in JSON format which means we will
@@ -183,7 +184,7 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
-void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs::path& local_file_name)
+void HTTPS_Downloader::DownloadFile (fs::path remote_file_name, fs::path local_file_name)
 {
 	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
     // but we also need to decompress any zipped files.  Might as well do it here.
@@ -206,8 +207,8 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     httplib::Client cli(server_name_, port_);
 #endif
 
-    cli.set_connection_timeout(2);      // 2 seconds
-    cli.set_read_timeout(5);            // 5 seconds
+    cli.set_connection_timeout(10s);
+    cli.set_read_timeout(5s);
     cli.set_decompress(false);
  
     std::vector<char> downloaded_data;
@@ -313,7 +314,7 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
     if (! expanded_file || remote_data.empty())
     {
-        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name, " to local file: ",
+        throw std::runtime_error(catenate("Unable to initiate local copy of remote file: ", remote_file_name, " to local file: ",
                     local_file_name));
     }
 
@@ -390,7 +391,7 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
     zip_error_fini(&err);
 }
 
-std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
+std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(remote_local_list file_list, int max_at_a_time)
 
 {
     // since this code can potentially run for hours on end (depending on internet connection throughput)

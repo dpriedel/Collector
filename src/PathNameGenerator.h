@@ -96,7 +96,7 @@ class QuarterlyIterator: public std::iterator<
 
         /* ====================  DATA MEMBERS  ======================================= */
 
-        inline static date::months a_quarter{3};
+        inline static constexpr date::months a_quarter{3};
 
         date::year_month_day start_date_;
         date::year_month_day working_date_;
