@@ -47,7 +47,6 @@ namespace fs = std::filesystem;
 
 #include "date/date.h"
 
-#include "HTTPS_Downloader.h"
 
 // =====================================================================================
 //        Class:  DailyIndexFileRetriever
@@ -119,7 +118,6 @@ class DailyIndexFileRetriever
 
 		// ====================  DATA MEMBERS  =======================================
 
-		HTTPS_Downloader the_server_;
         fs::path remote_directory_prefix_;                // top-level directory path
 		date::year_month_day input_date_;
 		date::year_month_day actual_file_date_;
@@ -127,6 +125,9 @@ class DailyIndexFileRetriever
 		date::year_month_day end_date_;
 		date::year_month_day actual_start_date_;
 		date::year_month_day actual_end_date_;
+
+        std::string host_;
+        int port_;
 
 }; // -----  end of class DailyIndexFileRetriever  -----
 

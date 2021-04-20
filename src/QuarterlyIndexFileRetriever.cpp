@@ -38,6 +38,7 @@
 #include "spdlog/spdlog.h"
 
 #include "Collector_Utils.h"
+#include "HTTPS_Downloader.h"
 #include "PathNameGenerator.h"
 #include "QuarterlyIndexFileRetriever.h"
 
@@ -47,7 +48,7 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever (const std::string& host, int port, const fs::path& prefix)
-	: the_server_{host, port}, remote_directory_prefix_{prefix}
+	: host_{host}, port_{port}, remote_directory_prefix_{prefix}
 {
 }  // -----  end of method QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)  -----
 
@@ -91,7 +92,8 @@ fs::path QuarterlyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const f
 	auto local_quarterly_index_file_directory = local_quarterly_index_file_name.parent_path();
 	fs::create_directories(local_quarterly_index_file_directory);
 
-	the_server_.DownloadFile(remote_file_name, local_quarterly_index_file_name);
+    HTTPS_Downloader the_server(host_, port_);
+	the_server.DownloadFile(remote_file_name, local_quarterly_index_file_name);
 
     spdlog::info(catenate("Q: Retrieved remote quarterly index file: ", remote_file_name.string(), " to: ",
         local_quarterly_index_file_name.string()));
@@ -207,7 +209,8 @@ std::vector<fs::path> QuarterlyIndexFileRetriever::ConcurrentlyHierarchicalCopyI
 
 	// now, we expect some magic to happen here...
 
-	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+    HTTPS_Downloader the_server(host_, port_);
+	auto [success_counter, error_counter] = the_server.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
     // if the first file name in the pair is empty, there was no download done.
 

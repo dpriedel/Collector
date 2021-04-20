@@ -44,6 +44,7 @@
 
 #include "Collector_Utils.h"
 #include "DailyIndexFileRetriever.h"
+#include "HTTPS_Downloader.h"
 #include "PathNameGenerator.h"
 
 //--------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@
 //--------------------------------------------------------------------------------------
 
 DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string& host, int port, const fs::path& prefix)
-	: the_server_{host, port}, remote_directory_prefix_{prefix}
+	: host_{host}, port_{port}, remote_directory_prefix_{prefix}
 {
 
 }  // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever  (constructor)  -----
@@ -187,7 +188,8 @@ std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(da
 
 std::vector<std::string> DailyIndexFileRetriever::GetRemoteIndexList (const fs::path& remote_directory)
 {
-	auto directory_list = the_server_.ListDirectoryContents(remote_directory);
+    HTTPS_Downloader the_server(host_, port_);
+	auto directory_list = the_server.ListDirectoryContents(remote_directory);
 
 	//	we need to do some cleanup of the directory listing to simplify our searches.
 
@@ -220,7 +222,8 @@ fs::path DailyIndexFileRetriever::CopyRemoteIndexFileTo (const fs::path& remote_
 
 	fs::create_directories(local_directory_name);
 
-	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
+    HTTPS_Downloader the_server(host_, port_);
+	the_server.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
 	spdlog::info(catenate("D: Retrieved remote daily index file: ", remote_daily_index_file_name.string(), " to: ",
 		local_daily_index_file_name.string()));
@@ -250,7 +253,8 @@ fs::path DailyIndexFileRetriever::HierarchicalCopyRemoteIndexFileTo (const fs::p
 	auto local_daily_index_file_directory = local_daily_index_file_name.parent_path();
 	fs::create_directories(local_daily_index_file_directory);
 
-	the_server_.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
+    HTTPS_Downloader the_server(host_, port_);
+	the_server.DownloadFile(remote_daily_index_file_name, local_daily_index_file_name);
 
 	spdlog::info(catenate("D: Retrieved remote daily index file: ", remote_daily_index_file_name.string(), " to: ",
 		local_daily_index_file_name.string()));
@@ -321,7 +325,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyCopyIndexFilesForDate
 
 	// now, we expect some magic to happen here...
 
-	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+    HTTPS_Downloader the_server(host_, port_);
+	auto [success_counter, error_counter] = the_server.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
     int skipped_files_counter = std::count_if(std::begin(concurrent_copy_list), std::end(concurrent_copy_list),
 		[] (const auto& e) { return ! e.first; });
@@ -412,7 +417,8 @@ std::vector<fs::path> DailyIndexFileRetriever::ConcurrentlyHierarchicalCopyIndex
 
 	// now, we expect some magic to happen here...
 
-	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+    HTTPS_Downloader the_server(host_, port_);
+	auto [success_counter, error_counter] = the_server.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
     // if the first file name in the pair is empty, there was no download done.
 

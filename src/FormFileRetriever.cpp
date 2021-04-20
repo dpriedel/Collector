@@ -43,6 +43,7 @@
 
 #include "Collector_Utils.h"
 #include "FormFileRetriever.h"
+#include "HTTPS_Downloader.h"
 
 // define our own 'transform_if' for now.
 // don't use the one from boost because it pulls in a
@@ -71,7 +72,7 @@ OutputIterator transform_if(InputIterator first, InputIterator last,
 //--------------------------------------------------------------------------------------
 
 FormFileRetriever::FormFileRetriever (const std::string& host, int port)
-	: the_server_{host, port}
+	: host_{host}, port_{port}
 
 {
 }  // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)  -----
@@ -309,7 +310,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles (const std::vector<fs::path>& rem
 			try
 			{
 				fs::create_directories(local_dir_name);
-				the_server_.DownloadFile(remote_file_name, local_file_name);
+                HTTPS_Downloader the_server(host_, port_);
+				the_server.DownloadFile(remote_file_name, local_file_name);
                 ++downloaded_files_counter;
 				spdlog::debug(catenate("F: Retrieved remote form file: ", remote_file_name.string(), " to: ",
                             local_file_name.string()));
@@ -398,7 +400,8 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles (const std::vector<fs
         );
 	// now, we expect some magic to happen here...
 
-	auto [success_counter, error_counter] = the_server_.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
+    HTTPS_Downloader the_server(host_, port_);
+	auto [success_counter, error_counter] = the_server.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);
 
     // if the first file name in the pair is empty, there was no download done.
 
