@@ -45,25 +45,30 @@
 #include <system_error>
 #include <thread>
 
-#include <HttpStatusCodes_C++11.h>
-#include <httplib.h>
-
-#include "Collector_Utils.h"
 #include "HTTPS_Downloader.h"
+#include "Collector_Utils.h"
 
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/json.hpp>
 
-#include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
 
 #include <zip.h>
 
-constexpr const char* CA_CERT_FILE = "./ca-bundle.crt";
+namespace beast = boost::beast; // from <boost/beast.hpp>
+namespace http = beast::http;   // from <boost/beast/http.hpp>
+namespace net = boost::asio;    // from <boost/asio.hpp>
+namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
+
+#include "cpp-json/json.h"
 #include "spdlog/spdlog.h"
-
-using namespace std::literals::chrono_literals;
 
 bool HTTPS_Downloader::had_signal_ = false;
 
@@ -79,7 +84,7 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
         for (int i=0; i!=vf.size(); ++i)
         {
             if (!vf[i].valid()) continue;
-            switch (vf[i].wait_for(0s))
+            switch (vf[i].wait_for(std::chrono::seconds{0}))
             {
             case std::future_status::ready:
                     return i;
@@ -102,58 +107,59 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, int port)
-	: server_name_{server_name}, port_{port} 
+HTTPS_Downloader::HTTPS_Downloader(const std::string& server_name, const std::string& port)
+	: server_name_{server_name}, port_{port}, ctx{ssl::context::tlsv12_client}
 {
+
+#ifndef NOCERTTEST
+    load_root_certificates(ctx);
+    ctx.set_verify_mode(ssl::verify_peer);
+#endif
+
 }  // -----  end of method HTTPS_Downloader::HTTPS_Downloader  (constructor)  -----
 
 
-std::string HTTPS_Downloader::RetrieveDataFromServer(fs::path request)
+std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path& request)
 {
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-    httplib::SSLClient cli(server_name_, port_);
-//    cli.set_ca_cert_path("./ca-bundle.crt");
-    cli.enable_server_certificate_verification(false);;
-#ifndef NOCERTTEST
-        cli.enable_server_certificate_verification(true);;
-#endif
-#else
-    httplib::Client cli(server_name_, port_);
-#endif
+    // if any problems occur here, we'll just let beast throw an exception.
 
-    cli.set_connection_timeout(10s);
-    cli.set_read_timeout(5s);
-    cli.set_decompress(false);
- 
-    std::string result;
+    tcp::resolver resolver(ioc);
+    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
-    if (auto res = cli.Get("/"); !res)
+    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
     {
-        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_, " : ", static_cast<int>(res.error())));
+        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        throw beast::system_error{ec};
     }
-    auto res = cli.Get(request.c_str());
 
-    if (! res)
-    {
-        throw std::runtime_error(catenate("Unable to re-contact server: ", static_cast<int>(res.error())));
-    }
-    if (res && res->status == HttpStatus::toInt(HttpStatus::Code::RequestTimeout))
-    {
-		throw Collector::TimeOutException("Timeout trying to retrieve data.");
-    }
-    if (res && res->status != HttpStatus::toInt(HttpStatus::Code::OK))
-    {
+    auto const results = resolver.resolve(server_name_, port_);
 
-        throw std::runtime_error(catenate("problem with server while retrieving data: ", res->status));
-    }
-    if (res && res->status == HttpStatus::toInt(HttpStatus::Code::OK))
-    {
-        result = res->body;
-    }
+    beast::get_lowest_layer(stream).connect(results);
+
+    stream.handshake(ssl::stream_base::client);
+
+    http::request<http::string_body> req{http::verb::get, request.c_str(), version_};
+    req.set(http::field::host, server_name_);
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+    http::write(stream, req);
+
+    beast::flat_buffer buffer;
+
+    http::response<http::string_body> res;
+
+    http::read(stream, buffer, res);
+    std::string result = res.body();
+
+    // shutdown without causing a 'stream_truncated' error.
+
+    beast::get_lowest_layer(stream).cancel();
+    beast::get_lowest_layer(stream).close();
+
 	return result;
 }
 
-std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (fs::path directory_name)
+std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path& directory_name)
 {
 	//	we read and store our results so we can end the active connection quickly.
 	// we will ask for the directory listing in JSON format which means we will
@@ -162,15 +168,15 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (fs::path direc
 	fs::path index_file_name{directory_name};
 	index_file_name /= "index.json";
 
-	std::string index_listing = this->RetrieveDataFromServer(index_file_name);
+	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
 
-	auto json_listing = boost::json::parse(index_listing);
+	auto json_listing = json::parse(index_listing);
 
 	std::vector<std::string> results;
 
-	for (auto& e : json_listing.as_object()["directory"].as_object()["item"].as_array())
+	for (auto& e : json::as_array(json_listing["directory"]["item"]))
     {
-		results.emplace_back(e.as_object()["name"].get_string().data());
+		results.emplace_back(json::as_string(e["name"]));
     }
 
 	//	one last thing...let's make sure there's no junk at end of each entry.
@@ -184,7 +190,7 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (fs::path direc
 }		// -----  end of method DailyIndexFileRetriever::ListRemoteDirectoryContents  -----
 
 
-void HTTPS_Downloader::DownloadFile (fs::path remote_file_name, fs::path local_file_name)
+void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs::path& local_file_name)
 {
 	// basically the same as RetrieveDataFromServer but write the output to a file instead of a string.
     // but we also need to decompress any zipped files.  Might as well do it here.
@@ -194,74 +200,80 @@ void HTTPS_Downloader::DownloadFile (fs::path remote_file_name, fs::path local_f
 
     // we will unzip zipped files but only if the local file name indicates the local file is not zipped.
 
-	bool need_to_unzip = ((remote_ext == ".gz" || remote_ext == ".zip") && remote_ext != local_ext);
+	bool need_to_unzip = (remote_ext == ".gz" or remote_ext == ".zip") && remote_ext != local_ext;
 
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-    httplib::SSLClient cli(server_name_, port_);
-//    cli.set_ca_cert_path("./ca-bundle.crt");
-    cli.enable_server_certificate_verification(false);;
-#ifndef NOCERTTEST
-        cli.enable_server_certificate_verification(true);;
-#endif
-#else
-    httplib::Client cli(server_name_, port_);
-#endif
+    tcp::resolver resolver(ioc);
+    beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
-    cli.set_connection_timeout(10s);
-    cli.set_read_timeout(5s);
-    cli.set_decompress(false);
- 
-    std::vector<char> downloaded_data;
- 
-    if (auto res = cli.Get("/"); !res)
+    if(! SSL_set_tlsext_host_name(stream.native_handle(), server_name_.c_str()))
     {
-        throw std::runtime_error(catenate("Unable to connect to host: ", server_name_, " at port: ", port_, " : ", static_cast<int>(res.error())));
+        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        throw beast::system_error{ec};
     }
 
-    auto res = cli.Get(remote_file_name.c_str(), [&downloaded_data](const char *data, uint64_t data_length)
-        {
-            downloaded_data.insert(downloaded_data.end(), data, data + data_length);
-            return true;
-        });
+    auto const results = resolver.resolve(server_name_, port_);
 
-    if (! res)
-    {
-        throw std::runtime_error(catenate("Unable to re-contact server: ", static_cast<int>(res.error())));
-    }
-    if (res && res->status == HttpStatus::toInt(HttpStatus::Code::RequestTimeout))
-    {
-		throw Collector::TimeOutException(catenate("Timeout trying to download file: ", remote_file_name));
-    }
-    if (res && res->status != HttpStatus::toInt(HttpStatus::Code::OK))
-    {
+    beast::get_lowest_layer(stream).connect(results);
 
-        throw std::runtime_error(catenate("problem retreiving data file: ", remote_file_name, ". Result was: ",res->status) );
+    stream.handshake(ssl::stream_base::client);
+
+    http::request<http::string_body> req{http::verb::get, remote_file_name.c_str(), version_};
+    req.set(http::field::host, server_name_);
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+    http::write(stream, req);
+
+    beast::flat_buffer buffer;
+
+    http::response_parser<http::vector_body<char>> res_parser;
+    // Allow for an unlimited body size
+    res_parser.body_limit((std::numeric_limits<std::uint64_t>::max)()); 
+
+    beast::error_code ec;
+    http::read(stream, buffer, res_parser, ec);
+    auto response_content = res_parser.get();
+
+    if (http::int_to_status(response_content.base().result_int()) == http::status::request_timeout)
+    {
+		throw Collector::TimeOutException(catenate(remote_file_name.string(), ": Result: ", ec.message(), 
+			"  ", response_content.base().reason().data(), ": Unable to download file."));
     }
+    if (ec != beast::errc::success || http::int_to_status(response_content.base().result_int()) != http::status::ok)
+    {
+		throw std::runtime_error(catenate(remote_file_name.string(), ": Result: ", ec.message(), 
+			"  ", response_content.base().reason().data(), ": Unable to download file."));
+    }
+    std::vector<char> remote_data = response_content.body();
+
+    // shutdown without causing a 'stream_truncated' error.
+
+    beast::get_lowest_layer(stream).cancel();
+    beast::get_lowest_layer(stream).close();
+
     if (! need_to_unzip)
     {
-        DownloadTextFile(local_file_name, downloaded_data, remote_file_name);
+        DownloadTextFile(local_file_name, remote_data, remote_file_name);
     }
     else
     {
         if (remote_ext == ".gz")
         {
-            DownloadGZipFile(local_file_name, downloaded_data, remote_file_name);
+            DownloadGZipFile(local_file_name, remote_data, remote_file_name);
         }
         else
         {
-            DownloadZipFile(local_file_name, downloaded_data, remote_file_name);
+            DownloadZipFile(local_file_name, remote_data, remote_file_name);
         }
     }
-    spdlog::info(catenate("Retrieved remote form file: ", remote_file_name, " to: ", local_file_name));
 }		// -----  end of method HTTPS_Downloader::DownloadFile  -----
 
-void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     std::ofstream local_file{local_file_name, std::ios::out | std::ios::binary};
     if (! local_file || remote_data.empty())
     {
-        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name,
-                    " to local file: ", local_file_name));
+        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name.string(),
+                    " to local file: ", local_file_name.string()));
     }
 
     // we have an array of chars so let's just dump it out.
@@ -272,20 +284,20 @@ void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& 
     if (download_result.fail())
     {
         std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name, " to local file: ",
-                local_file_name)};
+        throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name.string(), " to local file: ",
+                local_file_name.string())};
     }
 }
 
-void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     // we are going to decompress on the fly...
 
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
     if (! expanded_file || remote_data.empty())
     {
-        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name, " to local file: ",
-                    local_file_name));
+        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name.string(), " to local file: ",
+                    local_file_name.string()));
     }
 
     // for gzipped files, we can use boost (which uses zlib)
@@ -304,18 +316,18 @@ void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& 
     if (download_result.failed())
     {
         std::error_code err{errno, std::system_category()};
-        throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name, " to local file: ",
-                local_file_name)};
+        throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name.string(), " to local file: ",
+                local_file_name.string())};
     }
 }
 
-void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
+void HTTPS_Downloader::DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name)
 {
     std::ofstream expanded_file{local_file_name, std::ios::out | std::ios::binary};
     if (! expanded_file || remote_data.empty())
     {
-        throw std::runtime_error(catenate("Unable to initiate local copy of remote file: ", remote_file_name, " to local file: ",
-                    local_file_name));
+        throw std::runtime_error(catenate("Unable to initiate download of remote file: ", remote_file_name.string(), " to local file: ",
+                    local_file_name.string()));
     }
 
     // for zipped files, we need to use some non-boost code.
@@ -345,8 +357,8 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
     zip_stat_init(&st);
     if (int stat_rc = zip_stat(zip_data_archive, local_file_name.filename().c_str(), 0, &st); stat_rc != 0)
     {
-        auto* stat_error = zip_get_error(zip_data_archive);
-        throw std::runtime_error(catenate("Unable to find file: ", local_file_name.filename(),
+        auto stat_error = zip_get_error(zip_data_archive);
+        throw std::runtime_error(catenate("Unable to find file: ", local_file_name.filename().string(),
                     " in downloaded zip archive.\n", zip_error_strerror(stat_error)));
     }
 
@@ -358,11 +370,11 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
     std::array<char, buffer_size + 100> my_buffer;
 
     zip_int64_t total_bytes_read = 0;
-    auto* downloaded_zip_file = zip_fopen(zip_data_archive, local_file_name.filename().c_str(), ZIP_RDONLY);
+    auto downloaded_zip_file = zip_fopen(zip_data_archive, local_file_name.filename().c_str(), ZIP_RDONLY);
     if (downloaded_zip_file == nullptr)
     {
-        auto* stat_error = zip_get_error(zip_data_archive);
-        throw std::runtime_error(catenate("Unable to open compressed file: ", local_file_name,
+        auto stat_error = zip_get_error(zip_data_archive);
+        throw std::runtime_error(catenate("Unable to open compressed file: ", local_file_name.string(),
                     " in archive because: ", zip_error_strerror(stat_error)));
     }
 
@@ -371,7 +383,7 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
         auto bytes_read = zip_fread(downloaded_zip_file, my_buffer.data(), buffer_size);
         if (bytes_read == -1)
         {
-            auto* stat_error = zip_get_error(zip_data_archive);
+            auto stat_error = zip_get_error(zip_data_archive);
             throw std::runtime_error(catenate("Unable to read from zip archive because: ", zip_error_strerror(stat_error)));
         }
         total_bytes_read += bytes_read;
@@ -380,8 +392,8 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
         if (download_result.fail())
         {
             std::error_code err{errno, std::system_category()};
-            throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name,
-                    " to local file: ", local_file_name)};
+            throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name.string(),
+                    " to local file: ", local_file_name.string())};
         }
     }
 
@@ -391,7 +403,7 @@ void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& r
     zip_error_fini(&err);
 }
 
-std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(remote_local_list file_list, int max_at_a_time)
+std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_local_list& file_list, int max_at_a_time)
 
 {
     // since this code can potentially run for hours on end (depending on internet connection throughput)
@@ -431,7 +443,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(remote_local_lis
         {
             // queue up our tasks up to the limit.
 
-            const auto& [remote_file, local_file] = file_list[i];
+            auto& [remote_file, local_file] = file_list[i];
             if (remote_file)
             {
                 tasks.emplace_back(std::async(std::launch::async, &HTTPS_Downloader::DownloadFile, this, *remote_file, local_file));
@@ -446,9 +458,9 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(remote_local_lis
         // now, let's wait till they're all done
         // and then we'll do the next bunch.
 
-        for (int count = tasks.size(); count > 0; --count)
+        for (int count = tasks.size(); count; --count)
         {
-            int k = wait_for_any(tasks, 100us);
+            int k = wait_for_any(tasks, std::chrono::microseconds{100});
             // std::cout << "k: " << k << '\n';
             try
             {
@@ -544,6 +556,8 @@ void HTTPS_Downloader::Timer()
 	//	given the size of the files we are downloading, it
 	// seems unlikely this will have any effect.  But, for
 	// small files it may.
+
+    using namespace std::literals::chrono_literals;
 
 	std::this_thread::sleep_for(1s);
 }
