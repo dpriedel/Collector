@@ -55,7 +55,7 @@ class FormFileRetriever
 
 		// ====================  LIFECYCLE     =======================================
 
-		FormFileRetriever (const std::string& host, int port);            // constructor
+		FormFileRetriever (const std::string& host, const std::string& port);            // constructor
 
 		FormFileRetriever() = delete;
 		FormFileRetriever(const FormFileRetriever& rhs) = delete;
@@ -106,7 +106,7 @@ class FormFileRetriever
 		static constexpr std::string::size_type k_index_CIK_offset = 74;
 
         std::string host_;
-        int port_;
+        std::string port_;
 
 }; // -----  end of class FormFileRetriever  -----
 

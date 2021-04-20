@@ -56,7 +56,7 @@ class QuarterlyIndexFileRetriever
 	public:
 		// ====================  LIFECYCLE     =======================================
 		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (const std::string& host, int port, const fs::path& prefix);                // constructor
+		QuarterlyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);                // constructor
 
 		~QuarterlyIndexFileRetriever ()=default;
 
@@ -103,7 +103,7 @@ class QuarterlyIndexFileRetriever
 		date::year_month_day end_date_;
 
         std::string host_;
-        int port_;
+        std::string port_;
 
 }; // -----  end of class QuarterlyIndexFileRetriever  -----
 

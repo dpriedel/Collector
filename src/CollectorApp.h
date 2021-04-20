@@ -125,7 +125,7 @@ private:
 	std::string ticker_;
 	// std::string login_ID_;
     std::string HTTPS_host_{"www.sec.gov"};
-    int HTTPS_port_{443};
+    std::string HTTPS_port_{"443"};
     std::string logging_level_{"information"};
 
 	std::vector<std::string> form_list_;

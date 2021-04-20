@@ -71,7 +71,7 @@ OutputIterator transform_if(InputIterator first, InputIterator last,
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-FormFileRetriever::FormFileRetriever (const std::string& host, int port)
+FormFileRetriever::FormFileRetriever (const std::string& host, const std::string& port)
 	: host_{host}, port_{port}
 
 {

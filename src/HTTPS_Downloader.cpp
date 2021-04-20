@@ -67,8 +67,10 @@ namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 
-#include "cpp-json/json.h"
+#include <boost/json.hpp>
 #include "spdlog/spdlog.h"
+
+using namespace std::literals::chrono_literals;
 
 bool HTTPS_Downloader::had_signal_ = false;
 
@@ -84,7 +86,7 @@ int wait_for_any(std::vector<std::future<T>>& vf, std::chrono::steady_clock::dur
         for (int i=0; i!=vf.size(); ++i)
         {
             if (!vf[i].valid()) continue;
-            switch (vf[i].wait_for(std::chrono::seconds{0}))
+            switch (vf[i].wait_for(0s))
             {
             case std::future_status::ready:
                     return i;
@@ -170,13 +172,13 @@ std::vector<std::string> HTTPS_Downloader::ListDirectoryContents (const fs::path
 
 	std::string index_listing = this->RetrieveDataFromServer(index_file_name.string());
 
-	auto json_listing = json::parse(index_listing);
+	auto json_listing = boost::json::parse(index_listing);
 
 	std::vector<std::string> results;
 
-	for (auto& e : json::as_array(json_listing["directory"]["item"]))
+	for (auto& e : json_listing.as_object()["directory"].as_object()["item"].as_array())
     {
-		results.emplace_back(json::as_string(e["name"]));
+		results.emplace_back(e.as_object()["name"].get_string().data());
     }
 
 	//	one last thing...let's make sure there's no junk at end of each entry.
@@ -460,7 +462,7 @@ std::pair<int, int> HTTPS_Downloader::DownloadFilesConcurrently(const remote_loc
 
         for (int count = tasks.size(); count; --count)
         {
-            int k = wait_for_any(tasks, std::chrono::microseconds{100});
+            int k = wait_for_any(tasks, 100us);
             // std::cout << "k: " << k << '\n';
             try
             {
@@ -556,8 +558,6 @@ void HTTPS_Downloader::Timer()
 	//	given the size of the files we are downloading, it
 	// seems unlikely this will have any effect.  But, for
 	// small files it may.
-
-    using namespace std::literals::chrono_literals;
 
 	std::this_thread::sleep_for(1s);
 }
