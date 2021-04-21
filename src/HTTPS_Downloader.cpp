@@ -49,6 +49,7 @@
 #include "Collector_Utils.h"
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/json.hpp>
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -58,6 +59,7 @@
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream.hpp>
 
+#include "spdlog/spdlog.h"
 #include <zip.h>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
@@ -65,10 +67,6 @@ namespace http = beast::http;   // from <boost/beast/http.hpp>
 namespace net = boost::asio;    // from <boost/asio.hpp>
 namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
-
-#include <boost/json.hpp>
-#include "spdlog/spdlog.h"
 
 using namespace std::literals::chrono_literals;
 
