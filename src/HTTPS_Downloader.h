@@ -106,10 +106,6 @@ private:
     void Timer();
     static void HandleSignal(int signal);
 
-    void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
-    void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
-    void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
-
     // ====================  DATA MEMBERS  =======================================
 
     std::string server_name_;
@@ -123,5 +119,9 @@ private:
 
     static bool had_signal_;
 }; // -----  end of class HTTPS_Downloader  -----
+
+void DownloadTextFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+void DownloadGZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
+void DownloadZipFile(const fs::path& local_file_name, const std::vector<char>& remote_data, const fs::path& remote_file_name);
 
 #endif /* HTTPS_DOWNLOADER_H */
