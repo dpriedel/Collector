@@ -36,6 +36,7 @@
 #define  _COLLECTOR_UTILS_INC_
 
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -45,6 +46,8 @@
 
 
 #include "date/tz.h"
+#include "fmt/format.h"
+#include "fmt/chrono.h"
 
 using namespace std::string_literals;
 
@@ -111,50 +114,92 @@ concept has_string = requires(T t)
 //    s+= std::to_string(t);
 //}
 //
-template<typename T>
-void append_to_string(std::string& s, const T& t)
-{
-    // look for things which are 'string like' so we can just append them.
-
-    if constexpr(can_be_appended_to_string<T>)
-    {
-        s.append(t);
-    }
-    else if constexpr(std::is_same_v<T, char>)
-    {
-        s += t;
-    }
-    else if constexpr(std::is_arithmetic_v<T>)
-    {
-        // it's a number so convert it.
-
-        s.append(std::to_string(t));
-    }
-    else if constexpr(has_string<T>)
-    {
-        // it can look like a string
-
-        s.append(t.string());
-    }
-    else
-    {
-        // we don't know what to do with it.
-
-        throw std::invalid_argument("wrong type for 'catenate' function: "s + typeid(t).name());
-    }
-}
+//template<typename T>
+//void append_to_string(std::string& s, const T& t)
+//{
+//    // look for things which are 'string like' so we can just append them.
+//
+//    if constexpr(can_be_appended_to_string<T>)
+//    {
+//        s.append(t);
+//    }
+//    else if constexpr(std::is_same_v<T, char>)
+//    {
+//        s += t;
+//    }
+//    else if constexpr(std::is_arithmetic_v<T>)
+//    {
+//        // it's a number so convert it.
+//
+//        s.append(std::to_string(t));
+//    }
+//    else if constexpr(has_string<T>)
+//    {
+//        // it can look like a string
+//
+//        s.append(t.string());
+//    }
+//    else
+//    {
+//        // we don't know what to do with it.
+//
+//        throw std::invalid_argument("wrong type for 'catenate' function: "s + typeid(t).name());
+//    }
+//}
 
 // now, a function to concatenate a bunch of string-like things.
 
-template<typename... Ts>
-std::string catenate(Ts&&... ts)
-{
-    // let's use fold a expression
-    // (comma operator is cool...)
+//template<typename... Ts>
+//std::string catenate(Ts&&... ts)
+//{
+//    // let's use fold a expression
+//    // (comma operator is cool...)
+//
+//    std::string x;
+//    ( ... , append_to_string(x, std::forward<Ts>(ts)) );
+//    return x;
+//}
 
-    std::string x;
-    ( ... , append_to_string(x, std::forward<Ts>(ts)) );
-    return x;
+// custom fmtlib formatter for filesytem paths
+
+template <> struct fmt::formatter<std::filesystem::path>: formatter<std::string> {
+  // parse is inherited from formatter<string_view>.
+  template <typename FormatContext>
+  auto format(const std::filesystem::path& p, FormatContext& ctx) {
+    std::string f_name = p.string();
+    return formatter<std::string>::format(f_name, ctx);
+  }
+};
+
+// custom fmtlib formatter for date year_month_day
+
+template <> struct fmt::formatter<date::year_month_day>: formatter<std::string> {
+  // parse is inherited from formatter<string_view>.
+  template <typename FormatContext>
+  auto format(date::year_month_day d, FormatContext& ctx) {
+    std::string s_date = date::format("%Y-%m-%d", d);
+    return formatter<std::string>::format(s_date, ctx);
+  }
+};
+
+
+template<typename... Ts>
+inline std::string catenate(Ts&&... ts)
+{
+    constexpr auto N = sizeof...(Ts);
+
+    // first, construct our format string
+    // TODO: make constexpr
+    
+    std::vector<const char*> place_holders{N, "{}"};
+    std::string f_string;
+    for (const auto& p : place_holders)
+    {
+        f_string.append(p);
+    }
+    
+//    return f_string;
+    return fmt::format(f_string, std::forward<Ts>(ts)...);
 }
 
 // function to split a string on a delimiter and return a vector of string-views
