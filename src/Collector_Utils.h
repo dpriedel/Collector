@@ -93,73 +93,6 @@ concept has_string = requires(T t)
     t.string();
 };
 
-// suport for concatenation of string-like things
-// let's use some concepts
-
-//template<can_be_appended_to_string T>
-//void append_to_string(std::string& s, const T& t)
-//{
-//    s +=t;
-//}
-//
-//template<has_string T>
-//void append_to_string(std::string& s, const T& t)
-//{
-//    s +=t.to_string();
-//}
-//
-//template<typename T> requires(std::is_arithmetic_v<T>)
-//void append_to_string(std::string& s, const T& t)
-//{
-//    s+= std::to_string(t);
-//}
-//
-//template<typename T>
-//void append_to_string(std::string& s, const T& t)
-//{
-//    // look for things which are 'string like' so we can just append them.
-//
-//    if constexpr(can_be_appended_to_string<T>)
-//    {
-//        s.append(t);
-//    }
-//    else if constexpr(std::is_same_v<T, char>)
-//    {
-//        s += t;
-//    }
-//    else if constexpr(std::is_arithmetic_v<T>)
-//    {
-//        // it's a number so convert it.
-//
-//        s.append(std::to_string(t));
-//    }
-//    else if constexpr(has_string<T>)
-//    {
-//        // it can look like a string
-//
-//        s.append(t.string());
-//    }
-//    else
-//    {
-//        // we don't know what to do with it.
-//
-//        throw std::invalid_argument("wrong type for 'catenate' function: "s + typeid(t).name());
-//    }
-//}
-
-// now, a function to concatenate a bunch of string-like things.
-
-//template<typename... Ts>
-//std::string catenate(Ts&&... ts)
-//{
-//    // let's use fold a expression
-//    // (comma operator is cool...)
-//
-//    std::string x;
-//    ( ... , append_to_string(x, std::forward<Ts>(ts)) );
-//    return x;
-//}
-
 // custom fmtlib formatter for filesytem paths
 
 template <> struct fmt::formatter<std::filesystem::path>: formatter<std::string> {
@@ -191,14 +124,12 @@ inline std::string catenate(Ts&&... ts)
     // first, construct our format string
     // TODO: make constexpr
     
-    std::vector<const char*> place_holders{N, "{}"};
     std::string f_string;
-    for (const auto& p : place_holders)
+    for (int i = 0; i < N; ++i)
     {
-        f_string.append(p);
+        f_string.append("{}");
     }
     
-//    return f_string;
     return fmt::format(f_string, std::forward<Ts>(ts)...);
 }
 
