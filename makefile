@@ -19,8 +19,8 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.76_gcc-10
-GCCDIR := /extra/gcc/gcc-10
+BOOSTDIR := /extra/boost/boost-1.76_gcc-11
+GCCDIR := /extra/gcc/gcc-11
 CPP := $(GCCDIR)/bin/g++
 
 # If no configuration is specified, "Debug" will be used
