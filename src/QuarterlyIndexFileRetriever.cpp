@@ -34,8 +34,7 @@
 #include <fstream>
 
 #include <boost/algorithm/string/replace.hpp>
-
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 #include "Collector_Utils.h"
 #include "HTTPS_Downloader.h"

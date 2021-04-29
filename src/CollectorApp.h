@@ -39,17 +39,17 @@
 #ifndef COLLECTORAPP_H_
 #define COLLECTORAPP_H_
 
+#include <filesystem>
 #include <map>
 #include <memory>
-#include <filesystem>
 
 #include <boost/program_options.hpp>
 
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
-#include "date/date.h"
-#include "spdlog/spdlog.h"
+#include <date/date.h>
+#include <spdlog/spdlog.h>
 
 #include "TickerConverter.h"
 

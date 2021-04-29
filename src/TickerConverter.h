@@ -64,7 +64,7 @@ class TickerConverter
 		int ConvertTickerFileToCIKs(const fs::path& ticker_file_name, int pause=1);
 		void SaveCIKDataToFile();
 
-		static constexpr char NotFound[] = "**no_CIK_found**";
+		inline static constexpr const char* NotFound = "**no_CIK_found**";
 
 		// ====================  OPERATORS     =======================================
 

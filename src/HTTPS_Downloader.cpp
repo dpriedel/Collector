@@ -45,22 +45,20 @@
 #include <system_error>
 #include <thread>
 
-#include "Collector_Utils.h"
-#include "HTTPS_Downloader.h"
-
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/json.hpp>
-
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/json.hpp>
 
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 #include <zip.h>
+
+#include "Collector_Utils.h"
+#include "HTTPS_Downloader.h"
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>

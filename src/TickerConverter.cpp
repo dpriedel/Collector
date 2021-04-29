@@ -38,8 +38,7 @@
 //#include <regex>
 
 #include <boost/regex.hpp>
-
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 #include "HTTPS_Downloader.h"
 #include "TickerConverter.h"
@@ -50,7 +49,7 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
-constexpr char TickerConverter::NotFound[];
+//constexpr const char* TickerConverter::NotFound;
 
 std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int pause)
 {

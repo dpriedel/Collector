@@ -36,11 +36,8 @@
 #include <algorithm>
 #include <fstream>
 
-//#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
-//#include <boost/algorithm/string/trim.hpp>
-
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 #include "Collector_Utils.h"
 #include "DailyIndexFileRetriever.h"
