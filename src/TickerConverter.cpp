@@ -37,11 +37,15 @@
 #include <thread>
 //#include <regex>
 
+// I know I'm using boost exceptions in this program
+
+#include <boost/json.hpp>
 #include <boost/regex.hpp>
 #include <spdlog/spdlog.h>
 
 #include "HTTPS_Downloader.h"
 #include "TickerConverter.h"
+
 
 //--------------------------------------------------------------------------------------
 //       Class:  TickerConverter
@@ -76,31 +80,50 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
-int TickerConverter::ConvertTickerFileToCIKs (const fs::path& ticker_file_name, int pause)
+int TickerConverter::DownloadTickerToCIKFile (const fs::path& ticker_file_name)
 {
-	spdlog::debug(catenate("T: Doing CIK lookup for tickers in file: ", ticker_file_name.string()));
+	spdlog::debug(catenate("T: Downloading tickers file to: ", ticker_file_name.string()));
 
-	std::ifstream tickers_file{ticker_file_name};
-	BOOST_ASSERT_MSG(tickers_file.is_open(), catenate("Unable to open tickers file: ", ticker_file_name).c_str());
+	std::string uri = "/files/company_tickers.json";
 
+    HTTPS_Downloader edgar_server("www.sec.gov", "443");
+
+	std::string ticker_to_CIK_data = edgar_server.RetrieveDataFromServer(uri);
+	BOOST_ASSERT_MSG(! ticker_to_CIK_data.empty(), "Unable to download ticker-to-CIK data.");
+
+    //  ticker data is in json format.  we will store as tab-delimited file.
+
+    const auto json_listing = boost::json::parse(ticker_to_CIK_data);
+
+	std::string extracted_data;
+    int ticker_count = 0;
+
+    //TODO: since CIKs are stored as numbers, I'll need to pad them
+    // out to 10-char string values.
+	for (const auto& [k, v] : json_listing.as_object())
+    {
+		extracted_data.append(fmt::format("{}\t{}\n", v.as_object().at("ticker").as_string().c_str(), v.as_object().at("cik_str").as_int64()));
+        ++ticker_count;
+    }
 	int result{0};
+//	std::ifstream tickers_file{ticker_file_name};
+//
+//	while (tickers_file)
+//	{
+//		std::string next_ticker;
+//		tickers_file >> next_ticker;
+//		if (! next_ticker.empty())
+//		{
+//			ConvertTickerToCIK(next_ticker, pause);
+//			++result;
+//		}
+//	}
+//
+//	tickers_file.close();
+//
+//	spdlog::debug(catenate("T: Did Ticker lookup for: ", result, " ticker symbols."));
 
-	while (tickers_file)
-	{
-		std::string next_ticker;
-		tickers_file >> next_ticker;
-		if (! next_ticker.empty())
-		{
-			ConvertTickerToCIK(next_ticker, pause);
-			++result;
-		}
-	}
-
-	tickers_file.close();
-
-	spdlog::debug(catenate("T: Did Ticker lookup for: ", result, " ticker symbols."));
-
-	return result;
+	return ticker_count;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
 std::string SEC_CIK_Lookup (COL::sview ticker, int pause)
