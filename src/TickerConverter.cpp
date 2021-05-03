@@ -68,21 +68,15 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 		return pos->second;
 	}
 
-	decltype(auto) cik = SEC_CIK_Lookup(ticker, pause);
-	if (cik.empty())
-    {
-		cik = NotFound;
-    }
-	ticker_to_CIK_[ticker] = cik;
-
-	spdlog::debug(catenate("T: Found CIK: ", cik, " via SEC query."));
+    auto cik = NotFound;
+	spdlog::debug(fmt::format("T: Unable to find CIK for ticker: {}.", ticker));
 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
 int TickerConverter::DownloadTickerToCIKFile (const fs::path& ticker_file_name)
 {
-	spdlog::debug(catenate("T: Downloading tickers file to: ", ticker_file_name.string()));
+	spdlog::debug(fmt::format("T: Downloading tickers file to: {} .", ticker_file_name));
 
 	std::string uri = "/files/company_tickers.json";
 
@@ -98,30 +92,17 @@ int TickerConverter::DownloadTickerToCIKFile (const fs::path& ticker_file_name)
 	std::string extracted_data;
     int ticker_count = 0;
 
-    //TODO: since CIKs are stored as numbers, I'll need to pad them
-    // out to 10-char string values.
 	for (const auto& [k, v] : json_listing.as_object())
     {
-		extracted_data.append(fmt::format("{}\t{}\n", v.as_object().at("ticker").as_string().c_str(), v.as_object().at("cik_str").as_int64()));
+		extracted_data.append(fmt::format("{}\t{:0>10d}\n", v.as_object().at("ticker").as_string().c_str(), v.as_object().at("cik_str").as_int64()));
         ++ticker_count;
     }
-	int result{0};
-//	std::ifstream tickers_file{ticker_file_name};
-//
-//	while (tickers_file)
-//	{
-//		std::string next_ticker;
-//		tickers_file >> next_ticker;
-//		if (! next_ticker.empty())
-//		{
-//			ConvertTickerToCIK(next_ticker, pause);
-//			++result;
-//		}
-//	}
-//
-//	tickers_file.close();
-//
-//	spdlog::debug(catenate("T: Did Ticker lookup for: ", result, " ticker symbols."));
+	std::ofstream tickers_file{ticker_file_name, std::ios::out | std::ios::binary};
+    BOOST_ASSERT_MSG(tickers_file.is_open(), fmt::format("Unable to open ticker_CIK file: {}", ticker_file_name).c_str());
+    tickers_file.write(extracted_data.data(), extracted_data.size());
+	tickers_file.close();
+
+	spdlog::debug(fmt::format("T: Did Ticker download for: {} ticker symbols.", ticker_count));
 
 	return ticker_count;
 }		// -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
@@ -152,13 +133,10 @@ std::string SEC_CIK_Lookup (COL::sview ticker, int pause)
     return {};
 }		// -----  end of method ConvertTickerToCIK  -----
 
-void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
+int TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 {
 	cache_file_name_ = cache_file_name;
-	if (! fs::exists(cache_file_name_))
-    {
-		return ;
-    }
+    BOOST_ASSERT_MSG(fs::exists(cache_file_name), fmt::format("Unable to find ticker_CIK file: {}", cache_file_name).c_str());
 
 	std::ifstream ticker_cache_file{cache_file_name_};
 
@@ -179,23 +157,25 @@ void TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 	ticker_count_start_ = ticker_to_CIK_.size();
 	spdlog::debug(catenate("T: Loaded ", ticker_count_start_, " tickers from file: ", cache_file_name.string()));
 
+    return ticker_count_start_;
+
 }		// -----  end of method TickerConverter::UseTickerFile  -----
 
-void TickerConverter::SaveCIKDataToFile ()
-{
-	ticker_count_end_ = ticker_to_CIK_.size();
-
-	if (ticker_count_end_ == 0)
-    {
-		return;
-    }
-
-	std::ofstream ticker_cache_file{cache_file_name_.string()};
-
-	for (const auto& x : ticker_to_CIK_)
-    {
-		ticker_cache_file << x.first << '\t' << x.second << '\n';
-    }
-
-	spdlog::debug(catenate("T: Saved ", ticker_to_CIK_.size(), " tickers to file: ", cache_file_name_.string()));
-}		// -----  end of method TickerConverter::SaveCIKToFile  -----
+//void TickerConverter::SaveCIKDataToFile ()
+//{
+//	ticker_count_end_ = ticker_to_CIK_.size();
+//
+//	if (ticker_count_end_ == 0)
+//    {
+//		return;
+//    }
+//
+//	std::ofstream ticker_cache_file{cache_file_name_.string()};
+//
+//	for (const auto& x : ticker_to_CIK_)
+//    {
+//		ticker_cache_file << x.first << '\t' << x.second << '\n';
+//    }
+//
+//	spdlog::debug(catenate("T: Saved ", ticker_to_CIK_.size(), " tickers to file: ", cache_file_name_.string()));
+//}		// -----  end of method TickerConverter::SaveCIKToFile  -----

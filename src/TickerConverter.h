@@ -59,10 +59,10 @@ class TickerConverter
 
 		// ====================  MUTATORS      =======================================
 
-		void UseCacheFile(const fs::path& cache_file_name);
+		int UseCacheFile(const fs::path& cache_file_name);
 		std::string ConvertTickerToCIK(const std::string& ticker, int pause=1);
 		int DownloadTickerToCIKFile(const fs::path& ticker_file_name);
-		void SaveCIKDataToFile();
+//		void SaveCIKDataToFile();
 
 		inline static constexpr const char* NotFound = "**no_CIK_found**";
 
