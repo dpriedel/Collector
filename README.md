@@ -15,7 +15,7 @@ I'm using the Boost Beast library to handle file downloads and HTTPS/SSL interac
 SSL Certificate validation though.
 
 The application now supports optional concurrent downloads.  The SEC site has a limit of 10 connections per second.
-The application allows you to use a higher number but you will likely be stopped the the site.
+The application allows you to use a higher number but you will likely be stopped by the the site.
 
 This project is part of a set of projects to make use of the SEC's EDGAR data filings available on Linux computers.
 It is also a chance to explore using C++17 through 23 and to try out Test Driven Development with C++.  
