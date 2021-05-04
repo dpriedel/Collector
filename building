@@ -1,10 +1,13 @@
-To build this application you need the following:
-- compiler which supports c++1z.  I used gcc 7.1.  Clang 4.0 should work too.
-- Boost libraries (www.boost.org).  I used Boost 1.64
-- Poco libraries (pocoproject.org).  I used 1.7.8.p3
-- cpp-json https://github.com/eteran/cpp-json.  I used version 3.3.1
 
-- my app_framework is no longer needed as Poco provides these facilities.
+To build this application you need the following:
+
+- compiler which supports C++20 (and a little bit of C++23)  I used gcc 11.1.
+- Boost libraries (www.boost.org).  I used Boost 1.76 for regex, iostreams, program_options, json
+- Range-v3 (https://github.com/ericniebler/range-v3)
+- date (https://github.com/HowardHinnant/date)
+- spdlog (https://github.com/gabime/spdlog)
+- fmtlib (https://github.com/fmtlib/fmt)
+
 
 Since I have multiple versions of compilers and boost on my system and they are located in
 non-standard places, there are some makefile variables which need to be set to point to

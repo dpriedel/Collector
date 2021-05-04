@@ -1,28 +1,24 @@
-CollectEDGARData
+Collector
 ================
 
 Download manager for SEC EDGAR data files
 
-July 17, 2017. Version 1.9 update:
+May 4, 2021. Version 5.0 update:
 
-It's been a while and things at the EDGAR site have changed.
+It's been a while and things at the SEC EDGAR site have changed and so has this program.
 
-The applications are now Poco application framework projects (pocoproject.org).
+The applications are no longer Poco application framework projects.  It's back to Boost.
 
-There have been a number of changes due to compiler/boost/Poco udates. Every thing is current right now -- gcc 7.1,
-boost 1-64, Poco 1.7.8p3.
+There have been a number of changes due to compiler/boost/other library udates. See the 'building' file for changes.
 
-Most importantly, the EDGAR site has changed from FTP access to HTTPS access.  I have used the Poco library to
-implement support for HTTPS access with SSL verification.  (The SSL verification is turned off for now because
-my local test setup does not have a 'valid' SSL cert.)
+I'm using the Boost Beast library to handle file downloads and HTTPS/SSL interactions.  Still not using
+SSL Certificate validation though.
 
-Also, I have refactored a lot of the code related to file downloads in preparation for the main feature to be
-added next -- concurrent downloads.  According the the EDGAR web site, one is allowed up to 10 requests per second.
-I will be adding code to support this feature.  This will make the code version 2.0.
-
+The application now supports optional concurrent downloads.  The SEC site has a limit of 10 connections per second.
+The application allows you to use a higher number but you will likely be stopped the the site.
 
 This project is part of a set of projects to make use of the SEC's EDGAR data filings available on Linux computers.
-It is also a chance to explore using C++11 and to try out Test Driven Development with C++.  
+It is also a chance to explore using C++17 through 23 and to try out Test Driven Development with C++.  
 
 This program serves to download selected EDGAR filing files from the SEC's FTP site.  The files to be downloaded
 can be filtered by date range, form type (10-Q, 4, etc.) and ticker symbol.  Files are downloaded to a 
@@ -35,7 +31,9 @@ is the same.  The only difference is how many records are in the index files.
 
 EDGAR form files are identified by CIK number which is assigned by the EDGAR system.  This program will also do a
 ticker to CIK conversion.  You can provide a file with a list of stock ticker symbols and the corresponding CIK will
-be found.  The results are saved in file on your system so you can reuse them in future runs.
+be found.  The results are saved in file on your system so you can reuse them in future runs.  This feature used to do 
+repeated queries to the SEC site for the conversions but now, it just downloads the entire file which became available some
+time ago.
 
 
 
