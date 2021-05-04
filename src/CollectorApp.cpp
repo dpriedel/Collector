@@ -184,11 +184,6 @@ void CollectorApp::SetupProgramOptions()
         ("concurrent,k",   po::value<int>(&this->max_at_a_time_)->default_value(10), "Maximun number of concurrent downloads. Default of 10.")
         /* ("file,f",    po::value<std::string>(), "name of file containing data for ticker. Default is stdin") */
         /* ("mode,m",    po::value<std::string>(), "mode: either 'load' new data or 'update' existing data. Default is 'load'") */
-        /* ("output,o",   po::value<std::string>(), "output file name") */
-        /* ("destination,d",  po::value<std::string>(), "send data to file or DB. Default is 'stdout'.") */
-        /* ("boxsize,b",   po::value<DprDecimal::DDecimal<16>>(), "box step size. 'n', 'm.n'") */
-        /* ("reversal,r",   po::value<int>(),   "reversal size in number of boxes. Default is 1") */
-        /* ("scale",    po::value<std::string>(), "'arithmetic', 'log'. Default is 'arithmetic'") */
 	;
 
 }		// -----  end of method CollectorApp::Do_SetupProgramOptions  -----
@@ -227,16 +222,18 @@ bool CollectorApp::CheckArgs ()
 
 	if (! ticker_.empty())
 	{
+		BOOST_ASSERT_MSG(! ticker_cache_file_name_.empty(), "You must provide a cache file when using ticker symbols.");
         ticker_list_ = split_string_to_strings(ticker_, ',');
 	}
 
 	if (! ticker_list_file_name_.empty())
     {
-		BOOST_ASSERT_MSG(! ticker_cache_file_name_.empty(), "You must use a cache file when using a file of ticker symbols.");
+		BOOST_ASSERT_MSG(! ticker_cache_file_name_.empty(), "You must provide a cache file when using a file of ticker symbols.");
     }
 
 	if (mode_ == "ticker-only")
     {
+		BOOST_ASSERT_MSG(! ticker_cache_file_name_.empty(), "You must specify a cache file when downloading ticker symbols.");
 		return true;
     }
 
@@ -298,7 +295,7 @@ bool CollectorApp::CheckArgs ()
 
 void CollectorApp::Run ()
 {
-	if (! ticker_cache_file_name_.empty())
+	if (! ticker_cache_file_name_.empty() && mode_ != "ticker-only")
     {
 		ticker_converter_.UseCacheFile(ticker_cache_file_name_);
     }
@@ -310,7 +307,7 @@ void CollectorApp::Run ()
 
 	if (mode_ == "ticker-only")
     {
-		Do_Run_TickerLookup();
+		Do_Run_TickerDownload();
     }
 	else if (mode_ == "daily")
     {
@@ -321,25 +318,18 @@ void CollectorApp::Run ()
 		Do_Run_QuarterlyIndexFiles();
     }
 
-	if (! ticker_cache_file_name_.empty())
-    {
-		ticker_converter_.SaveCIKDataToFile();
-    }
-
 }		// -----  end of method CollectorApp::Do_Run  -----
 
-void CollectorApp::Do_Run_TickerLookup ()
+void CollectorApp::Do_Run_TickerDownload ()
 {
-	for (const auto& ticker : ticker_list_)
-    {
-		ticker_converter_.ConvertTickerToCIK(ticker);
-    }
+    ticker_converter_.DownloadTickerToCIKFile(ticker_cache_file_name_);
 
 }		// -----  end of method CollectorApp::Do_Run_tickerLookup  -----
 
 void CollectorApp::Do_Run_TickerFileLookup ()
 {
-	ticker_converter_.ConvertTickerFileToCIKs(ticker_list_file_name_, pause_);
+    ticker_converter_.UseCacheFile(ticker_cache_file_name_);
+	ticker_map_ = ticker_converter_.ConvertFileOfTickersToCIKs(ticker_list_file_name_);
 
 }		// -----  end of method CollectorApp::Do_Run_TickerFileLookup  -----
 

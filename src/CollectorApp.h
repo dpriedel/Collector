@@ -90,7 +90,7 @@ protected:
 
 	void Do_Run_DailyIndexFiles();
 	void Do_Run_QuarterlyIndexFiles();
-	void Do_Run_TickerLookup();
+	void Do_Run_TickerDownload();
 	void Do_Run_TickerFileLookup();
 
 	void Do_TickerMap_Setup();
@@ -131,7 +131,7 @@ private:
 	std::vector<std::string> form_list_;
 	std::vector<std::string> ticker_list_;
 
-	std::map<std::string, std::string> ticker_map_;
+    TickerConverter::TickerCIKMap ticker_map_;
 
 	fs::path log_file_path_name_;
 	fs::path local_index_file_directory_;
