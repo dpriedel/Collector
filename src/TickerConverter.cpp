@@ -74,13 +74,43 @@ std::string TickerConverter::ConvertTickerToCIK (const std::string& ticker, int 
 	return cik;
 }		// -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
-int TickerConverter::DownloadTickerToCIKFile (const fs::path& ticker_file_name)
+TickerConverter::TickerCIKMap TickerConverter::ConvertFileOfTickersToCIKs (const fs::path& ticker_file_name)
+{
+	BOOST_ASSERT_MSG(! ticker_to_CIK_.empty(), "Must load ticker cache file data before doing lookups.");
+
+	std::ifstream tickers_file{ticker_file_name};
+	BOOST_ASSERT_MSG(tickers_file.is_open(), fmt::format("Unable to open tickers list file: {}", ticker_file_name).c_str());
+
+    TickerConverter::TickerCIKMap result;
+
+	while (tickers_file)
+	{
+		std::string next_ticker;
+		tickers_file >> next_ticker;
+		if (! next_ticker.empty())
+		{
+            auto pos = ticker_to_CIK_.find(next_ticker);
+            if (pos != ticker_to_CIK_.end())
+            {
+                result.insert_or_assign(pos->first, pos->second);
+            }
+		}
+	}
+
+	tickers_file.close();
+
+	spdlog::debug(fmt::format("T: Did Ticker lookup for: {} tickers from file: {}.", ticker_to_CIK_.size(), ticker_file_name));
+
+    return result;
+}		// -----  end of method TickerConverter::ConvertFileOfTickersToCIKs  ----- 
+
+int TickerConverter::DownloadTickerToCIKFile (const fs::path& ticker_file_name, const std::string& server_name, const std::string& port)
 {
 	spdlog::debug(fmt::format("T: Downloading tickers file to: {} .", ticker_file_name));
 
 	std::string uri = "/files/company_tickers.json";
 
-    HTTPS_Downloader edgar_server("www.sec.gov", "443");
+    HTTPS_Downloader edgar_server(server_name, port);
 
 	std::string ticker_to_CIK_data = edgar_server.RetrieveDataFromServer(uri);
 	BOOST_ASSERT_MSG(! ticker_to_CIK_data.empty(), "Unable to download ticker-to-CIK data.");
@@ -135,8 +165,9 @@ std::string SEC_CIK_Lookup (COL::sview ticker, int pause)
 
 int TickerConverter::UseCacheFile (const fs::path& cache_file_name)
 {
-	cache_file_name_ = cache_file_name;
     BOOST_ASSERT_MSG(fs::exists(cache_file_name), fmt::format("Unable to find ticker_CIK file: {}", cache_file_name).c_str());
+    ticker_to_CIK_.clear();
+	cache_file_name_ = cache_file_name;
 
 	std::ifstream ticker_cache_file{cache_file_name_};
 
