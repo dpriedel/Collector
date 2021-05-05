@@ -16,15 +16,100 @@
 //
 
 //--------------------------------------------------------------------------------------
-//       Class:  FinancialStatementsAndNotes
-//      Method:  FinancialStatementsAndNotes
+//       Class:  FinancialStatementsAndNotes_gen
+//      Method:  FinancialStatementsAndNotes_gen
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
+#include <fmt/format.h>
+
 #include "FinancialStatementsAndNotes.h"
 
-FinancialStatementsAndNotes::FinancialStatementsAndNotes ()
+FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen (date::year_month_day start_date, date::year_month_day end_date)
 {
-}  // -----  end of method FinancialStatementsAndNotes::FinancialStatementsAndNotes  (constructor)  ----- 
+    // when in quarterly mode, the 'month' value will actually be the 'quarter' value between 1 and 4.
+    // maybe there's a better way to do this. Nonetheless, it keeps the code conistent.
+
+    date::year_month temp_s{start_date.year(), start_date.month()};
+    if (temp_s > last_quarterly_)
+    {
+        monthly_mode_ = true;
+	    start_date_ = temp_s;
+    }
+    else
+    {
+        start_date_ = date::year_month{start_date.year(), date::month{start_date.month().operator unsigned int() / 3 + (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
+    }
+
+    date::year_month temp_e{end_date.year(), end_date.month()};
+    if (temp_e > last_quarterly_)
+    {
+        end_date_ = temp_e;
+    }
+    else
+    {
+	    end_date_ = date::year_month{end_date.year(), date::month{end_date.month().operator unsigned int() / 3 + (end_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
+    }
+    current_date_ = start_date_;
+
+    format_current_value();
+
+}  // -----  end of method FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen  (constructor)  ----- 
+
+
+FinancialStatementsAndNotes_gen& FinancialStatementsAndNotes_gen::operator++ ()
+{
+    // see if we're done
+
+    if ( current_date_ == date::year_month{})
+    {
+        return *this;
+    }
+
+    if (! monthly_mode_)
+    {
+        // we need to do 'quarterly' arithmetic here.
+
+        current_date_ += a_month;
+        if (current_date_.month().operator unsigned int() > 4)
+        {
+            current_date_ = {current_date_.year() + a_year, January};
+        }
+        if (current_date_ > last_quarterly_)
+        {
+            current_date_ = first_monthly_;
+            monthly_mode_ = true;
+        }
+    }
+    else
+    {
+        current_date_ += a_month;
+    }
+
+    if ( current_date_ >= end_date_)
+    {
+        current_date_ = date::year_month{};
+        current_value_ = "";
+        return *this;
+    }
+
+    format_current_value();
+
+    return *this;
+}		// -----  end of method FinancialStatementsAndNotes_gen::operator++  ----- 
+
+
+void FinancialStatementsAndNotes_gen::format_current_value ()
+{
+    if (! monthly_mode_)
+    {
+        current_value_ = fmt::format("{}q{}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+    }
+    else
+    {
+        current_value_ = fmt::format("{}_{:>02d}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+    }
+}		// -----  end of method FinancialStatementsAndNotes_gen::format_current_value  ----- 
+
 
 
