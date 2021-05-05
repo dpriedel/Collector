@@ -82,6 +82,7 @@ private:
 
     inline static constexpr date::year_month first_quarterly_ = 2009_y/January;
     inline static constexpr date::year_month last_quarterly_ = 2020_y/September;
+    inline static constexpr date::year_month last_quarterly_qtr = 2020_y/March;        // using months for quarters
     inline static constexpr date::year_month first_monthly_ = 2020_y/October;
 
     date::year_month start_date_;

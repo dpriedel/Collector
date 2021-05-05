@@ -21,6 +21,8 @@
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include <fmt/format.h>
 
 #include "FinancialStatementsAndNotes.h"
@@ -75,7 +77,7 @@ FinancialStatementsAndNotes_gen& FinancialStatementsAndNotes_gen::operator++ ()
         {
             current_date_ = {current_date_.year() + a_year, January};
         }
-        if (current_date_ > last_quarterly_)
+        if (current_date_ > last_quarterly_qtr)
         {
             current_date_ = first_monthly_;
             monthly_mode_ = true;
