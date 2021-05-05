@@ -26,6 +26,7 @@
 #include <fmt/format.h>
 
 #include "FinancialStatementsAndNotes.h"
+#include "HTTPS_Downloader.h"
 
 FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen (date::year_month_day start_date, date::year_month_day end_date)
 {
@@ -75,7 +76,7 @@ FinancialStatementsAndNotes_gen& FinancialStatementsAndNotes_gen::operator++ ()
         current_date_ += a_month;
         if (current_date_.month().operator unsigned int() > 4)
         {
-            current_date_ = {current_date_.year() + a_year, January};
+            current_date_ = {current_date_.year() + a_year, date::January};
         }
         if (current_date_ > last_quarterly_qtr)
         {
@@ -114,4 +115,28 @@ void FinancialStatementsAndNotes_gen::format_current_value ()
 }		// -----  end of method FinancialStatementsAndNotes_gen::format_current_value  ----- 
 
 
+//--------------------------------------------------------------------------------------
+//       Class:  FinancialStatementsAndNotes
+//      Method:  FinancialStatementsAndNotes
+// Description:  constructor
+//--------------------------------------------------------------------------------------
+FinancialStatementsAndNotes::FinancialStatementsAndNotes (date::year_month_day start_date, date::year_month_day end_date)
+    : start_date_{start_date.year(), start_date.month()}, end_date_{end_date.year(), end_date.month()}
+{
+}  // -----  end of method FinancialStatementsAndNotes::FinancialStatementsAndNotes  (constructor)  ----- 
+
+
+    // files/dera/data/financial-statement-and-notes-data-sets/
+void FinancialStatementsAndNotes::download_files (const std::string& server_name, const std::string& port, const fs::path& download_destination)
+{
+    // for now, just download
+
+    HTTPS_Downloader fin_statement_downloader{server_name, port};
+    if (! fs::exists(download_destination))
+    {
+        fs::create_directories(download_destination);
+    }
+
+    return ;
+}		// -----  end of method FinancialStatementsAndNotes::download_files  ----- 
 

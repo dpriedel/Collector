@@ -20,15 +20,18 @@
 //  Description:  generator for financial statement and notes file names. 
 // =====================================================================================
 
-#ifndef  financialstatementsandnotes_INC
-#define  FinancialStatementsAndNotes_INC
+#ifndef  FINANCIALSTATEMENTSANDNOTES_INC
+#define  FINANCIALSTATEMENTSANDNOTES_INC
 
 #include <chrono>
+#include <filesystem>
 #include <string>
+
 #include <date/date.h>
 
-//using namespace std::chrono_literals;
-using namespace date;
+namespace fs = std::filesystem;
+
+using namespace date::literals;
 
 class FinancialStatementsAndNotes_gen
 {
@@ -44,7 +47,7 @@ public:
     // ====================  LIFECYCLE     ======================================= 
 
     FinancialStatementsAndNotes_gen () = default;                             // constructor 
-    FinancialStatementsAndNotes_gen (date::year_month_day start_date, date::year_month_day end_date);                             // constructor 
+    FinancialStatementsAndNotes_gen (date::year_month_day start_date, date::year_month_day end_date);    // constructor 
 
     // ====================  ACCESSORS     ======================================= 
 
@@ -80,10 +83,10 @@ private:
     inline static constexpr date::months a_month{1};
     inline static constexpr date::years a_year{1};
 
-    inline static constexpr date::year_month first_quarterly_ = 2009_y/January;
-    inline static constexpr date::year_month last_quarterly_ = 2020_y/September;
-    inline static constexpr date::year_month last_quarterly_qtr = 2020_y/March;        // using months for quarters
-    inline static constexpr date::year_month first_monthly_ = 2020_y/October;
+    inline static constexpr date::year_month first_quarterly_ = 2009_y/date::January;
+    inline static constexpr date::year_month last_quarterly_ = 2020_y/date::September;
+    inline static constexpr date::year_month last_quarterly_qtr = 2020_y/date::March;        // using months for quarters
+    inline static constexpr date::year_month first_monthly_ = 2020_y/date::October;
 
     date::year_month start_date_;
     date::year_month end_date_;
@@ -102,25 +105,31 @@ private:
 // =====================================================================================
 class FinancialStatementsAndNotes
 {
-    public:
-        // ====================  LIFECYCLE     ======================================= 
-        FinancialStatementsAndNotes ();                             // constructor 
+public:
+    // ====================  LIFECYCLE     ======================================= 
 
-        // ====================  ACCESSORS     ======================================= 
+    FinancialStatementsAndNotes (date::year_month_day start_date, date::year_month_day end_date);   // constructor 
 
-        // ====================  MUTATORS      ======================================= 
+    // ====================  ACCESSORS     ======================================= 
 
-        // ====================  OPERATORS     ======================================= 
+    // ====================  MUTATORS      ======================================= 
 
-    protected:
-        // ====================  METHODS       ======================================= 
+    void download_files(const std::string& server_name, const std::string& port, const fs::path& download_destination);
 
-        // ====================  DATA MEMBERS  ======================================= 
+    // ====================  OPERATORS     ======================================= 
 
-    private:
-        // ====================  METHODS       ======================================= 
+protected:
+    // ====================  METHODS       ======================================= 
 
-        // ====================  DATA MEMBERS  ======================================= 
+    // ====================  DATA MEMBERS  ======================================= 
+
+private:
+    // ====================  METHODS       ======================================= 
+
+    // ====================  DATA MEMBERS  ======================================= 
+
+    date::year_month start_date_;
+    date::year_month end_date_;
 
 }; // -----  end of class FinancialStatementsAndNotes  ----- 
 
