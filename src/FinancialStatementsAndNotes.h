@@ -17,7 +17,7 @@
 
 // =====================================================================================
 //        Class:  FinancialStatementsAndNotes_itor
-//  Description:  generator for financial statement and notes file names. 
+//  Description:  generator for financial statement and notes file and directory names. 
 // =====================================================================================
 
 #ifndef  FINANCIALSTATEMENTSANDNOTES_INC
@@ -26,6 +26,7 @@
 #include <chrono>
 #include <filesystem>
 #include <string>
+#include <utility>
 
 #include <date/date.h>
 
@@ -38,10 +39,10 @@ class FinancialStatementsAndNotes_gen
 public:
 
     using iterator_category = std::forward_iterator_tag;
-    using value_type = std::string;
+    using value_type = std::pair<std::string, std::string>;     // file name, directory name
     using difference_type = ptrdiff_t;
-    using const_pointer = std::string const *;
-    using const_reference = std::string const &;
+    using const_pointer = value_type const *;
+    using const_reference = value_type const &;
 
 public:
     // ====================  LIFECYCLE     ======================================= 
@@ -93,7 +94,7 @@ private:
 
     date::year_month current_date_;
 
-    std::string current_value_;
+    value_type current_value_;
     bool monthly_mode_ = false;
 
 }; // -----  end of class FinancialStatementsAndNotes_gen  ----- 
@@ -106,11 +107,18 @@ private:
 class FinancialStatementsAndNotes
 {
 public:
+
+    using const_iterator = FinancialStatementsAndNotes_gen;
+
+public:
     // ====================  LIFECYCLE     ======================================= 
 
     FinancialStatementsAndNotes (date::year_month_day start_date, date::year_month_day end_date);   // constructor 
 
     // ====================  ACCESSORS     ======================================= 
+
+    const_iterator begin() const { return FinancialStatementsAndNotes_gen{start_date_, end_date_}; }
+    const_iterator end() const { return FinancialStatementsAndNotes_gen(); }
 
     // ====================  MUTATORS      ======================================= 
 
@@ -128,8 +136,8 @@ private:
 
     // ====================  DATA MEMBERS  ======================================= 
 
-    date::year_month start_date_;
-    date::year_month end_date_;
+    date::year_month_day start_date_;
+    date::year_month_day end_date_;
 
 }; // -----  end of class FinancialStatementsAndNotes  ----- 
 

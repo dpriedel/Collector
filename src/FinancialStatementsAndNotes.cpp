@@ -41,6 +41,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen (date::year_mon
     }
     else
     {
+        // convert to our faux quarterly value
         start_date_ = date::year_month{start_date.year(), date::month{start_date.month().operator unsigned int() / 3 + (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
     }
 
@@ -51,6 +52,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen (date::year_mon
     }
     else
     {
+        // convert to our faux quarterly value
 	    end_date_ = date::year_month{end_date.year(), date::month{end_date.month().operator unsigned int() / 3 + (end_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
     }
     current_date_ = start_date_;
@@ -91,8 +93,8 @@ FinancialStatementsAndNotes_gen& FinancialStatementsAndNotes_gen::operator++ ()
 
     if ( current_date_ >= end_date_)
     {
-        current_date_ = date::year_month{};
-        current_value_ = "";
+        current_date_ = date::year_month();
+        current_value_ = {"", ""};
         return *this;
     }
 
@@ -106,11 +108,13 @@ void FinancialStatementsAndNotes_gen::format_current_value ()
 {
     if (! monthly_mode_)
     {
-        current_value_ = fmt::format("{}q{}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+        current_value_.first = fmt::format("{}q{}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+        current_value_.second = fmt::format("{}_{}", current_date_.year().operator int(), current_date_.month().operator unsigned int());
     }
     else
     {
-        current_value_ = fmt::format("{}_{:>02d}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+        current_value_.first = fmt::format("{}_{:>02d}_notes.zip", current_date_.year().operator int(), current_date_.month().operator unsigned int());
+        current_value_.second = fmt::format("{}_{}", current_date_.year().operator int(), current_date_.month().operator unsigned int());
     }
 }		// -----  end of method FinancialStatementsAndNotes_gen::format_current_value  ----- 
 
@@ -121,7 +125,7 @@ void FinancialStatementsAndNotes_gen::format_current_value ()
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 FinancialStatementsAndNotes::FinancialStatementsAndNotes (date::year_month_day start_date, date::year_month_day end_date)
-    : start_date_{start_date.year(), start_date.month()}, end_date_{end_date.year(), end_date.month()}
+    : start_date_{start_date}, end_date_{end_date}
 {
 }  // -----  end of method FinancialStatementsAndNotes::FinancialStatementsAndNotes  (constructor)  ----- 
 
