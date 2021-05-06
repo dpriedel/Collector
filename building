@@ -3,7 +3,6 @@ To build this application you need the following:
 
 - compiler which supports C++20 (and a little bit of C++23)  I used gcc 11.1.
 - Boost libraries (www.boost.org).  I used Boost 1.76 for regex, iostreams, program_options, json
-- Range-v3 (https://github.com/ericniebler/range-v3)
 - date (https://github.com/HowardHinnant/date)
 - spdlog (https://github.com/gabime/spdlog)
 - fmtlib (https://github.com/fmtlib/fmt)
