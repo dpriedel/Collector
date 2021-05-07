@@ -25,6 +25,7 @@
 
 #include <fmt/format.h>
 
+#include "Collector_Utils.h"
 #include "FinancialStatementsAndNotes.h"
 #include "HTTPS_Downloader.h"
 
@@ -141,6 +142,27 @@ void FinancialStatementsAndNotes::download_files (const std::string& server_name
         fs::create_directories(download_destination);
     }
 
-    return ;
+    // since this class looks like a range (has 'begin' and 'end') we can do this.
+    
+    // TODO: add 'replace' logic
+    // TODO: add logging
+
+    for (const auto& [file, directory] : *this)
+    {
+        fs::path source_file = source_directory / file;
+        fs::path destination_directory = download_destination / directory;
+        if (! fs::exists(destination_directory))
+        {
+            fs::create_directories(destination_directory);
+        }
+        BOOST_ASSERT_MSG(fs::exists(destination_directory), fmt::format("Unable to create/find destination_directory: {}", destination_directory).c_str());
+
+        fs::path destination_file = destination_directory / file;
+
+        fin_statement_downloader.DownloadFile(source_file, destination_file);
+
+        // files need to be unzipped so let's do it here.
+    }
+
 }		// -----  end of method FinancialStatementsAndNotes::download_files  ----- 
 
