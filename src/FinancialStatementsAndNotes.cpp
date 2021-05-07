@@ -22,8 +22,12 @@
 //--------------------------------------------------------------------------------------
 
 #include <iostream>
+#include <system_error>
+
+#include <boost/process.hpp>
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "Collector_Utils.h"
 #include "FinancialStatementsAndNotes.h"
@@ -132,9 +136,11 @@ FinancialStatementsAndNotes::FinancialStatementsAndNotes (date::year_month_day s
 
 
     // files/dera/data/financial-statement-and-notes-data-sets/
-void FinancialStatementsAndNotes::download_files (const std::string& server_name, const std::string& port, const fs::path& download_destination)
+void FinancialStatementsAndNotes::download_files (const std::string& server_name, const std::string& port, const fs::path& download_destination, bool replace_files)
 {
-    // for now, just download
+    int downloaded_files_counter = 0;
+    int skipped_files_counter = 0;
+	int error_counter = 0;
 
     HTTPS_Downloader fin_statement_downloader{server_name, port};
     if (! fs::exists(download_destination))
@@ -144,9 +150,6 @@ void FinancialStatementsAndNotes::download_files (const std::string& server_name
 
     // since this class looks like a range (has 'begin' and 'end') we can do this.
     
-    // TODO: add 'replace' logic
-    // TODO: add logging
-
     for (const auto& [file, directory] : *this)
     {
         fs::path source_file = source_directory / file;
@@ -158,11 +161,35 @@ void FinancialStatementsAndNotes::download_files (const std::string& server_name
         BOOST_ASSERT_MSG(fs::exists(destination_directory), fmt::format("Unable to create/find destination_directory: {}", destination_directory).c_str());
 
         fs::path destination_file = destination_directory / file;
+        if (fs::exists(destination_file) && replace_files == false)
+        {
+            ++skipped_files_counter;
+			spdlog::info(fmt::format("N: File: {} exists and 'replace' is false. Skipping download.", destination_file));
+            continue;
+        }
 
-        fin_statement_downloader.DownloadFile(source_file, destination_file);
+        try
+        {
+            fin_statement_downloader.DownloadFile(source_file, destination_file);
 
-        // files need to be unzipped so let's do it here.
+            // files need to be unzipped so let's do it here.
+
+            boost::process::system(fmt::format("unzip -o -qq {} -d {}", destination_file, destination_directory));
+
+            ++downloaded_files_counter;
+        }
+        catch (std::system_error& e)
+        {
+            ++error_counter;
+            spdlog::error(e.what());
+            auto ec = e.code();
+            spdlog::error(catenate("Category: ", ec.category().name(), ". Value: ", ec.value(),
+                    ". Message: ", ec.message()));
+        }
     }
+
+    spdlog::info(fmt::format("N: Downloaded: {}. Skipped: {}. Errors: {}. out of {} possible files.",
+                downloaded_files_counter, skipped_files_counter, error_counter, std::ranges::distance(*this)));
 
 }		// -----  end of method FinancialStatementsAndNotes::download_files  ----- 
 

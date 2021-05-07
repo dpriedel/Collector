@@ -122,7 +122,7 @@ public:
 
     // ====================  MUTATORS      ======================================= 
 
-    void download_files(const std::string& server_name, const std::string& port, const fs::path& download_destination);
+    void download_files(const std::string& server_name, const std::string& port, const fs::path& download_destination, bool replace_files);
 
     // ====================  OPERATORS     ======================================= 
 
