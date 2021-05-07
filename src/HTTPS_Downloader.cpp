@@ -238,7 +238,7 @@ void HTTPS_Downloader::DownloadFile (const fs::path& remote_file_name, const fs:
     }
     if (ec != beast::errc::success || http::int_to_status(response_content.base().result_int()) != http::status::ok)
     {
-		throw std::runtime_error(catenate(remote_file_name, ": Result: ", ec.message(), 
+		throw std::system_error(ec, catenate(remote_file_name, ": Result: ", ec.message(), 
 			"  ", response_content.base().reason().data(), ": Unable to download file."));
     }
     std::vector<char> remote_data = response_content.body();
