@@ -92,6 +92,7 @@ protected:
 	void Do_Run_QuarterlyIndexFiles();
 	void Do_Run_TickerDownload();
 	void Do_Run_TickerFileLookup();
+    void Do_Run_FinancialNotesDownload();
 
 	void Do_TickerMap_Setup();
 
@@ -138,6 +139,7 @@ private:
 	fs::path local_form_file_directory_;
 	fs::path ticker_cache_file_name_;
 	fs::path ticker_list_file_name_;
+    fs::path financial_notes_directory_name_;
 
 	int pause_{0};
     int max_forms_to_download_{-1};     // mainly for testing
@@ -145,6 +147,7 @@ private:
 
 	bool replace_index_files_{false};
 	bool replace_form_files_{false};
+	bool replace_notes_files_{false};
 	bool index_only_{false};			//	do no download any form files
 	bool help_requested_{false};
 

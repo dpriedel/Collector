@@ -47,6 +47,7 @@
 
 #include "Collector_Utils.h"
 #include "DailyIndexFileRetriever.h"
+#include "FinancialStatementsAndNotes.h"
 #include "FormFileRetriever.h"
 #include "HTTPS_Downloader.h"
 #include "QuarterlyIndexFileRetriever.h"
@@ -169,14 +170,16 @@ void CollectorApp::SetupProgramOptions()
         ("form-dir",  po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded to.")
         ("host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we download from. Default is 'www.sec.gov'.")
         ("port", po::value<std::string>(&this->HTTPS_port_)->default_value("443"), "Port number to use for web site. Default is '443' for SSL.")
-        ("mode",   po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only'. Default is 'daily'.")
+        ("mode",   po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only' or 'notes'. Default is 'daily'.")
         ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are downloading. Default is '10-Q'.")
         ("ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")
         ("log-path",  po::value<fs::path>(&this->log_file_path_name_), "path name for log file")
         ("ticker-cache",  po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")
+        ("notes-directory",  po::value<fs::path>(&this->financial_notes_directory_name_), "path name for financial statements and notes files downloads.")
         ("ticker-file",  po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker symbols to convert to CIKs.")
         ("replace-index-files",  po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if specified. Default is 'false'.")
         ("replace-form-files",  po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified. Default is 'false'.")
+        ("replace-notes-files",  po::value<bool>(&this->replace_notes_files_)->implicit_value(true), "over write local financial notes files if specified. Default is 'false'.")
         ("index-only",  po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files. Default is 'false'.")
         ("pause,p",   po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
         ("max",   po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
@@ -215,7 +218,8 @@ void CollectorApp::ParseProgramOptions (const std::vector<std::string>& tokens)
 
 bool CollectorApp::CheckArgs ()
 {
-	BOOST_ASSERT_MSG(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only", catenate("Mode must be either 'daily','quarterly' or 'ticker-only' ==> ", mode_).c_str());
+	BOOST_ASSERT_MSG(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only" || mode_ == "notes",
+            catenate("Mode must be either 'daily','quarterly', 'notes', or 'ticker-only' ==> ", mode_).c_str());
 
 	//	the user may specify multiple stock tickers in a comma delimited list. We need to parse the entries out
 	//	of that list and place into ultimate home.  If just a single entry, copy it to our form list destination too.
@@ -272,11 +276,17 @@ bool CollectorApp::CheckArgs ()
         BOOST_ASSERT_MSG(end_date_.ok(), catenate("Invalid end date: ", stop_date_).c_str());
     }
 
-	BOOST_ASSERT_MSG(! start_date_.empty(), "Must specify 'begin-date' for index and/or form downloads.");
+	BOOST_ASSERT_MSG(! start_date_.empty(), "Must specify 'begin-date' for index and/or form downloads and/or notes files downloads.");
 
 	if (stop_date_.empty())
     {
 		end_date_ = begin_date_;
+    }
+
+	if (mode_ == "notes")
+    {
+		BOOST_ASSERT_MSG(! financial_notes_directory_name_.empty(), "You must specify a directory when downloading financial notes files.");
+		return true;
     }
 
 	BOOST_ASSERT_MSG(! local_index_file_directory_.empty(), "Must specify 'index-dir' when downloading index and/or forms.");
@@ -309,6 +319,10 @@ void CollectorApp::Run ()
     {
 		Do_Run_TickerDownload();
     }
+	else if (mode_ == "notes")
+    {
+		Do_Run_FinancialNotesDownload();
+    }
 	else if (mode_ == "daily")
     {
 		Do_Run_DailyIndexFiles();
@@ -325,6 +339,12 @@ void CollectorApp::Do_Run_TickerDownload ()
     ticker_converter_.DownloadTickerToCIKFile(ticker_cache_file_name_);
 
 }		// -----  end of method CollectorApp::Do_Run_tickerLookup  -----
+
+void CollectorApp::Do_Run_FinancialNotesDownload ()
+{
+    FinancialStatementsAndNotes fin_statement_downloader{begin_date_, end_date_};
+    fin_statement_downloader.download_files(HTTPS_host_, HTTPS_port_, financial_notes_directory_name_, replace_notes_files_);
+}		// -----  end of method CollectorApp::Do_Run_FinancialNotesDownload  ----- 
 
 void CollectorApp::Do_Run_TickerFileLookup ()
 {
