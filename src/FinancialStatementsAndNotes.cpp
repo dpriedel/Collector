@@ -26,6 +26,8 @@
 
 #include <boost/process.hpp>
 
+namespace bp = boost::process;
+
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -171,11 +173,7 @@ void FinancialStatementsAndNotes::download_files (const std::string& server_name
         try
         {
             fin_statement_downloader.DownloadFile(source_file, destination_file);
-
-            // files need to be unzipped so let's do it here.
-
-            boost::process::system(fmt::format("unzip -o -qq {} -d {}", destination_file, destination_directory));
-
+            bp::system(fmt::format("7z x -o{} {}", destination_directory, destination_file), bp::std_out > bp::null, bp::std_err > bp::null);
             ++downloaded_files_counter;
         }
         catch (std::system_error& e)
