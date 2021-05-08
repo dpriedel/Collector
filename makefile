@@ -43,6 +43,7 @@ SDIR2 := ./src
 SRCS2 := $(SDIR2)/HTTPS_Downloader.cpp $(SDIR2)/DailyIndexFileRetriever.cpp \
 		 $(SDIR2)/FormFileRetriever.cpp $(SDIR2)/QuarterlyIndexFileRetriever.cpp \
 		 $(SDIR2)/TickerConverter.cpp $(SDIR2)/CollectorApp.cpp $(SDIR2)/PathNameGenerator.cpp \
+		 $(SDIR2)/FinancialStatementsAndNotes.cpp \
 		 $(SDIR2)/Collector_Utils.cpp
 
 
