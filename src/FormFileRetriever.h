@@ -2,7 +2,8 @@
 //
 //       Filename:  FormFileRetriever.h
 //
-//    Description:  Header for class which finds entries for specified form type.
+//    Description:  Header for class which finds entries for specified form
+//    type.
 //
 //        Version:  1.0
 //        Created:  01/13/2014 10:10:18 AM
@@ -15,21 +16,20 @@
 //
 // =====================================================================================
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
-
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifndef FORMRETRIEVER_H_
 #define FORMRETRIEVER_H_
@@ -47,69 +47,81 @@ namespace fs = std::filesystem;
 //        Class:  FormFileRetriever
 //  Description:
 // =====================================================================================
-class FormFileRetriever
-{
-	public:
+class FormFileRetriever {
+public:
+  using FormsAndFilesList = std::map<std::string, std::vector<fs::path>>;
 
-		using FormsAndFilesList = std::map<std::string, std::vector<fs::path>>;
+  // ====================  LIFECYCLE     =======================================
 
-		// ====================  LIFECYCLE     =======================================
+  FormFileRetriever(const std::string &host,
+                    const std::string &port); // constructor
 
-		FormFileRetriever (const std::string& host, const std::string& port);            // constructor
+  FormFileRetriever() = delete;
+  FormFileRetriever(const FormFileRetriever &rhs) = delete;
+  FormFileRetriever(FormFileRetriever &&rhs) = delete;
 
-		FormFileRetriever() = delete;
-		FormFileRetriever(const FormFileRetriever& rhs) = delete;
-		FormFileRetriever(FormFileRetriever&& rhs) = delete;
+  // ====================  ACCESSORS     =======================================
 
-		// ====================  ACCESSORS     =======================================
+  // ====================  MUTATORS      =======================================
 
-		// ====================  MUTATORS      =======================================
+  FormFileRetriever &operator=(const FormFileRetriever &rhs) = delete;
+  FormFileRetriever &operator=(FormFileRetriever &&rhs) = delete;
 
-        FormFileRetriever& operator=(const FormFileRetriever& rhs) = delete;
-        FormFileRetriever& operator=(FormFileRetriever&& rhs) = delete;
+  // ====================  OPERATORS     =======================================
 
-		// ====================  OPERATORS     =======================================
+  FormsAndFilesList
+  FindFilesForForms(const std::vector<std::string> &the_form_types,
+                    const fs::path &local_index_file_name,
+                    const TickerConverter::TickerCIKMap &ticker_map = {});
 
-		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
-				const fs::path& local_index_file_name, const TickerConverter::TickerCIKMap& ticker_map={});
+  FormsAndFilesList
+  FindFilesForForms(const std::vector<std::string> &the_form_types,
+                    const std::vector<fs::path> &local_index_files,
+                    const TickerConverter::TickerCIKMap &ticker_map = {});
 
-		FormsAndFilesList FindFilesForForms(const std::vector<std::string>& the_form_types,
-				const std::vector<fs::path>& local_index_files, const TickerConverter::TickerCIKMap& ticker_map={});
+  // NOTE: the retrieved files will be placed in a directory hierarchy as
+  // follows: <form_directory>/<the_form_type>/<CIK number>/<file name>
 
-		// NOTE: the retrieved files will be placed in a directory hierarchy as follows:
-		// <form_directory>/<the_form_type>/<CIK number>/<file name>
+  void RetrieveSpecifiedFiles(const FormsAndFilesList &form_list,
+                              const fs::path &local_form_directory,
+                              bool replace_files = false);
 
-		void RetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
-				const fs::path& local_form_directory, bool replace_files=false);
+  void ConcurrentlyRetrieveSpecifiedFiles(const FormsAndFilesList &form_list,
+                                          const fs::path &local_form_directory,
+                                          int max_at_a_time,
+                                          bool replace_files = false);
 
-		void ConcurrentlyRetrieveSpecifiedFiles(const FormsAndFilesList& form_list,
-				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
+protected:
+  void RetrieveSpecifiedFiles(const std::vector<fs::path> &remote_file_names,
+                              const std::string &form_type,
+                              const fs::path &local_form_directory,
+                              bool replace_files = false);
 
-	protected:
+  void ConcurrentlyRetrieveSpecifiedFiles(
+      const std::vector<fs::path> &remote_file_names,
+      const std::string &form_type, const fs::path &local_form_directory,
+      int max_at_a_time, bool replace_files = false);
 
-		void RetrieveSpecifiedFiles(const std::vector<fs::path>& remote_file_names, const std::string& form_type,
-				const fs::path& local_form_directory, bool replace_files=false);
+  // ====================  DATA MEMBERS  =======================================
 
-		void ConcurrentlyRetrieveSpecifiedFiles(const std::vector<fs::path>& remote_file_names, const std::string& form_type,
-				const fs::path& local_form_directory, int max_at_a_time, bool replace_files=false);
+private:
+  auto ExtractFileName(int &found_a_form);
 
-		// ====================  DATA MEMBERS  =======================================
+  auto AddToCopyList(const std::string &form_name,
+                     const fs::path &local_form_directory, bool replace_files);
 
-	private:
+  // ====================  DATA MEMBERS  =======================================
 
-		auto ExtractFileName(int& found_a_form);
+  static constexpr std::string::size_type k_index_CIK_offset = 74;
 
-		auto AddToCopyList(const std::string& form_name, const fs::path& local_form_directory, bool replace_files);
-
-		// ====================  DATA MEMBERS  =======================================
-
-		static constexpr std::string::size_type k_index_CIK_offset = 74;
-
-        std::string host_;
-        std::string port_;
+  std::string host_;
+  std::string port_;
 
 }; // -----  end of class FormFileRetriever  -----
 
-fs::path MakeLocalDirNameFromRemoteFileName(const fs::path& local_form_directory_name, const fs::path& remote_file_name, const std::string& form_name);
+fs::path
+MakeLocalDirNameFromRemoteFileName(const fs::path &local_form_directory_name,
+                                   const fs::path &remote_file_name,
+                                   const std::string &form_name);
 
 #endif /* FORMRETRIEVER_H_ */

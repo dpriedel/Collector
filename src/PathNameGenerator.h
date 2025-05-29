@@ -2,7 +2,8 @@
 //
 //       Filename:  PathNameGenerator.h
 //
-//    Description:  Header for class which knows how to generate SEC index file path names
+//    Description:  Header for class which knows how to generate SEC index file
+//    path names
 //
 //        Version:  1.0
 //        Created:  06/29/2017 09:14:10 AM
@@ -18,21 +19,20 @@
 #ifndef PATHNAMEGENERATOR_H_
 #define PATHNAMEGENERATOR_H_
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
-
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <filesystem>
 #include <iterator>
@@ -51,62 +51,77 @@ namespace fs = std::filesystem;
  *  Description:  really a generator for dates in a range.
  * =====================================================================================
  */
-class QuarterlyIterator: public std::iterator<
-                         std::forward_iterator_tag,     // iterator_category
-                         date::year_month_day           // value_type
-                         >
-{
-    public:
-        /* ====================  LIFECYCLE     ======================================= */
-        
-        QuarterlyIterator () = default;                        /* constructor */
-        explicit QuarterlyIterator(date::year_month_day start_date);
+class QuarterlyIterator {
+public:
+  // Type aliases required for a custom iterator
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = date::year_month_day;
+  using difference_type = std::ptrdiff_t;
+  using pointer = value_type *;
+  using reference = value_type &;
 
-        QuarterlyIterator(const QuarterlyIterator& rhs) = default;
-        QuarterlyIterator(QuarterlyIterator&& rhs) = default;
+  /* ====================  LIFECYCLE     =======================================
+   */
 
-        ~QuarterlyIterator() = default;
+  QuarterlyIterator() = default; /* constructor */
+  explicit QuarterlyIterator(date::year_month_day start_date);
 
-        /* ====================  ACCESSORS     ======================================= */
+  QuarterlyIterator(const QuarterlyIterator &rhs) = default;
+  QuarterlyIterator(QuarterlyIterator &&rhs) = default;
 
-        date::year_month_day operator*() const { return working_date_; }
+  ~QuarterlyIterator() = default;
 
-        /* ====================  MUTATORS      ======================================= */
+  /* ====================  ACCESSORS     =======================================
+   */
 
-        QuarterlyIterator& operator++();
+  date::year_month_day operator*() const { return working_date_; }
 
-        /* ====================  OPERATORS     ======================================= */
+  /* ====================  MUTATORS      =======================================
+   */
 
-        QuarterlyIterator& operator=(const QuarterlyIterator& rhs) = default;
-        QuarterlyIterator& operator=(QuarterlyIterator&& rhs) = default;
+  QuarterlyIterator &operator++();
 
-        bool operator!=(const QuarterlyIterator& other) const { return working_date_ != other.working_date_; }
-        bool operator<=(const QuarterlyIterator& other) const { return working_date_ <= other.working_date_; }
+  /* ====================  OPERATORS     =======================================
+   */
 
-    protected:
-        /* ====================  METHODS       ======================================= */
+  QuarterlyIterator &operator=(const QuarterlyIterator &rhs) = default;
+  QuarterlyIterator &operator=(QuarterlyIterator &&rhs) = default;
 
-        /* ====================  DATA MEMBERS  ======================================= */
+  bool operator!=(const QuarterlyIterator &other) const {
+    return working_date_ != other.working_date_;
+  }
+  bool operator<=(const QuarterlyIterator &other) const {
+    return working_date_ <= other.working_date_;
+  }
 
-    private:
-        /* ====================  METHODS       ======================================= */
+protected:
+  /* ====================  METHODS       =======================================
+   */
 
-        /* ====================  DATA MEMBERS  ======================================= */
+  /* ====================  DATA MEMBERS  =======================================
+   */
 
-        inline static constexpr date::months a_quarter{3};
+private:
+  /* ====================  METHODS       =======================================
+   */
 
-        date::year_month_day start_date_;
-        date::year_month_day working_date_;
-        date::year start_year_;
-        date::year working_year_;
-        date::month start_month_;
-        date::month working_month_;
+  /* ====================  DATA MEMBERS  =======================================
+   */
+
+  inline static constexpr date::months a_quarter{3};
+
+  date::year_month_day start_date_;
+  date::year_month_day working_date_;
+  date::year start_year_;
+  date::year working_year_;
+  date::month start_month_;
+  date::month working_month_;
 
 }; /* -----  end of class QuarterlyIterator  ----- */
 
-inline bool operator < (const QuarterlyIterator& lhs, const QuarterlyIterator& rhs)
-{
-	return *lhs < *rhs;
+inline bool operator<(const QuarterlyIterator &lhs,
+                      const QuarterlyIterator &rhs) {
+  return *lhs < *rhs;
 }
 
 // we want to have a half open range of at least 1 quarter
@@ -120,38 +135,48 @@ inline bool operator < (const QuarterlyIterator& lhs, const QuarterlyIterator& r
  *  Description:  provide a half-open interval at least 1 quarter.
  * =====================================================================================
  */
-class DateRange
-{
-    public:
-        /* ====================  LIFECYCLE     ======================================= */
-	
-        DateRange(date::year_month_day start_date, date::year_month_day end_date);
+class DateRange {
+public:
+  /* ====================  LIFECYCLE     =======================================
+   */
 
-        /* ====================  ACCESSORS     ======================================= */
+  DateRange(date::year_month_day start_date, date::year_month_day end_date);
 
-        [[nodiscard]] QuarterlyIterator begin() const { return QuarterlyIterator{start_date_}; }
-        [[nodiscard]] QuarterlyIterator end() const { return QuarterlyIterator{end_date_}; }
-        /* ====================  MUTATORS      ======================================= */
+  /* ====================  ACCESSORS     =======================================
+   */
 
-        /* ====================  OPERATORS     ======================================= */
+  [[nodiscard]] QuarterlyIterator begin() const {
+    return QuarterlyIterator{start_date_};
+  }
+  [[nodiscard]] QuarterlyIterator end() const {
+    return QuarterlyIterator{end_date_};
+  }
+  /* ====================  MUTATORS      =======================================
+   */
 
-    protected:
-        /* ====================  METHODS       ======================================= */
+  /* ====================  OPERATORS     =======================================
+   */
 
-        /* ====================  DATA MEMBERS  ======================================= */
+protected:
+  /* ====================  METHODS       =======================================
+   */
 
-    private:
-        /* ====================  METHODS       ======================================= */
+  /* ====================  DATA MEMBERS  =======================================
+   */
 
-        /* ====================  DATA MEMBERS  ======================================= */
+private:
+  /* ====================  METHODS       =======================================
+   */
 
-        date::year_month_day start_date_;
-        date::year_month_day end_date_;
+  /* ====================  DATA MEMBERS  =======================================
+   */
+
+  date::year_month_day start_date_;
+  date::year_month_day end_date_;
 
 }; /* -----  end of class DateRange  ----- */
 
-
-fs::path GeneratePath(const fs::path& prefix, date::year_month_day quarter_begin);
-
+fs::path GeneratePath(const fs::path &prefix,
+                      date::year_month_day quarter_begin);
 
 #endif /* PATHNAMEGENERATOR_H_ */

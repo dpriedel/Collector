@@ -17,23 +17,23 @@
  * =====================================================================================
  */
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef  _COLLECTOR_UTILS_INC_
-#define  _COLLECTOR_UTILS_INC_
+#ifndef _COLLECTOR_UTILS_INC_
+#define _COLLECTOR_UTILS_INC_
 
 #include <exception>
 #include <filesystem>
@@ -49,29 +49,24 @@
 
 using namespace std::string_literals;
 
-namespace Collector
-{
-    class AssertionException : public std::invalid_argument
-    {
-    public:
+namespace Collector {
+class AssertionException : public std::invalid_argument {
+public:
+  explicit AssertionException(const char *what);
 
-        explicit AssertionException(const char* what);
+  explicit AssertionException(const std::string &what);
+};
 
-        explicit AssertionException(const std::string& what);
-    };
+class TimeOutException : public std::runtime_error {
+public:
+  explicit TimeOutException(const char *what);
 
-    class TimeOutException : public std::runtime_error
-    {
-    public:
+  explicit TimeOutException(const std::string &what);
+};
 
-        explicit TimeOutException(const char* what);
+using sview = std::string_view;
 
-        explicit TimeOutException(const std::string& what);
-    };
-
-    using sview = std::string_view;
-
-};	/* -----  end of namespace Collector  ----- */
+}; // namespace Collector
 
 namespace COL = Collector;
 
@@ -80,23 +75,19 @@ namespace COL = Collector;
 // let's try some concepts
 
 template <typename T>
-concept can_be_appended_to_string = requires(T t)
-{
-    std::declval<std::string>().append(t);
-};
+concept can_be_appended_to_string =
+    requires(T t) { std::declval<std::string>().append(t); };
 
 template <typename T>
-concept has_string = requires(T t)
-{
-    t.string();
-};
+concept has_string = requires(T t) { t.string(); };
 
 // custom fmtlib formatter for filesytem paths
 
-template <> struct fmt::formatter<std::filesystem::path>: formatter<std::string> {
+template <>
+struct fmt::formatter<std::filesystem::path> : formatter<std::string> {
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
-  auto format(const std::filesystem::path& p, FormatContext& ctx) {
+  auto format(const std::filesystem::path &p, FormatContext &ctx) {
     std::string f_name = p.string();
     return formatter<std::string>::format(f_name, ctx);
   }
@@ -104,75 +95,64 @@ template <> struct fmt::formatter<std::filesystem::path>: formatter<std::string>
 
 // custom fmtlib formatter for date year_month_day
 
-template <> struct fmt::formatter<date::year_month_day>: formatter<std::string> {
+template <>
+struct fmt::formatter<date::year_month_day> : formatter<std::string> {
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
-  auto format(date::year_month_day d, FormatContext& ctx) {
+  auto format(date::year_month_day d, FormatContext &ctx) {
     std::string s_date = date::format("%Y-%m-%d", d);
     return formatter<std::string>::format(s_date, ctx);
   }
 };
 
+template <typename... Ts> inline std::string catenate(Ts &&...ts) {
+  constexpr auto N = sizeof...(Ts);
 
-template<typename... Ts>
-inline std::string catenate(Ts&&... ts)
-{
-    constexpr auto N = sizeof...(Ts);
+  // first, construct our format string
+  // TODO: make constexpr
 
-    // first, construct our format string
-    // TODO: make constexpr
-    
-    std::string f_string;
-    for (int i = 0; i < N; ++i)
-    {
-        f_string.append("{}");
-    }
-    
-    return fmt::format(f_string, std::forward<Ts>(ts)...);
+  std::string f_string;
+  for (int i = 0; i < N; ++i) {
+    f_string.append("{}");
+  }
+
+  return fmt::format(f_string, std::forward<Ts>(ts)...);
 }
 
 // function to split a string on a delimiter and return a vector of string-views
 
-inline std::vector<COL::sview> split_string(COL::sview string_data, char delim)
-{
-    std::vector<COL::sview> results;
-	for (auto it = 0; it != COL::sview::npos; ++it)
-	{
-		auto pos = string_data.find(delim, it);
-        if (pos != COL::sview::npos)
-        {
-    		results.emplace_back(string_data.substr(it, pos - it));
-        }
-        else
-        {
-    		results.emplace_back(string_data.substr(it));
-            break;
-        }
-		it = pos;
-	}
-    return results;
+inline std::vector<COL::sview> split_string(COL::sview string_data,
+                                            char delim) {
+  std::vector<COL::sview> results;
+  for (auto it = 0; it != COL::sview::npos; ++it) {
+    auto pos = string_data.find(delim, it);
+    if (pos != COL::sview::npos) {
+      results.emplace_back(string_data.substr(it, pos - it));
+    } else {
+      results.emplace_back(string_data.substr(it));
+      break;
+    }
+    it = pos;
+  }
+  return results;
 }
 
 // function to split a string on a delimiter and return a vector of strings
 
-inline std::vector<std::string> split_string_to_strings(COL::sview string_data, char delim)
-{
-    std::vector<std::string> results;
-	for (auto it = 0; it != std::string::npos; ++it)
-	{
-		auto pos = string_data.find(delim, it);
-        if (pos != std::string::npos)
-        {
-    		results.emplace_back(string_data.substr(it, pos - it));
-        }
-        else
-        {
-    		results.emplace_back(string_data.substr(it));
-            break;
-        }
-		it = pos;
-	}
-    return results;
+inline std::vector<std::string> split_string_to_strings(COL::sview string_data,
+                                                        char delim) {
+  std::vector<std::string> results;
+  for (auto it = 0; it != std::string::npos; ++it) {
+    auto pos = string_data.find(delim, it);
+    if (pos != std::string::npos) {
+      results.emplace_back(string_data.substr(it, pos - it));
+    } else {
+      results.emplace_back(string_data.substr(it));
+      break;
+    }
+    it = pos;
+  }
+  return results;
 }
 
 // replace boost gregorian with new date library.
@@ -181,13 +161,14 @@ inline std::vector<std::string> split_string_to_strings(COL::sview string_data, 
 // based on code from "The C++ Standard Library 2nd Edition"
 // by Nicolai Josuttis p. 158
 
-inline std::string LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time)
-{
-    auto t = date::make_zoned(date::current_zone(), a_date_time);
-    std::string ts = date::format("%a, %b %d, %Y at %I:%M:%S %p %Z", t);
-    return ts;
+inline std::string
+LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time) {
+  auto t = date::make_zoned(date::current_zone(), a_date_time);
+  std::string ts = date::format("%a, %b %d, %Y at %I:%M:%S %p %Z", t);
+  return ts;
 }
 
-date::year_month_day StringToDateYMD(const std::string& input_format, std::string the_date);
+date::year_month_day StringToDateYMD(const std::string &input_format,
+                                     std::string the_date);
 
-#endif   /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */
+#endif /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */

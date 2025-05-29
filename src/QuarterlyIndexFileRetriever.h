@@ -2,7 +2,8 @@
 //
 //       Filename:  QuarterlyIndexFileRetriever.h
 //
-//    Description:  Header for class which knows how to retrieve SEC quarterly index files
+//    Description:  Header for class which knows how to retrieve SEC quarterly
+//    index files
 //
 //        Version:  1.0
 //        Created:  01/30/2014 11:14:10 AM
@@ -18,21 +19,20 @@
 #ifndef QUARTERLYINDEXFILERETRIEVER_H_
 #define QUARTERLYINDEXFILERETRIEVER_H_
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
-
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <filesystem>
 #include <string>
@@ -42,64 +42,72 @@ namespace fs = std::filesystem;
 
 #include <date/date.h>
 
-
 // =====================================================================================
 //        Class:  QuarterlyIndexFileRetriever
 //  Description:
 // =====================================================================================
-class QuarterlyIndexFileRetriever
-{
-	public:
-		// ====================  LIFECYCLE     =======================================
-		QuarterlyIndexFileRetriever ()=delete;
-		QuarterlyIndexFileRetriever (const std::string& host, const std::string& port, const fs::path& prefix);                // constructor
+class QuarterlyIndexFileRetriever {
+public:
+  // ====================  LIFECYCLE     =======================================
+  QuarterlyIndexFileRetriever() = delete;
+  QuarterlyIndexFileRetriever(const std::string &host, const std::string &port,
+                              const fs::path &prefix); // constructor
 
-		~QuarterlyIndexFileRetriever ()=default;
+  ~QuarterlyIndexFileRetriever() = default;
 
-		QuarterlyIndexFileRetriever (const QuarterlyIndexFileRetriever& rhs)=delete;
-		QuarterlyIndexFileRetriever (QuarterlyIndexFileRetriever&& rhs)=delete;
-        //
-		// ====================  ACCESSORS     =======================================
+  QuarterlyIndexFileRetriever(const QuarterlyIndexFileRetriever &rhs) = delete;
+  QuarterlyIndexFileRetriever(QuarterlyIndexFileRetriever &&rhs) = delete;
+  //
+  // ====================  ACCESSORS     =======================================
 
-		// ====================  MUTATORS      =======================================
+  // ====================  MUTATORS      =======================================
 
-		QuarterlyIndexFileRetriever& operator=(const QuarterlyIndexFileRetriever& rhs)=delete;
-		QuarterlyIndexFileRetriever& operator=(QuarterlyIndexFileRetriever&& rhs)=delete;
+  QuarterlyIndexFileRetriever &
+  operator=(const QuarterlyIndexFileRetriever &rhs) = delete;
+  QuarterlyIndexFileRetriever &
+  operator=(QuarterlyIndexFileRetriever &&rhs) = delete;
 
-		fs::path MakeQuarterlyIndexPathName(date::year_month_day day_in_quarter);
-		fs::path HierarchicalCopyRemoteIndexFileTo(const fs::path& remote_file_name, const fs::path& local_directory_name,
-                bool replace_files=false);
+  fs::path MakeQuarterlyIndexPathName(date::year_month_day day_in_quarter);
+  fs::path
+  HierarchicalCopyRemoteIndexFileTo(const fs::path &remote_file_name,
+                                    const fs::path &local_directory_name,
+                                    bool replace_files = false);
 
-		//	This method treats the date range as a closed interval.
+  //	This method treats the date range as a closed interval.
 
-		std::vector<fs::path> MakeIndexFileNamesForDateRange(date::year_month_day start_date, date::year_month_day end_date);
-		std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
-                const fs::path& local_directory_name, bool replace_files=false);
-		std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(const std::vector<fs::path>& remote_file_list,
-                const fs::path& local_directory_name, int max_at_a_time, bool replace_files=false);
+  std::vector<fs::path>
+  MakeIndexFileNamesForDateRange(date::year_month_day start_date,
+                                 date::year_month_day end_date);
+  std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(
+      const std::vector<fs::path> &remote_file_list,
+      const fs::path &local_directory_name, bool replace_files = false);
+  std::vector<fs::path> ConcurrentlyHierarchicalCopyIndexFilesForDateRangeTo(
+      const std::vector<fs::path> &remote_file_list,
+      const fs::path &local_directory_name, int max_at_a_time,
+      bool replace_files = false);
 
-		// ====================  OPERATORS     =======================================
+  // ====================  OPERATORS     =======================================
 
-	protected:
+protected:
+  date::year_month_day CheckDate(date::year_month_day aDate);
+  fs::path
+  MakeLocalIndexFilePath(const fs::path &local_prefix,
+                         const fs::path &remote_quarterly_index_file_name);
 
-		date::year_month_day CheckDate(date::year_month_day aDate);
-		fs::path MakeLocalIndexFilePath(const fs::path& local_prefix, const fs::path& remote_quarterly_index_file_name);
+  // ====================  DATA MEMBERS  =======================================
 
-		// ====================  DATA MEMBERS  =======================================
+private:
+  auto AddToCopyList(const fs::path &local_directory_name, bool replace_files);
 
-	private:
+  // ====================  DATA MEMBERS  =======================================
 
-		auto AddToCopyList(const fs::path& local_directory_name, bool replace_files);
+  fs::path remote_directory_prefix_; // top-level directory path
+  date::year_month_day input_date_;
+  date::year_month_day start_date_;
+  date::year_month_day end_date_;
 
-		// ====================  DATA MEMBERS  =======================================
-
-        fs::path remote_directory_prefix_;                // top-level directory path
-		date::year_month_day input_date_;
-		date::year_month_day start_date_;
-		date::year_month_day end_date_;
-
-        std::string host_;
-        std::string port_;
+  std::string host_;
+  std::string port_;
 
 }; // -----  end of class QuarterlyIndexFileRetriever  -----
 

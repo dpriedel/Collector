@@ -15,21 +15,20 @@
 //
 // =====================================================================================
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
-
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 // =====================================================================================
 //        Class:  CollectorApp
@@ -53,103 +52,99 @@ namespace po = boost::program_options;
 
 #include "TickerConverter.h"
 
-class CollectorApp
-{
+class CollectorApp {
 public:
+  // use ctor below for testing with predefined options
 
-    // use ctor below for testing with predefined options
+  explicit CollectorApp(const std::vector<std::string> &tokens);
 
-    explicit CollectorApp(const std::vector<std::string>& tokens);
-    
-    CollectorApp() = delete;
-	CollectorApp(int argc, char* argv[]);
-	CollectorApp(const CollectorApp& rhs) = delete;
-	CollectorApp(CollectorApp&& rhs) = delete;
+  CollectorApp() = delete;
+  CollectorApp(int argc, char *argv[]);
+  CollectorApp(const CollectorApp &rhs) = delete;
+  CollectorApp(CollectorApp &&rhs) = delete;
 
-    ~CollectorApp() = default;
+  ~CollectorApp() = default;
 
-    CollectorApp& operator=(const CollectorApp& rhs) = delete;
-    CollectorApp& operator=(CollectorApp&& rhs) = delete;
+  CollectorApp &operator=(const CollectorApp &rhs) = delete;
+  CollectorApp &operator=(CollectorApp &&rhs) = delete;
 
-    bool Startup();
-    void Run();
-    void Shutdown();
+  bool Startup();
+  void Run();
+  void Shutdown();
 
 protected:
+  //	Setup for parsing program options.
 
-	//	Setup for parsing program options.
+  void SetupProgramOptions();
+  void ParseProgramOptions();
+  void ParseProgramOptions(const std::vector<std::string> &tokens);
 
-	void	SetupProgramOptions();
-	void 	ParseProgramOptions();
-	void 	ParseProgramOptions(const std::vector<std::string>& tokens);
+  void ConfigureLogging();
 
-    void    ConfigureLogging();
+  bool CheckArgs();
+  void Do_Quit();
 
-	bool	CheckArgs ();
-	void	Do_Quit ();
+  void Do_Run_DailyIndexFiles();
+  void Do_Run_QuarterlyIndexFiles();
+  void Do_Run_TickerDownload();
+  void Do_Run_TickerFileLookup();
+  void Do_Run_FinancialNotesDownload();
 
-	void Do_Run_DailyIndexFiles();
-	void Do_Run_QuarterlyIndexFiles();
-	void Do_Run_TickerDownload();
-	void Do_Run_TickerFileLookup();
-    void Do_Run_FinancialNotesDownload();
+  void Do_TickerMap_Setup();
 
-	void Do_TickerMap_Setup();
-
-		// ====================  DATA MEMBERS  =======================================
+  // ====================  DATA MEMBERS  =======================================
 
 private:
+  // ====================  DATA MEMBERS  =======================================
 
+  po::positional_options_description mPositional; //	old style options
+  std::unique_ptr<po::options_description>
+      mNewOptions; //	new style options (with identifiers)
+  po::variables_map mVariableMap;
 
-		// ====================  DATA MEMBERS  =======================================
+  int mArgc = 0;
+  char **mArgv = nullptr;
+  const std::vector<std::string> tokens_;
 
-	po::positional_options_description	mPositional;			//	old style options
-    std::unique_ptr<po::options_description> mNewOptions;    	//	new style options (with identifiers)
-	po::variables_map					mVariableMap;
+  TickerConverter ticker_converter_;
 
-	int mArgc = 0;
-	char** mArgv = nullptr;
-	const std::vector<std::string> tokens_;
+  date::year_month_day begin_date_;
+  date::year_month_day end_date_;
 
-	TickerConverter ticker_converter_;
+  std::shared_ptr<spdlog::logger> logger_;
 
-	date::year_month_day begin_date_;
-    date::year_month_day end_date_;
+  std::string start_date_;
+  std::string stop_date_;
 
-    std::shared_ptr<spdlog::logger> logger_;
+  std::string mode_{"daily"};
+  std::string form_{"10-Q"};
+  std::string ticker_;
+  // std::string login_ID_;
+  std::string HTTPS_host_{"www.sec.gov"};
+  std::string HTTPS_port_{"443"};
+  std::string logging_level_{"information"};
 
-    std::string start_date_;
-    std::string stop_date_;
+  std::vector<std::string> form_list_;
+  std::vector<std::string> ticker_list_;
 
-	std::string mode_{"daily"};
-	std::string form_{"10-Q"};
-	std::string ticker_;
-	// std::string login_ID_;
-    std::string HTTPS_host_{"www.sec.gov"};
-    std::string HTTPS_port_{"443"};
-    std::string logging_level_{"information"};
+  TickerConverter::TickerCIKMap ticker_map_;
 
-	std::vector<std::string> form_list_;
-	std::vector<std::string> ticker_list_;
+  fs::path log_file_path_name_;
+  fs::path local_index_file_directory_;
+  fs::path local_form_file_directory_;
+  fs::path ticker_cache_file_name_;
+  fs::path ticker_list_file_name_;
+  fs::path financial_notes_directory_name_;
 
-    TickerConverter::TickerCIKMap ticker_map_;
+  int pause_{0};
+  int max_forms_to_download_{-1}; // mainly for testing
+  int max_at_a_time_{10};         // how many concurrent downloads allowed
 
-	fs::path log_file_path_name_;
-	fs::path local_index_file_directory_;
-	fs::path local_form_file_directory_;
-	fs::path ticker_cache_file_name_;
-	fs::path ticker_list_file_name_;
-    fs::path financial_notes_directory_name_;
-
-	int pause_{0};
-    int max_forms_to_download_{-1};     // mainly for testing
-    int max_at_a_time_{10};             // how many concurrent downloads allowed
-
-	bool replace_index_files_{false};
-	bool replace_form_files_{false};
-	bool replace_notes_files_{false};
-	bool index_only_{false};			//	do no download any form files
-	bool help_requested_{false};
+  bool replace_index_files_{false};
+  bool replace_form_files_{false};
+  bool replace_notes_files_{false};
+  bool index_only_{false}; //	do no download any form files
+  bool help_requested_{false};
 
 }; // -----  end of class CollectorApp  -----
 
