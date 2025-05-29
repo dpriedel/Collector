@@ -25,6 +25,7 @@
 #include <iostream>
 #include <system_error>
 
+#include <boost/asio.hpp>
 #include <boost/process.hpp>
 
 namespace bp = boost::process;
@@ -133,9 +134,10 @@ void FinancialStatementsAndNotes_gen::format_current_value() {
 //--------------------------------------------------------------------------------------
 FinancialStatementsAndNotes::FinancialStatementsAndNotes(
     date::year_month_day start_date, date::year_month_day end_date)
-    : start_date_{start_date}, end_date_{end_date} {} // -----  end of method
-                                                      // FinancialStatementsAndNotes::FinancialStatementsAndNotes
-                                                      // (constructor)  -----
+    : start_date_{start_date}, end_date_{end_date} {
+} // -----  end of method
+  // FinancialStatementsAndNotes::FinancialStatementsAndNotes
+  // (constructor)  -----
 
 // files/dera/data/financial-statement-and-notes-data-sets/
 void FinancialStatementsAndNotes::download_files(
@@ -173,11 +175,21 @@ void FinancialStatementsAndNotes::download_files(
       continue;
     }
 
+    namespace asio = boost::asio;
+    using boost::process::process;
     try {
       fin_statement_downloader.DownloadFile(source_file, destination_file);
-      bp::system(
-          fmt::format("7z x -o{} {}", destination_directory, destination_file),
-          bp::std_out > bp::null, bp::std_err > bp::null);
+
+      asio::io_context ctx;
+      process proc(ctx.get_executor(), // <1>
+                   "7z x -o",          // <2>
+                   {destination_directory.c_str(), destination_file.c_str()}
+                   // <3>
+      ); // <4>
+
+      // bp::system(
+      //     fmt::format("7z x -o{} {}", destination_directory,
+      //     destination_file), bp::std_out > bp::null, bp::std_err > bp::null);
       ++downloaded_files_counter;
     } catch (std::system_error &e) {
       ++error_counter;
