@@ -16,25 +16,24 @@
  * =====================================================================================
  */
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <sstream>
 
 #include "Collector_Utils.h"
-
 
 /*
  *--------------------------------------------------------------------------------------
@@ -43,15 +42,15 @@
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-Collector::AssertionException::AssertionException(const char* text)
-    : std::invalid_argument(text)
-{
-}  /* -----  end of method AssertionException::AssertionException  (constructor)  ----- */
+Collector::AssertionException::AssertionException(const char *text)
+    : std::invalid_argument(text) {
+} /* -----  end of method AssertionException::AssertionException  (constructor)
+     ----- */
 
-Collector::AssertionException::AssertionException(const std::string& text)
-    : std::invalid_argument(text)
-{
-}  /* -----  end of method AssertionException::AssertionException  (constructor)  ----- */
+Collector::AssertionException::AssertionException(const std::string &text)
+    : std::invalid_argument(text) {
+} /* -----  end of method AssertionException::AssertionException  (constructor)
+     ----- */
 
 /*
  *--------------------------------------------------------------------------------------
@@ -60,77 +59,79 @@ Collector::AssertionException::AssertionException(const std::string& text)
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-Collector::TimeOutException::TimeOutException(const char* text)
-    : std::runtime_error(text)
-{
-}  /* -----  end of method TimeOutException::TimeOutException  (constructor)  ----- */
+Collector::TimeOutException::TimeOutException(const char *text)
+    : std::runtime_error(text) {
+} /* -----  end of method TimeOutException::TimeOutException  (constructor)
+     ----- */
 
-Collector::TimeOutException::TimeOutException(const std::string& text)
-    : std::runtime_error(text)
-{
-}  /* -----  end of method TimeOutException::TimeOutException  (constructor)  ----- */
+Collector::TimeOutException::TimeOutException(const std::string &text)
+    : std::runtime_error(text) {
+} /* -----  end of method TimeOutException::TimeOutException  (constructor)
+     ----- */
 
-date::year_month_day StringToDateYMD(const std::string& input_format, std::string the_date)
-{
-    std::istringstream in{the_date};
-    date::sys_days tp;
-    in >> date::parse(input_format, tp);
-    BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse given date: ", the_date).c_str());
-    date::year_month_day result = tp;
-    BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
-    return result;
+date::year_month_day StringToDateYMD(const std::string &input_format,
+                                     std::string the_date) {
+  std::istringstream in{the_date};
+  date::sys_days tp;
+  in >> date::parse(input_format, tp);
+  BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
+                   catenate("Unable to parse given date: ", the_date).c_str());
+  date::year_month_day result = tp;
+  BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
+  return result;
 
-    // TODO: take a list of formats to try
+  // TODO: take a list of formats to try
+  //
+  //    if (! start_date_.empty())
+  //    {
+  //        std::istringstream in{start_date_};
+  //        date::sys_days tp;
+  //        in >> date::parse("%F", tp);
+  //        if (in.fail())
+  //        {
+  //            // try an alternate representation
+  //
+  //            in.clear();
+  //            in.rdbuf()->pubseekpos(0);
+  //            in >> date::parse("%Y-%b-%d", tp);
+  //        }
+  //        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to
+  //        parse begin date: ", start_date_).c_str()); begin_date_ = tp;
+  //        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ",
+  //        start_date_).c_str());
+  //    }
+} // -----  end of method tringToDateYMD  -----
+
+namespace boost {
+// these functions are declared in the library headers but left to the user to
+// define. so here they are...
 //
-//    if (! start_date_.empty())
-//    {
-//        std::istringstream in{start_date_};
-//        date::sys_days tp;
-//        in >> date::parse("%F", tp);
-//        if (in.fail())
-//        {
-//            // try an alternate representation
-//
-//            in.clear();
-//            in.rdbuf()->pubseekpos(0);
-//            in >> date::parse("%Y-%b-%d", tp);
-//        }
-//        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to parse begin date: ", start_date_).c_str());
-//        begin_date_ = tp;
-//        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ", start_date_).c_str());
-//    }
-}		// -----  end of method tringToDateYMD  ----- 
+/*
+ * ===  FUNCTION
+ * ====================================================================== Name:
+ * assertion_failed_mgs Description: defined in boost header but left to us to
+ * implement.
+ * =====================================================================================
+ */
 
+void assertion_failed_msg(char const *expr, char const *msg,
+                          char const *function, char const *file, long line) {
+  throw Collector::AssertionException(catenate(
+      "\n*** Assertion failed *** test: ", expr, " in function: ", function,
+      " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
+} /* -----  end of function assertion_failed_mgs  ----- */
 
-namespace boost
-{
-    // these functions are declared in the library headers but left to the user to define.
-    // so here they are...
-    //
-    /* 
-     * ===  FUNCTION  ======================================================================
-     *         Name:  assertion_failed_mgs
-     *  Description:  
-     *         defined in boost header but left to us to implement.
-     * =====================================================================================
-     */
+/*
+ * ===  FUNCTION
+ * ====================================================================== Name:
+ * assertion_failed Description:
+ * =====================================================================================
+ */
+void assertion_failed(char const *expr, char const *function, char const *file,
+                      long line) {
+  throw Collector::AssertionException(catenate(
+      "\n*** Assertion failed *** test: ", expr, " in function: ", function,
+      " from file: ", file, " at line: ", line));
+} /* -----  end of function assertion_failed  ----- */
 
-    void assertion_failed_msg (char const* expr, char const* msg, char const* function, char const* file, long line)
-    {
-        throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
-                    " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
-    }		/* -----  end of function assertion_failed_mgs  ----- */
-
-    /* 
-     * ===  FUNCTION  ======================================================================
-     *         Name:  assertion_failed
-     *  Description:  
-     * =====================================================================================
-     */
-    void assertion_failed (char const* expr, char const* function, char const* file, long line )
-    {
-        throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
-                    " from file: ", file, " at line: ", line));
-    }		/* -----  end of function assertion_failed  ----- */
-
-}		/* -----  end of namespace boost  ----- */
+} // namespace boost
