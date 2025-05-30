@@ -118,10 +118,10 @@ void FinancialStatementsAndNotes_gen::format_current_value() {
                     current_date_.month().operator unsigned int());
   } else {
     current_value_.first =
-        fmt::format("{}_{:>02d}_notes.zip", current_date_.year().operator int(),
+        fmt::format("{}_{:02}_notes.zip", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
     current_value_.second =
-        fmt::format("{}_{}", current_date_.year().operator int(),
+        fmt::format("{}_{:02}", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
   }
 } // -----  end of method FinancialStatementsAndNotes_gen::format_current_value
@@ -180,12 +180,19 @@ void FinancialStatementsAndNotes::download_files(
     try {
       fin_statement_downloader.DownloadFile(source_file, destination_file);
 
+      std::cout << "unzipping to: " << destination_directory.c_str() << '\n';
       asio::io_context ctx;
       process proc(ctx.get_executor(), // <1>
-                   "7z x -o",          // <2>
-                   {destination_directory.c_str(), destination_file.c_str()}
-                   // <3>
-      ); // <4>
+                   "/usr/bin/7z",      // <2>
+                   {"x"s, "-o"s + destination_directory.string(),
+                    destination_file.string()} // <3>
+      );                                       // <4>
+      auto result = proc.wait();
+      if (result != 0) {
+        throw std::runtime_error(
+            std::format("Unzipping file: {} failed with return code: {}",
+                        destination_file.c_str(), result));
+      }
 
       // bp::system(
       //     fmt::format("7z x -o{} {}", destination_directory,
