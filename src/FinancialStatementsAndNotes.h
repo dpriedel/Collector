@@ -94,11 +94,11 @@ private:
   inline static constexpr date::year_month first_quarterly_ =
       2009_y / date::January;
   inline static constexpr date::year_month last_quarterly_ =
-      2020_y / date::September;
+      2023_y / date::December;
   inline static constexpr date::year_month last_quarterly_qtr =
-      2020_y / date::March; // using months for quarters
+      2023_y / date::October; // using months for quarters
   inline static constexpr date::year_month first_monthly_ =
-      2020_y / date::October;
+      2024_y / date::January;
 
   date::year_month start_date_;
   date::year_month end_date_;
