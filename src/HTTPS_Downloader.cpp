@@ -159,7 +159,7 @@ std::string HTTPS_Downloader::RetrieveDataFromServer(const fs::path &request) {
 std::vector<std::string>
 HTTPS_Downloader::ListDirectoryContents(const fs::path &directory_name) {
   //	we read and store our results so we can end the active connection
-  //quickly.
+  // quickly.
   // we will ask for the directory listing in JSON format which means we will
   // have to parse it out.
 
