@@ -167,6 +167,6 @@ LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time) {
 }
 
 date::year_month_day StringToDateYMD(const std::string &input_format,
-                                     std::string the_date);
+                                     const std::string &the_date);
 
 #endif /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */
