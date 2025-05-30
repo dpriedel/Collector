@@ -70,10 +70,10 @@ Collector::TimeOutException::TimeOutException(const std::string &text)
      ----- */
 
 date::year_month_day StringToDateYMD(const std::string &input_format,
-                                     std::string the_date) {
+                                     const std::string &the_date) {
   std::istringstream in{the_date};
   date::sys_days tp;
-  in >> date::parse(input_format, tp);
+  date::from_stream(in, input_format.c_str(), tp);
   BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
                    catenate("Unable to parse given date: ", the_date).c_str());
   date::year_month_day result = tp;
