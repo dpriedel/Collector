@@ -142,56 +142,74 @@ FinancialStatementsAndNotes::FinancialStatementsAndNotes(
 // files/dera/data/financial-statement-and-notes-data-sets/
 void FinancialStatementsAndNotes::download_files(
     const std::string &server_name, const std::string &port,
-    const fs::path &download_destination, bool replace_files) {
+    const fs::path &download_destination_zips,
+    const fs::path &download_destination_files, bool replace_files) {
   int downloaded_files_counter = 0;
   int skipped_files_counter = 0;
   int error_counter = 0;
 
   HTTPS_Downloader fin_statement_downloader{server_name, port};
-  if (!fs::exists(download_destination)) {
-    fs::create_directories(download_destination);
+
+  if (!fs::exists(download_destination_zips)) {
+    fs::create_directories(download_destination_zips);
+  }
+
+  if (!fs::exists(download_destination_files)) {
+    fs::create_directories(download_destination_files);
   }
 
   // since this class looks like a range (has 'begin' and 'end') we can do this.
 
   for (const auto &[file, directory] : *this) {
     fs::path source_file = source_directory / file;
-    fs::path destination_directory = download_destination / directory;
-    if (!fs::exists(destination_directory)) {
-      fs::create_directories(destination_directory);
+    fs::path destination_zip_directory = download_destination_zips / directory;
+    if (!fs::exists(destination_zip_directory)) {
+      fs::create_directories(destination_zip_directory);
     }
     BOOST_ASSERT_MSG(
-        fs::exists(destination_directory),
-        fmt::format("Unable to create/find destination_directory: {}",
-                    destination_directory)
+        fs::exists(destination_zip_directory),
+        fmt::format("Unable to create/find destination_zip_directory: {}",
+                    destination_zip_directory)
             .c_str());
 
-    fs::path destination_file = destination_directory / file;
-    if (fs::exists(destination_file) && replace_files == false) {
+    fs::path destination_file_directory =
+        download_destination_files / directory;
+    if (!fs::exists(destination_file_directory)) {
+      fs::create_directories(destination_file_directory);
+    }
+    BOOST_ASSERT_MSG(
+        fs::exists(destination_file_directory),
+        fmt::format("Unable to create/find destination_file_directory: {}",
+                    destination_file_directory)
+            .c_str());
+
+    fs::path destination_zip_file = destination_zip_directory / file;
+    if (fs::exists(destination_zip_file) && replace_files == false) {
       ++skipped_files_counter;
       spdlog::info(fmt::format(
           "N: File: {} exists and 'replace' is false. Skipping download.",
-          destination_file));
+          destination_zip_file));
       continue;
     }
 
     namespace asio = boost::asio;
     using boost::process::process;
     try {
-      fin_statement_downloader.DownloadFile(source_file, destination_file);
+      fin_statement_downloader.DownloadFile(source_file, destination_zip_file);
 
-      std::cout << "unzipping to: " << destination_directory.c_str() << '\n';
+      std::cout << "unzipping to: " << destination_file_directory.c_str()
+                << '\n';
       asio::io_context ctx;
       process proc(ctx.get_executor(), // <1>
                    "/usr/bin/7z",      // <2>
-                   {"x"s, "-o"s + destination_directory.string(),
-                    destination_file.string()} // <3>
-      );                                       // <4>
+                   {"x"s, "-o"s + destination_file_directory.string(),
+                    destination_zip_file.string()} // <3>
+      );                                           // <4>
       auto result = proc.wait();
       if (result != 0) {
         throw std::runtime_error(
             std::format("Unzipping file: {} failed with return code: {}",
-                        destination_file.c_str(), result));
+                        destination_zip_file.c_str(), result));
       }
 
       // bp::system(

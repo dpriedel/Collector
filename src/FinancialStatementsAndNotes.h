@@ -134,7 +134,9 @@ public:
   // ====================  MUTATORS      =======================================
 
   void download_files(const std::string &server_name, const std::string &port,
-                      const fs::path &download_destination, bool replace_files);
+                      const fs::path &download_destination_zips,
+                      const fs::path &download_destination_files,
+                      bool replace_files);
 
   // ====================  OPERATORS     =======================================
 
