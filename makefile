@@ -19,8 +19,8 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.76_gcc-11
-GCCDIR := /extra/gcc/gcc-11
+BOOSTDIR := /extra/boost/boost-1.88_gcc-15
+GCCDIR := /extra/gcc/gcc-15
 CPP := $(GCCDIR)/bin/g++
 
 # If no configuration is specified, "Debug" will be used
@@ -32,7 +32,7 @@ endif
 
 OUTFILE := CollectorApp
 
-CFG_INC := -I./src -I$(BOOSTDIR) 
+CFG_INC := -I./src -isystem$(BOOSTDIR) 
 
 RPATH_LIB := -Wl,-rpath,$(GCCDIR)/lib64 -Wl,-rpath,$(BOOSTDIR)/lib -Wl,-rpath,/usr/local/lib
 
@@ -67,9 +67,12 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-x64 \
+		-lboost_process-mt-x64 \
 		-L/usr/local/lib \
-		-lfmt \
-		-ldate-tz 
+		-ldate-tz \
+		-lgtest -lgtest_main \
+		-L/usr/lib \
+		-lfmt
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -77,7 +80,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++20 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++26 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -99,9 +102,12 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-d-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-d-x64 \
+		-lboost_process-mt-x64 \
 		-L/usr/local/lib \
-		-lfmt \
-		-ldate-tz 
+		-ldate-tz \
+		-lgtest -lgtest_main \
+		-L/usr/lib \
+		-lfmt
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -111,7 +117,7 @@ DEPS=$(OBJS:.o=.d)
 
 # need to figure out cert handling better. Until then, turn off the SSL Cert testing.
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++20 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_FMT_EXTERNAL -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
