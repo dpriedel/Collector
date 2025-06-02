@@ -238,8 +238,8 @@ bool CollectorApp::CheckArgs() {
                        .c_str());
 
   //	the user may specify multiple stock tickers in a comma delimited list.
-  //We need to parse the entries out 	of that list and place into ultimate home.
-  //If just a single entry, copy it to our form list destination too.
+  // We need to parse the entries out 	of that list and place into ultimate
+  // home. If just a single entry, copy it to our form list destination too.
 
   if (!ticker_.empty()) {
     BOOST_ASSERT_MSG(
@@ -264,13 +264,13 @@ bool CollectorApp::CheckArgs() {
   if (!start_date_.empty()) {
     std::istringstream in{start_date_};
     date::sys_days tp;
-    in >> date::parse("%F", tp);
+    date::from_stream(in, "%F", tp);
     if (in.fail()) {
       // try an alternate representation
 
       in.clear();
       in.rdbuf()->pubseekpos(0);
-      in >> date::parse("%Y-%b-%d", tp);
+      date::from_stream(in, "%Y-%b-%d", tp);
     }
     BOOST_ASSERT_MSG(
         !in.fail() && !in.bad(),
@@ -282,13 +282,13 @@ bool CollectorApp::CheckArgs() {
   if (!stop_date_.empty()) {
     std::istringstream in{stop_date_};
     date::sys_days tp;
-    in >> date::parse("%F", tp);
+    date::from_stream(in, "%F", tp);
     if (in.fail()) {
       // try an alternate representation
 
       in.clear();
       in.rdbuf()->pubseekpos(0);
-      in >> date::parse("%Y-%b-%d", tp);
+      date::from_stream(in, "%Y-%b-%d", tp);
     }
     BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
                      catenate("Unable to parse end date: ", end_date_).c_str());
@@ -320,8 +320,8 @@ bool CollectorApp::CheckArgs() {
       "Must specify 'form-dir' when not using 'index-only' option.");
 
   //	the user may specify multiple form types in a comma delimited list. We
-  //need to parse the entries out 	of that list and place into ultimate home.  If
-  //just a single entry, copy it to our form list destination too.
+  // need to parse the entries out 	of that list and place into ultimate
+  // home.  If just a single entry, copy it to our form list destination too.
 
   if (!form_.empty()) {
     form_list_ = split_string_to_strings(form_, ',');
