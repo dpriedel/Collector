@@ -99,7 +99,8 @@ struct fmt::formatter<date::year_month_day> : fmt::formatter<std::string> {
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
   auto format(const date::year_month_day &d, FormatContext &ctx) const {
-    return fmt::format_to(ctx.out(), "{:%Y-%m-%d}", d);
+    std::string s_date = date::format("%Y-%m-%d", d);
+    return formatter<std::string>::format(s_date, ctx);
   }
 };
 
