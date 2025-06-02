@@ -149,7 +149,7 @@ private:
   // ====================  DATA MEMBERS  =======================================
 
   inline static const fs::path source_directory =
-      "/files/dera/data/financial-statement-and-notes-data-sets";
+      "/files/dera/data/financial-statement-notes-data-sets";
 
   date::year_month_day start_date_;
   date::year_month_day end_date_;
