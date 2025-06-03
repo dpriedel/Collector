@@ -173,7 +173,8 @@ void CollectorApp::SetupProgramOptions() {
       "path name for ticker-to-CIK cache file.")(
       "notes-directory",
       po::value<fs::path>(&this->financial_notes_directory_name_),
-      "path name for financial statements and notes files downloads.")(
+      "top level path name for financial statements and notes files "
+      "downloads.")(
       "ticker-file", po::value<fs::path>(&this->ticker_list_file_name_),
       "path name for file with list of ticker symbols to convert to CIKs.")(
       "replace-index-files",
