@@ -359,9 +359,9 @@ void CollectorApp::Do_Run_TickerDownload() {
 
 void CollectorApp::Do_Run_FinancialNotesDownload() {
   FinancialStatementsAndNotes fin_statement_downloader{begin_date_, end_date_};
-  fin_statement_downloader.download_files(HTTPS_host_, HTTPS_port_,
-                                          financial_notes_directory_name_,
-                                          replace_notes_files_);
+  fin_statement_downloader.download_files(
+      HTTPS_host_, HTTPS_port_, financial_notes_directory_name_ / "zip_files",
+      financial_notes_directory_name_ / "data_files", replace_notes_files_);
 } // -----  end of method CollectorApp::Do_Run_FinancialNotesDownload  -----
 
 void CollectorApp::Do_Run_TickerFileLookup() {
