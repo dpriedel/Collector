@@ -202,7 +202,8 @@ void FinancialStatementsAndNotes::download_files(
       asio::io_context ctx;
       process proc(ctx.get_executor(), // <1>
                    "/usr/bin/7z",      // <2>
-                   {"x"s, "-y", "-o"s + destination_file_directory.string(),
+                   {"x"s, "-aoa", "-bd", "-bb0", "-bsp0", "-bso0",
+                    "-o"s + destination_file_directory.string(),
                     destination_zip_file.string()} // <3>
       );                                           // <4>
       auto result = proc.wait();
