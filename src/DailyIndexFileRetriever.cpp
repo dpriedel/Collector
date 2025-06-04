@@ -63,9 +63,9 @@ DailyIndexFileRetriever::CheckDate(std::chrono::year_month_day aDate) {
 
   std::chrono::year_month_day today{
       floor<std::chrono::days>(std::chrono::system_clock::now())};
-  BOOST_ASSERT_MSG(aDate <= today, catenate(std::format(":%F", aDate),
+  BOOST_ASSERT_MSG(aDate <= today, catenate(std::format("{:%F}", aDate),
                                             ": Date must be less than ",
-                                            std::format(":%F", today))
+                                            std::format("{:%F}", today))
                                        .c_str());
 
   return aDate;
@@ -88,14 +88,14 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
   input_date_ = this->CheckDate(aDate);
 
   spdlog::debug(catenate("D: Looking for Daily Index File nearest date: ",
-                         std::format(":%F", aDate)));
+                         std::format("{:%F}", aDate)));
 
   auto remote_diretory_name = MakeDailyIndexPathName(aDate);
   decltype(auto) directory_list =
       this->GetRemoteIndexList(remote_diretory_name);
 
   std::string looking_for =
-      catenate("form.", std::format(":%Y%m%d", input_date_), ".idx");
+      catenate("form.", std::format("{:%Y%m%d}", input_date_), ".idx");
 
   // index files may or may not be gzipped, so we need to exclude possible file
   // name suffix from comparisons
@@ -107,13 +107,13 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
                    });
   BOOST_ASSERT_MSG(pos != directory_list.rend(),
                    catenate("Can't find daily index file for date: ",
-                            std::format(":%F", input_date_))
+                            std::format("{:%F}", input_date_))
                        .c_str());
 
-  actual_file_date_ = StringToDateYMD(":%Y%m%d", (*pos).substr(5, 8));
+  actual_file_date_ = StringToDateYMD("%Y%m%d", (*pos).substr(5, 8));
 
   spdlog::debug(catenate("D: Found Daily Index File for date: ",
-                         std::format(":%F", actual_file_date_)));
+                         std::format("{:%F}", actual_file_date_)));
 
   auto remote_daily_index_file_name = remote_diretory_name /= *pos;
   return remote_daily_index_file_name;
@@ -127,14 +127,15 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
   start_date_ = this->CheckDate(begin_date);
   end_date_ = this->CheckDate(end_date);
 
-  spdlog::debug(catenate(
-      "D: Looking for Daily Index Files in date range from: ",
-      std::format(":%F", start_date_), " to: ", std::format(":%F", end_date_)));
+  spdlog::debug(
+      catenate("D: Looking for Daily Index Files in date range from: ",
+               std::format("{:%F}", start_date_),
+               " to: ", std::format("{:%F}", end_date_)));
 
   auto looking_for_start =
-      std::string{"form."} + std::format(":%Y%m%d", start_date_) + ".idx";
+      std::string{"form."} + std::format("{:%Y%m%d}", start_date_) + ".idx";
   auto looking_for_end =
-      std::string{"form."} + std::format(":%Y%m%d", end_date_) + ".idx";
+      std::string{"form."} + std::format("{:%Y%m%d}", end_date_) + ".idx";
 
   auto remote_directory_list =
       MakeIndexFileNamesForDateRange(begin_date, end_date);
@@ -169,16 +170,16 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
   }
   BOOST_ASSERT_MSG(!remote_daily_index_file_name_list.empty(),
                    catenate("Can't find daily index files for date range: ",
-                            std::format(":%F", start_date_), " ",
-                            std::format(":%F", end_date_))
+                            std::format("{:%F}", start_date_), " ",
+                            std::format("{:%F}", end_date_))
                        .c_str());
 
   actual_start_date_ = StringToDateYMD(
-      ":%Y%m%d",
+      "%Y%m%d",
       remote_daily_index_file_name_list.back().filename().string().substr(5,
                                                                           8));
   actual_end_date_ = StringToDateYMD(
-      ":%Y%m%d",
+      "%Y%m%d",
       remote_daily_index_file_name_list.front().filename().string().substr(5,
                                                                            8));
 
