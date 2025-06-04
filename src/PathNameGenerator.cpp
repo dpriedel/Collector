@@ -41,15 +41,16 @@
  *--------------------------------------------------------------------------------------
  */
 
-DateRange::DateRange(date::year_month_day start_date,
-                     date::year_month_day end_date)
+DateRange::DateRange(std::chrono::year_month_day start_date,
+                     std::chrono::year_month_day end_date)
     : start_date_{start_date}, end_date_{end_date}
 
 {
-  //	auto working_date1 = date::year_month_day(start_date.year(),
+  //	auto working_date1 = std::chrono::year_month_day(start_date.year(),
   //(start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2,
-  //1); 	auto working_date2 = date::year_month_day(end_date.year(),
-  //(end_date.month() / 3 + (end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+  // 1); 	auto working_date2 =
+  // std::chrono::year_month_day(end_date.year(), (end_date.month() / 3 +
+  //(end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
 
   end_date_ = *(++QuarterlyIterator{end_date});
 } /* -----  end of method DateRange::DateRange  (constructor)  ----- */
@@ -62,7 +63,7 @@ DateRange::DateRange(date::year_month_day start_date,
  *--------------------------------------------------------------------------------------
  */
 
-QuarterlyIterator::QuarterlyIterator(date::year_month_day start_date)
+QuarterlyIterator::QuarterlyIterator(std::chrono::year_month_day start_date)
     : start_date_{start_date}, start_year_{start_date.year()},
       working_year_{start_date.year()}, start_month_{start_date.month()},
       working_month_{start_date.month()}
@@ -71,14 +72,14 @@ QuarterlyIterator::QuarterlyIterator(date::year_month_day start_date)
   // compute the first day of the quarter and use that as the base of
   // calculations
 
-  working_date_ = date::year_month_day{
+  working_date_ = std::chrono::year_month_day{
       start_date.year(),
-      date::month{
+      std::chrono::month{
           (start_date.month().operator unsigned int() / 3 +
            (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)) *
               3 -
           2},
-      date::day{1}};
+      std::chrono::day{1}};
   working_month_ = working_date_.month();
 } /* -----  end of method QuarterlyIterator::QuarterlyIterator  (constructor)
      ----- */
@@ -98,7 +99,7 @@ QuarterlyIterator &QuarterlyIterator::operator++()
  * =====================================================================================
  */
 fs::path GeneratePath(const fs::path &prefix,
-                      date::year_month_day quarter_begin)
+                      std::chrono::year_month_day quarter_begin)
 
 {
   auto working_year = quarter_begin.year();

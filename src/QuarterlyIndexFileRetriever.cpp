@@ -31,8 +31,6 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <fstream>
-
 #include <boost/algorithm/string/replace.hpp>
 #include <spdlog/spdlog.h>
 
@@ -53,23 +51,23 @@ QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever(
   // QuarterlyIndexFileRetriever::QuarterlyIndexFileRetriever  (constructor)
   // -----
 
-date::year_month_day
-QuarterlyIndexFileRetriever::CheckDate(date::year_month_day day_in_quarter) {
+std::chrono::year_month_day QuarterlyIndexFileRetriever::CheckDate(
+    std::chrono::year_month_day day_in_quarter) {
   input_date_ = {};
 
   //	we can only work with past data.
 
-  auto today =
-      date::year_month_day{floor<date::days>(std::chrono::system_clock::now())};
+  auto today = std::chrono::year_month_day{
+      floor<std::chrono::days>(std::chrono::system_clock::now())};
   BOOST_ASSERT_MSG(
       day_in_quarter < today,
-      catenate("Date must be less than ", date::format("%F", today)).c_str());
+      catenate("Date must be less than ", std::format(":%F", today)).c_str());
 
   return day_in_quarter;
 } // -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
 
 fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName(
-    date::year_month_day day_in_quarter) {
+    std::chrono::year_month_day day_in_quarter) {
   input_date_ = CheckDate(day_in_quarter);
 
   auto remote_quarterly_index_file_name =
@@ -137,7 +135,8 @@ fs::path QuarterlyIndexFileRetriever::MakeLocalIndexFilePath(
 
 std::vector<fs::path>
 QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(
-    date::year_month_day begin_date, date::year_month_day end_date) {
+    std::chrono::year_month_day begin_date,
+    std::chrono::year_month_day end_date) {
   start_date_ = this->CheckDate(begin_date);
   end_date_ = this->CheckDate(end_date);
 
@@ -163,7 +162,7 @@ QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo(
   std::vector<fs::path> results;
 
   //	Remember...we are working with compressed directory files on the SEC
-  //server
+  // server
 
   results.reserve(remote_file_list.size());
   for (const auto &remote_file : remote_file_list) {
@@ -178,7 +177,7 @@ QuarterlyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo(
 auto QuarterlyIndexFileRetriever::AddToCopyList(
     const fs::path &local_directory_name, bool replace_files) {
   //	construct our lambda function here so it doesn't clutter up our code
-  //below.
+  // below.
 
   return [this, local_directory_name,
           replace_files](const auto &remote_file_name) {

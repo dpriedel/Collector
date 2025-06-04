@@ -69,14 +69,14 @@ Collector::TimeOutException::TimeOutException(const std::string &text)
 } /* -----  end of method TimeOutException::TimeOutException  (constructor)
      ----- */
 
-date::year_month_day StringToDateYMD(const std::string &input_format,
-                                     const std::string &the_date) {
+std::chrono::year_month_day StringToDateYMD(const std::string &input_format,
+                                            const std::string &the_date) {
   std::istringstream in{the_date};
-  date::sys_days tp;
-  date::from_stream(in, input_format.c_str(), tp);
+  std::chrono::sys_days tp;
+  std::chrono::from_stream(in, input_format.c_str(), tp);
   BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
                    catenate("Unable to parse given date: ", the_date).c_str());
-  date::year_month_day result = tp;
+  std::chrono::year_month_day result = tp;
   BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
   return result;
 
@@ -85,15 +85,15 @@ date::year_month_day StringToDateYMD(const std::string &input_format,
   //    if (! start_date_.empty())
   //    {
   //        std::istringstream in{start_date_};
-  //        date::sys_days tp;
-  //        in >> date::parse("%F", tp);
+  //        std::chrono::sys_days tp;
+  //        in >> std::chrono::parse("%F", tp);
   //        if (in.fail())
   //        {
   //            // try an alternate representation
   //
   //            in.clear();
   //            in.rdbuf()->pubseekpos(0);
-  //            in >> date::parse("%Y-%b-%d", tp);
+  //            in >> std::chrono::parse("%Y-%b-%d", tp);
   //        }
   //        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to
   //        parse begin date: ", start_date_).c_str()); begin_date_ = tp;

@@ -34,13 +34,12 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <chrono>
 #include <filesystem>
 #include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
-
-#include <date/date.h>
 
 // =====================================================================================
 //        Class:  QuarterlyIndexFileRetriever
@@ -67,7 +66,8 @@ public:
   QuarterlyIndexFileRetriever &
   operator=(QuarterlyIndexFileRetriever &&rhs) = delete;
 
-  fs::path MakeQuarterlyIndexPathName(date::year_month_day day_in_quarter);
+  fs::path
+  MakeQuarterlyIndexPathName(std::chrono::year_month_day day_in_quarter);
   fs::path
   HierarchicalCopyRemoteIndexFileTo(const fs::path &remote_file_name,
                                     const fs::path &local_directory_name,
@@ -76,8 +76,8 @@ public:
   //	This method treats the date range as a closed interval.
 
   std::vector<fs::path>
-  MakeIndexFileNamesForDateRange(date::year_month_day start_date,
-                                 date::year_month_day end_date);
+  MakeIndexFileNamesForDateRange(std::chrono::year_month_day start_date,
+                                 std::chrono::year_month_day end_date);
   std::vector<fs::path> HierarchicalCopyIndexFilesForDateRangeTo(
       const std::vector<fs::path> &remote_file_list,
       const fs::path &local_directory_name, bool replace_files = false);
@@ -89,7 +89,7 @@ public:
   // ====================  OPERATORS     =======================================
 
 protected:
-  date::year_month_day CheckDate(date::year_month_day aDate);
+  std::chrono::year_month_day CheckDate(std::chrono::year_month_day aDate);
   fs::path
   MakeLocalIndexFilePath(const fs::path &local_prefix,
                          const fs::path &remote_quarterly_index_file_name);
@@ -102,9 +102,9 @@ private:
   // ====================  DATA MEMBERS  =======================================
 
   fs::path remote_directory_prefix_; // top-level directory path
-  date::year_month_day input_date_;
-  date::year_month_day start_date_;
-  date::year_month_day end_date_;
+  std::chrono::year_month_day input_date_;
+  std::chrono::year_month_day start_date_;
+  std::chrono::year_month_day end_date_;
 
   std::string host_;
   std::string port_;

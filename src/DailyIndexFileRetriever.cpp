@@ -32,7 +32,6 @@
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <algorithm>
-#include <fstream>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <spdlog/spdlog.h>
@@ -56,24 +55,24 @@ DailyIndexFileRetriever::DailyIndexFileRetriever(const std::string &host,
 } // -----  end of method DailyIndexFileRetriever::DailyIndexFileRetriever
   // (constructor)  -----
 
-date::year_month_day
-DailyIndexFileRetriever::CheckDate(date::year_month_day aDate) {
+std::chrono::year_month_day
+DailyIndexFileRetriever::CheckDate(std::chrono::year_month_day aDate) {
   input_date_ = {};
 
   //	we can only work with past data.
 
-  date::year_month_day today{
-      floor<date::days>(std::chrono::system_clock::now())};
-  BOOST_ASSERT_MSG(aDate <= today, catenate(date::format("%F", aDate),
+  std::chrono::year_month_day today{
+      floor<std::chrono::days>(std::chrono::system_clock::now())};
+  BOOST_ASSERT_MSG(aDate <= today, catenate(std::format(":%F", aDate),
                                             ": Date must be less than ",
-                                            date::format("%F", today))
+                                            std::format(":%F", today))
                                        .c_str());
 
   return aDate;
 } // -----  end of method DailyIndexFileRetriever::CheckDate  -----
 
 fs::path DailyIndexFileRetriever::MakeDailyIndexPathName(
-    date::year_month_day day_in_quarter) {
+    std::chrono::year_month_day day_in_quarter) {
   input_date_ = CheckDate(day_in_quarter);
 
   auto remote_index_file_directory =
@@ -85,18 +84,18 @@ fs::path DailyIndexFileRetriever::MakeDailyIndexPathName(
   // -----
 
 fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
-    date::year_month_day aDate) {
+    std::chrono::year_month_day aDate) {
   input_date_ = this->CheckDate(aDate);
 
   spdlog::debug(catenate("D: Looking for Daily Index File nearest date: ",
-                         date::format("%F", aDate)));
+                         std::format(":%F", aDate)));
 
   auto remote_diretory_name = MakeDailyIndexPathName(aDate);
   decltype(auto) directory_list =
       this->GetRemoteIndexList(remote_diretory_name);
 
   std::string looking_for =
-      catenate("form.", date::format("%Y%m%d", input_date_), ".idx");
+      catenate("form.", std::format(":%Y%m%d", input_date_), ".idx");
 
   // index files may or may not be gzipped, so we need to exclude possible file
   // name suffix from comparisons
@@ -108,13 +107,13 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
                    });
   BOOST_ASSERT_MSG(pos != directory_list.rend(),
                    catenate("Can't find daily index file for date: ",
-                            date::format("%F", input_date_))
+                            std::format(":%F", input_date_))
                        .c_str());
 
-  actual_file_date_ = StringToDateYMD("%Y%m%d", (*pos).substr(5, 8));
+  actual_file_date_ = StringToDateYMD(":%Y%m%d", (*pos).substr(5, 8));
 
   spdlog::debug(catenate("D: Found Daily Index File for date: ",
-                         date::format("%F", actual_file_date_)));
+                         std::format(":%F", actual_file_date_)));
 
   auto remote_daily_index_file_name = remote_diretory_name /= *pos;
   return remote_daily_index_file_name;
@@ -123,18 +122,19 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
 
 std::vector<fs::path>
 DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
-    date::year_month_day begin_date, date::year_month_day end_date) {
+    std::chrono::year_month_day begin_date,
+    std::chrono::year_month_day end_date) {
   start_date_ = this->CheckDate(begin_date);
   end_date_ = this->CheckDate(end_date);
 
   spdlog::debug(catenate(
       "D: Looking for Daily Index Files in date range from: ",
-      date::format("%F", start_date_), " to: ", date::format("%F", end_date_)));
+      std::format(":%F", start_date_), " to: ", std::format(":%F", end_date_)));
 
   auto looking_for_start =
-      std::string{"form."} + date::format("%Y%m%d", start_date_) + ".idx";
+      std::string{"form."} + std::format(":%Y%m%d", start_date_) + ".idx";
   auto looking_for_end =
-      std::string{"form."} + date::format("%Y%m%d", end_date_) + ".idx";
+      std::string{"form."} + std::format(":%Y%m%d", end_date_) + ".idx";
 
   auto remote_directory_list =
       MakeIndexFileNamesForDateRange(begin_date, end_date);
@@ -169,16 +169,16 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
   }
   BOOST_ASSERT_MSG(!remote_daily_index_file_name_list.empty(),
                    catenate("Can't find daily index files for date range: ",
-                            date::format("%F", start_date_), " ",
-                            date::format("%F", end_date_))
+                            std::format(":%F", start_date_), " ",
+                            std::format(":%F", end_date_))
                        .c_str());
 
   actual_start_date_ = StringToDateYMD(
-      "%Y%m%d",
+      ":%Y%m%d",
       remote_daily_index_file_name_list.back().filename().string().substr(5,
                                                                           8));
   actual_end_date_ = StringToDateYMD(
-      "%Y%m%d",
+      ":%Y%m%d",
       remote_daily_index_file_name_list.front().filename().string().substr(5,
                                                                            8));
 
@@ -190,7 +190,8 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
   // DailyIndexFileRetriever::FindIndexFileNamesForDateRange  -----
 
 std::vector<fs::path> DailyIndexFileRetriever::MakeIndexFileNamesForDateRange(
-    date::year_month_day begin_date, date::year_month_day end_date) {
+    std::chrono::year_month_day begin_date,
+    std::chrono::year_month_day end_date) {
   start_date_ = this->CheckDate(begin_date);
   end_date_ = this->CheckDate(end_date);
 
@@ -213,7 +214,7 @@ DailyIndexFileRetriever::GetRemoteIndexList(const fs::path &remote_directory) {
   auto directory_list = the_server.ListDirectoryContents(remote_directory);
 
   //	we need to do some cleanup of the directory listing to simplify our
-  //searches.
+  // searches.
 
   auto not_form =
       std::partition(directory_list.begin(), directory_list.end(),
@@ -306,7 +307,7 @@ std::vector<fs::path> DailyIndexFileRetriever::CopyIndexFilesForDateRangeTo(
 auto DailyIndexFileRetriever::AddToCopyList(
     const fs::path &local_directory_name, bool replace_files) {
   //	construct our lambda function here so it doesn't clutter up our code
-  //below.
+  // below.
 
   return [local_directory_name, replace_files](const auto &remote_file_name) {
     auto local_daily_index_file_name = local_directory_name;
@@ -400,7 +401,7 @@ DailyIndexFileRetriever::HierarchicalCopyIndexFilesForDateRangeTo(
 auto DailyIndexFileRetriever::AddToConcurrentCopyList(
     const fs::path &local_directory_prefix, bool replace_files) {
   //	construct our lambda function here so it doesn't clutter up our code
-  //below.
+  // below.
 
   return [this, local_directory_prefix,
           replace_files](const auto &remote_file_name) {

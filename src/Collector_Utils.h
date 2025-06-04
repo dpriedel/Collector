@@ -35,15 +35,13 @@
 #ifndef _COLLECTOR_UTILS_INC_
 #define _COLLECTOR_UTILS_INC_
 
-#include <exception>
+#include <chrono>
 #include <filesystem>
-#include <functional>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
 #include <boost/assert.hpp>
-#include <date/tz.h>
+// #include <date/tz.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
@@ -95,11 +93,12 @@ struct fmt::formatter<std::filesystem::path> : fmt::formatter<std::string> {
 // custom fmtlib formatter for date year_month_day
 
 template <>
-struct fmt::formatter<date::year_month_day> : fmt::formatter<std::string> {
+struct fmt::formatter<std::chrono::year_month_day>
+    : fmt::formatter<std::string> {
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
-  auto format(const date::year_month_day &d, FormatContext &ctx) const {
-    std::string s_date = date::format("%Y-%m-%d", d);
+  auto format(const std::chrono::year_month_day &d, FormatContext &ctx) const {
+    std::string s_date = fmt::format(":%Y-%m-%d", d);
     return formatter<std::string>::format(s_date, ctx);
   }
 };
@@ -156,18 +155,19 @@ inline std::vector<std::string> split_string_to_strings(COL::sview string_data,
 
 // replace boost gregorian with new date library.
 
-// utility to convert a date::year_month_day to a string
+// utility to convert a std::chrono::year_month_day to a string
 // based on code from "The C++ Standard Library 2nd Edition"
 // by Nicolai Josuttis p. 158
 
 inline std::string
 LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time) {
-  auto t = date::make_zoned(date::current_zone(), a_date_time);
-  std::string ts = date::format("%a, %b %d, %Y at %I:%M:%S %p %Z", t);
-  return ts;
+  // auto t = std::chrono::zoned_time(std::chrono::current_zone(), a_date_time);
+  // std::string ts = fmt::format(":%a, %b %d, %Y at %I:%M:%S %p %Z", t);
+  // return ts;
+  return "\n\n\t*** Not working...Fix needed ***\n\n";
 }
 
-date::year_month_day StringToDateYMD(const std::string &input_format,
-                                     const std::string &the_date);
+std::chrono::year_month_day StringToDateYMD(const std::string &input_format,
+                                            const std::string &the_date);
 
 #endif /* ----- #IFNDEF COLLECTOR_UTILS_INC  ----- */

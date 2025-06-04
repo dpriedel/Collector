@@ -34,9 +34,9 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <chrono>
 #include <filesystem>
 #include <iterator>
-#include <string>
 
 namespace fs = std::filesystem;
 
@@ -55,7 +55,7 @@ class QuarterlyIterator {
 public:
   // Type aliases required for a custom iterator
   using iterator_category = std::forward_iterator_tag;
-  using value_type = date::year_month_day;
+  using value_type = std::chrono::year_month_day;
   using difference_type = std::ptrdiff_t;
   using pointer = value_type *;
   using reference = value_type &;
@@ -64,7 +64,7 @@ public:
    */
 
   QuarterlyIterator() = default; /* constructor */
-  explicit QuarterlyIterator(date::year_month_day start_date);
+  explicit QuarterlyIterator(std::chrono::year_month_day start_date);
 
   QuarterlyIterator(const QuarterlyIterator &rhs) = default;
   QuarterlyIterator(QuarterlyIterator &&rhs) = default;
@@ -74,7 +74,7 @@ public:
   /* ====================  ACCESSORS     =======================================
    */
 
-  date::year_month_day operator*() const { return working_date_; }
+  std::chrono::year_month_day operator*() const { return working_date_; }
 
   /* ====================  MUTATORS      =======================================
    */
@@ -108,14 +108,14 @@ private:
   /* ====================  DATA MEMBERS  =======================================
    */
 
-  inline static constexpr date::months a_quarter{3};
+  inline static constexpr std::chrono::months a_quarter{3};
 
-  date::year_month_day start_date_;
-  date::year_month_day working_date_;
-  date::year start_year_;
-  date::year working_year_;
-  date::month start_month_;
-  date::month working_month_;
+  std::chrono::year_month_day start_date_;
+  std::chrono::year_month_day working_date_;
+  std::chrono::year start_year_;
+  std::chrono::year working_year_;
+  std::chrono::month start_month_;
+  std::chrono::month working_month_;
 
 }; /* -----  end of class QuarterlyIterator  ----- */
 
@@ -140,7 +140,8 @@ public:
   /* ====================  LIFECYCLE     =======================================
    */
 
-  DateRange(date::year_month_day start_date, date::year_month_day end_date);
+  DateRange(std::chrono::year_month_day start_date,
+            std::chrono::year_month_day end_date);
 
   /* ====================  ACCESSORS     =======================================
    */
@@ -171,12 +172,12 @@ private:
   /* ====================  DATA MEMBERS  =======================================
    */
 
-  date::year_month_day start_date_;
-  date::year_month_day end_date_;
+  std::chrono::year_month_day start_date_;
+  std::chrono::year_month_day end_date_;
 
 }; /* -----  end of class DateRange  ----- */
 
 fs::path GeneratePath(const fs::path &prefix,
-                      date::year_month_day quarter_begin);
+                      std::chrono::year_month_day quarter_begin);
 
 #endif /* PATHNAMEGENERATOR_H_ */

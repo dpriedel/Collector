@@ -38,32 +38,33 @@ namespace bp = boost::process;
 #include "HTTPS_Downloader.h"
 
 FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(
-    date::year_month_day start_date, date::year_month_day end_date) {
+    std::chrono::year_month_day start_date,
+    std::chrono::year_month_day end_date) {
   // when in quarterly mode, the 'month' value will actually be the 'quarter'
   // value between 1 and 4. maybe there's a better way to do this. Nonetheless,
   // it keeps the code conistent.
 
-  date::year_month temp_s{start_date.year(), start_date.month()};
+  std::chrono::year_month temp_s{start_date.year(), start_date.month()};
   if (temp_s > last_quarterly_) {
     monthly_mode_ = true;
     start_date_ = temp_s;
   } else {
     // convert to our faux quarterly value
-    start_date_ = date::year_month{
+    start_date_ = std::chrono::year_month{
         start_date.year(),
-        date::month{
+        std::chrono::month{
             start_date.month().operator unsigned int() / 3 +
             (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
   }
 
-  date::year_month temp_e{end_date.year(), end_date.month()};
+  std::chrono::year_month temp_e{end_date.year(), end_date.month()};
   if (temp_e > last_quarterly_) {
     end_date_ = temp_e;
   } else {
     // convert to our faux quarterly value
-    end_date_ = date::year_month{
+    end_date_ = std::chrono::year_month{
         end_date.year(),
-        date::month{
+        std::chrono::month{
             end_date.month().operator unsigned int() / 3 +
             (end_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
   }
@@ -78,7 +79,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(
 FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++() {
   // see if we're done
 
-  if (current_date_ == date::year_month{}) {
+  if (current_date_ == std::chrono::year_month{}) {
     return *this;
   }
 
@@ -87,7 +88,7 @@ FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++() {
 
     current_date_ += a_month;
     if (current_date_.month().operator unsigned int() > 4) {
-      current_date_ = {current_date_.year() + a_year, date::January};
+      current_date_ = {current_date_.year() + a_year, std::chrono::January};
     }
     if (current_date_ > last_quarterly_qtr) {
       current_date_ = first_monthly_;
@@ -98,7 +99,7 @@ FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++() {
   }
 
   if (current_date_ >= end_date_) {
-    current_date_ = date::year_month();
+    current_date_ = std::chrono::year_month();
     current_value_ = {"", ""};
     return *this;
   }
@@ -133,7 +134,8 @@ void FinancialStatementsAndNotes_gen::format_current_value() {
 // Description:  constructor
 //--------------------------------------------------------------------------------------
 FinancialStatementsAndNotes::FinancialStatementsAndNotes(
-    date::year_month_day start_date, date::year_month_day end_date)
+    std::chrono::year_month_day start_date,
+    std::chrono::year_month_day end_date)
     : start_date_{start_date}, end_date_{end_date} {
 } // -----  end of method
   // FinancialStatementsAndNotes::FinancialStatementsAndNotes

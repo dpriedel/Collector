@@ -34,13 +34,12 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <chrono>
 #include <filesystem>
 #include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
-
-#include <date/date.h>
 
 // =====================================================================================
 //        Class:  DailyIndexFileRetriever
@@ -60,10 +59,11 @@ public:
 
   // ====================  ACCESSORS     =======================================
 
-  [[nodiscard]] date::year_month_day GetActualIndexFileDate() const {
+  [[nodiscard]] std::chrono::year_month_day GetActualIndexFileDate() const {
     return actual_file_date_;
   }
-  [[nodiscard]] std::pair<date::year_month_day, date::year_month_day>
+  [[nodiscard]] std::pair<std::chrono::year_month_day,
+                          std::chrono::year_month_day>
   GetActualDateRange() const {
     return std::pair(actual_start_date_, actual_end_date_);
   }
@@ -77,7 +77,8 @@ public:
   operator=(const DailyIndexFileRetriever &rhs) = delete;
   DailyIndexFileRetriever &operator=(DailyIndexFileRetriever &&rhs) = delete;
 
-  fs::path FindRemoteIndexFileNameNearestDate(date::year_month_day aDate);
+  fs::path
+  FindRemoteIndexFileNameNearestDate(std::chrono::year_month_day aDate);
 
   //	returns the local path name of the downloaded file.
 
@@ -91,11 +92,11 @@ public:
   //	This method treats the date range as a closed interval.
 
   std::vector<fs::path>
-  FindRemoteIndexFileNamesForDateRange(date::year_month_day start_date,
-                                       date::year_month_day end_date);
+  FindRemoteIndexFileNamesForDateRange(std::chrono::year_month_day start_date,
+                                       std::chrono::year_month_day end_date);
   std::vector<fs::path>
-  MakeIndexFileNamesForDateRange(date::year_month_day start_date,
-                                 date::year_month_day end_date);
+  MakeIndexFileNamesForDateRange(std::chrono::year_month_day start_date,
+                                 std::chrono::year_month_day end_date);
 
   //	returns the local path name of the downloaded file.
 
@@ -119,12 +120,12 @@ public:
   // daily files are now organized in a directory hierarchy the same as
   // quarterly index files.
 
-  fs::path MakeDailyIndexPathName(date::year_month_day day_in_quarter);
+  fs::path MakeDailyIndexPathName(std::chrono::year_month_day day_in_quarter);
 
   // ====================  OPERATORS     =======================================
 
 protected:
-  date::year_month_day CheckDate(date::year_month_day aDate);
+  std::chrono::year_month_day CheckDate(std::chrono::year_month_day aDate);
   fs::path MakeLocalIndexFilePath(const fs::path &local_prefix,
                                   const fs::path &remote_daily_index_file_name);
   std::vector<std::string> GetRemoteIndexList(const fs::path &remote_directory);
@@ -139,12 +140,12 @@ private:
   // ====================  DATA MEMBERS  =======================================
 
   fs::path remote_directory_prefix_; // top-level directory path
-  date::year_month_day input_date_;
-  date::year_month_day actual_file_date_;
-  date::year_month_day start_date_;
-  date::year_month_day end_date_;
-  date::year_month_day actual_start_date_;
-  date::year_month_day actual_end_date_;
+  std::chrono::year_month_day input_date_;
+  std::chrono::year_month_day actual_file_date_;
+  std::chrono::year_month_day start_date_;
+  std::chrono::year_month_day end_date_;
+  std::chrono::year_month_day actual_start_date_;
+  std::chrono::year_month_day actual_end_date_;
 
   std::string host_;
   std::string port_;

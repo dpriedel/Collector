@@ -29,11 +29,9 @@
 #include <string>
 #include <utility>
 
-#include <date/date.h>
-
 namespace fs = std::filesystem;
 
-using namespace date::literals;
+using namespace std::chrono_literals;
 
 class FinancialStatementsAndNotes_gen {
 public:
@@ -48,8 +46,9 @@ public:
   // ====================  LIFECYCLE     =======================================
 
   FinancialStatementsAndNotes_gen() = default; // constructor
-  FinancialStatementsAndNotes_gen(date::year_month_day start_date,
-                                  date::year_month_day end_date); // constructor
+  FinancialStatementsAndNotes_gen(
+      std::chrono::year_month_day start_date,
+      std::chrono::year_month_day end_date); // constructor
 
   // ====================  ACCESSORS     =======================================
 
@@ -88,22 +87,22 @@ private:
 
   // ====================  DATA MEMBERS  =======================================
 
-  inline static constexpr date::months a_month{1};
-  inline static constexpr date::years a_year{1};
+  inline static constexpr std::chrono::months a_month{1};
+  inline static constexpr std::chrono::years a_year{1};
 
-  inline static constexpr date::year_month first_quarterly_ =
-      2009_y / date::January;
-  inline static constexpr date::year_month last_quarterly_ =
-      2023_y / date::December;
-  inline static constexpr date::year_month last_quarterly_qtr =
-      2023_y / date::October; // using months for quarters
-  inline static constexpr date::year_month first_monthly_ =
-      2024_y / date::January;
+  inline static constexpr std::chrono::year_month first_quarterly_ =
+      2009y / std::chrono::January;
+  inline static constexpr std::chrono::year_month last_quarterly_ =
+      2023y / std::chrono::December;
+  inline static constexpr std::chrono::year_month last_quarterly_qtr =
+      2023y / std::chrono::October; // using months for quarters
+  inline static constexpr std::chrono::year_month first_monthly_ =
+      2024y / std::chrono::January;
 
-  date::year_month start_date_;
-  date::year_month end_date_;
+  std::chrono::year_month start_date_;
+  std::chrono::year_month end_date_;
 
-  date::year_month current_date_;
+  std::chrono::year_month current_date_;
 
   value_type current_value_;
   bool monthly_mode_ = false;
@@ -121,8 +120,9 @@ public:
 public:
   // ====================  LIFECYCLE     =======================================
 
-  FinancialStatementsAndNotes(date::year_month_day start_date,
-                              date::year_month_day end_date); // constructor
+  FinancialStatementsAndNotes(
+      std::chrono::year_month_day start_date,
+      std::chrono::year_month_day end_date); // constructor
 
   // ====================  ACCESSORS     =======================================
 
@@ -153,8 +153,8 @@ private:
   inline static const fs::path source_directory =
       "/files/dera/data/financial-statement-notes-data-sets";
 
-  date::year_month_day start_date_;
-  date::year_month_day end_date_;
+  std::chrono::year_month_day start_date_;
+  std::chrono::year_month_day end_date_;
 
 }; // -----  end of class FinancialStatementsAndNotes  -----
 
