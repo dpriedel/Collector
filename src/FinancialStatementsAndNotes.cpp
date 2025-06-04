@@ -162,15 +162,6 @@ void FinancialStatementsAndNotes::download_files(
 
   for (const auto &[file, directory] : *this) {
     fs::path source_file = source_directory / file;
-    fs::path destination_zip_directory = download_destination_zips / directory;
-    if (!fs::exists(destination_zip_directory)) {
-      fs::create_directories(destination_zip_directory);
-    }
-    BOOST_ASSERT_MSG(
-        fs::exists(destination_zip_directory),
-        fmt::format("Unable to create/find destination_zip_directory: {}",
-                    destination_zip_directory)
-            .c_str());
 
     fs::path destination_file_directory =
         download_destination_files / directory;
@@ -183,7 +174,7 @@ void FinancialStatementsAndNotes::download_files(
                     destination_file_directory)
             .c_str());
 
-    fs::path destination_zip_file = destination_zip_directory / file;
+    fs::path destination_zip_file = download_destination_zips / file;
     if (fs::exists(destination_zip_file) && replace_files == false) {
       ++skipped_files_counter;
       spdlog::info(fmt::format(
