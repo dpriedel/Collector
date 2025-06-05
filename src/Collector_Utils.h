@@ -37,8 +37,10 @@
 
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include <boost/assert.hpp>
 // #include <date/tz.h>
@@ -98,16 +100,16 @@ struct fmt::formatter<std::chrono::year_month_day>
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
   auto format(const std::chrono::year_month_day &d, FormatContext &ctx) const {
-    std::string s_date = fmt::format(":%Y-%m-%d", d);
+    std::string s_date = std::format("{:%Y-%m-%d}", d);
     return formatter<std::string>::format(s_date, ctx);
   }
 };
 
-template <typename... Ts> inline std::string catenate(const Ts &...ts) {
+template <typename... Ts> inline std::string catenate(Ts &&...ts) {
+
   constexpr auto N = sizeof...(Ts);
 
   // first, construct our format string
-  // TODO: make constexpr
 
   std::string f_string;
   for (int i = 0; i < N; ++i) {
@@ -161,10 +163,10 @@ inline std::vector<std::string> split_string_to_strings(COL::sview string_data,
 
 inline std::string
 LocalDateTimeAsString(std::chrono::system_clock::time_point a_date_time) {
-  // auto t = std::chrono::zoned_time(std::chrono::current_zone(), a_date_time);
-  // std::string ts = fmt::format(":%a, %b %d, %Y at %I:%M:%S %p %Z", t);
-  // return ts;
-  return "\n\n\t*** Not working...Fix needed ***\n\n";
+  auto t = std::chrono::zoned_time(std::chrono::current_zone(), a_date_time);
+  std::string ts = std::format("{:%a, %b %d, %Y at %I:%M:%S %p %Z}", t);
+  return ts;
+  // return "\n\n\t*** Not working...Fix needed ***\n\n";
 }
 
 std::chrono::year_month_day StringToDateYMD(const std::string &input_format,
