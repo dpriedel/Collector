@@ -69,10 +69,7 @@ CFG_LIB := -lpthread \
 		-lboost_json-mt-x64 \
 		-lboost_process-mt-x64 \
 		-L/usr/local/lib \
-		-ldate-tz \
-		-lgtest -lgtest_main \
-		-L/usr/lib \
-		-lfmt
+		-ldate-tz 
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -104,10 +101,7 @@ CFG_LIB := -lpthread \
 		-lboost_json-mt-d-x64 \
 		-lboost_process-mt-x64 \
 		-L/usr/local/lib \
-		-ldate-tz \
-		-lgtest -lgtest_main \
-		-L/usr/lib \
-		-lfmt
+		-ldate-tz 
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))

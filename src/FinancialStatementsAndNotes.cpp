@@ -30,7 +30,6 @@
 
 namespace bp = boost::process;
 
-#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include "Collector_Utils.h"
@@ -112,17 +111,17 @@ FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++() {
 void FinancialStatementsAndNotes_gen::format_current_value() {
   if (!monthly_mode_) {
     current_value_.first =
-        fmt::format("{}q{}_notes.zip", current_date_.year().operator int(),
+        std::format("{}q{}_notes.zip", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
     current_value_.second =
-        fmt::format("{}_{}", current_date_.year().operator int(),
+        std::format("{}_{}", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
   } else {
     current_value_.first =
-        fmt::format("{}_{:02}_notes.zip", current_date_.year().operator int(),
+        std::format("{}_{:02}_notes.zip", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
     current_value_.second =
-        fmt::format("{}_{:02}", current_date_.year().operator int(),
+        std::format("{}_{:02}", current_date_.year().operator int(),
                     current_date_.month().operator unsigned int());
   }
 } // -----  end of method FinancialStatementsAndNotes_gen::format_current_value
@@ -172,14 +171,14 @@ void FinancialStatementsAndNotes::download_files(
     }
     BOOST_ASSERT_MSG(
         fs::exists(destination_file_directory),
-        fmt::format("Unable to create/find destination_file_directory: {}",
+        std::format("Unable to create/find destination_file_directory: {}",
                     destination_file_directory)
             .c_str());
 
     fs::path destination_zip_file = download_destination_zips / file;
     if (fs::exists(destination_zip_file) && replace_files == false) {
       ++skipped_files_counter;
-      spdlog::info(fmt::format(
+      spdlog::info(std::format(
           "N: File: {} exists and 'replace' is false. Skipping download.",
           destination_zip_file));
       continue;
@@ -207,7 +206,7 @@ void FinancialStatementsAndNotes::download_files(
       }
 
       // bp::system(
-      //     fmt::format("7z x -o{} {}", destination_directory,
+      //     std::format("7z x -o{} {}", destination_directory,
       //     destination_file), bp::std_out > bp::null, bp::std_err > bp::null);
       ++downloaded_files_counter;
     } catch (std::system_error &e) {
@@ -219,7 +218,7 @@ void FinancialStatementsAndNotes::download_files(
     }
   }
 
-  spdlog::info(fmt::format(
+  spdlog::info(std::format(
       "N: Downloaded: {}. Skipped: {}. Errors: {}. out of {} possible files.",
       downloaded_files_counter, skipped_files_counter, error_counter,
       std::ranges::distance(*this)));

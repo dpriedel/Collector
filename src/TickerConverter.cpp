@@ -3,7 +3,8 @@
 //       Filename:  TickerConverter.cpp
 //
 //    Description:  Implementation file for class which does a file or web
-//    lookup to 				convert a ticker ticker to an SEC CIK.
+//    lookup to 				convert a ticker ticker to an
+//    SEC CIK.
 //
 //        Version:  1.0
 //        Created:  02/06/2014 01:57:16 PM
@@ -32,6 +33,7 @@
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <chrono>
+#include <format>
 #include <fstream>
 #include <thread>
 // #include <regex>
@@ -56,7 +58,7 @@
 std::string TickerConverter::ConvertTickerToCIK(const std::string &ticker,
                                                 int pause) {
   //	we have a cache of our already looked up tickers so let's check that
-  //first
+  // first
 
   spdlog::debug(catenate("T: Doing CIK lookup for ticker: ", ticker));
 
@@ -67,7 +69,7 @@ std::string TickerConverter::ConvertTickerToCIK(const std::string &ticker,
   }
 
   auto cik = NotFound;
-  spdlog::debug(fmt::format("T: Unable to find CIK for ticker: {}.", ticker));
+  spdlog::debug(std::format("T: Unable to find CIK for ticker: {}.", ticker));
 
   return cik;
 } // -----  end of method TickerConverter::ConvertTickerToCIK  -----
@@ -80,7 +82,7 @@ TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name) {
   std::ifstream tickers_file{ticker_file_name};
   BOOST_ASSERT_MSG(
       tickers_file.is_open(),
-      fmt::format("Unable to open tickers list file: {}", ticker_file_name)
+      std::format("Unable to open tickers list file: {}", ticker_file_name)
           .c_str());
 
   TickerConverter::TickerCIKMap result;
@@ -99,7 +101,7 @@ TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name) {
   tickers_file.close();
 
   spdlog::debug(
-      fmt::format("T: Did Ticker lookup for: {} tickers from file: {}.",
+      std::format("T: Did Ticker lookup for: {} tickers from file: {}.",
                   ticker_to_CIK_.size(), ticker_file_name));
 
   return result;
@@ -109,7 +111,7 @@ int TickerConverter::DownloadTickerToCIKFile(const fs::path &ticker_file_name,
                                              const std::string &server_name,
                                              const std::string &port) {
   spdlog::debug(
-      fmt::format("T: Downloading tickers file to: {} .", ticker_file_name));
+      std::format("T: Downloading tickers file to: {} .", ticker_file_name));
 
   std::string uri = "/files/company_tickers.json";
 
@@ -127,7 +129,7 @@ int TickerConverter::DownloadTickerToCIKFile(const fs::path &ticker_file_name,
   int ticker_count = 0;
 
   for (const auto &[k, v] : json_listing.as_object()) {
-    extracted_data.append(fmt::format(
+    extracted_data.append(std::format(
         "{}\t{:0>10d}\n", v.as_object().at("ticker").as_string().c_str(),
         v.as_object().at("cik_str").as_int64()));
     ++ticker_count;
@@ -136,12 +138,12 @@ int TickerConverter::DownloadTickerToCIKFile(const fs::path &ticker_file_name,
                              std::ios::out | std::ios::binary};
   BOOST_ASSERT_MSG(
       tickers_file.is_open(),
-      fmt::format("Unable to open ticker_CIK file: {}", ticker_file_name)
+      std::format("Unable to open ticker_CIK file: {}", ticker_file_name)
           .c_str());
   tickers_file.write(extracted_data.data(), extracted_data.size());
   tickers_file.close();
 
-  spdlog::debug(fmt::format("T: Did Ticker download for: {} ticker symbols.",
+  spdlog::debug(std::format("T: Did Ticker download for: {} ticker symbols.",
                             ticker_count));
 
   return ticker_count;
@@ -176,7 +178,7 @@ std::string SEC_CIK_Lookup(COL::sview ticker, int pause) {
 int TickerConverter::UseCacheFile(const fs::path &cache_file_name) {
   BOOST_ASSERT_MSG(
       fs::exists(cache_file_name),
-      fmt::format("Unable to find ticker_CIK file: {}", cache_file_name)
+      std::format("Unable to find ticker_CIK file: {}", cache_file_name)
           .c_str());
   ticker_to_CIK_.clear();
   cache_file_name_ = cache_file_name;
@@ -220,5 +222,5 @@ int TickerConverter::UseCacheFile(const fs::path &cache_file_name) {
 //     }
 //
 //	spdlog::debug(catenate("T: Saved ", ticker_to_CIK_.size(), " tickers to
-//file: ", cache_file_name_.string())); }		// -----  end of method
+// file: ", cache_file_name_.string())); }		// -----  end of method
 // TickerConverter::SaveCIKToFile  -----

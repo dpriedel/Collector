@@ -33,6 +33,8 @@
 
 #include <algorithm>
 
+#include <format>
+
 #include <boost/algorithm/string/replace.hpp>
 #include <spdlog/spdlog.h>
 
