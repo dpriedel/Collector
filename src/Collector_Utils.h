@@ -43,9 +43,6 @@
 #include <utility>
 
 #include <boost/assert.hpp>
-// #include <date/tz.h>
-#include <fmt/chrono.h>
-#include <fmt/format.h>
 
 using namespace std::string_literals;
 
@@ -84,24 +81,11 @@ concept has_string = requires(T t) { t.string(); };
 // custom fmtlib formatter for filesytem paths
 
 template <>
-struct fmt::formatter<std::filesystem::path> : fmt::formatter<std::string> {
+struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
   // parse is inherited from formatter<string_view>.
   template <typename FormatContext>
   auto format(const std::filesystem::path &p, FormatContext &ctx) const {
-    return fmt::format_to(ctx.out(), "{}", p.string());
-  }
-};
-
-// custom fmtlib formatter for date year_month_day
-
-template <>
-struct fmt::formatter<std::chrono::year_month_day>
-    : fmt::formatter<std::string> {
-  // parse is inherited from formatter<string_view>.
-  template <typename FormatContext>
-  auto format(const std::chrono::year_month_day &d, FormatContext &ctx) const {
-    std::string s_date = std::format("{:%Y-%m-%d}", d);
-    return formatter<std::string>::format(s_date, ctx);
+    return std::format_to(ctx.out(), "{}", p.string());
   }
 };
 
@@ -116,7 +100,7 @@ template <typename... Ts> inline std::string catenate(Ts &&...ts) {
     f_string.append("{}");
   }
 
-  return fmt::vformat(f_string, fmt::make_format_args(ts...));
+  return std::vformat(f_string, std::make_format_args(ts...));
 }
 
 // function to split a string on a delimiter and return a vector of string-views
