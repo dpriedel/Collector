@@ -38,6 +38,7 @@
 #ifndef COLLECTORAPP_H_
 #define COLLECTORAPP_H_
 
+#include <chrono>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -47,7 +48,6 @@
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
-#include <date/date.h>
 #include <spdlog/spdlog.h>
 
 #include "TickerConverter.h"
@@ -108,8 +108,8 @@ private:
 
   TickerConverter ticker_converter_;
 
-  date::year_month_day begin_date_;
-  date::year_month_day end_date_;
+  std::chrono::year_month_day begin_date_;
+  std::chrono::year_month_day end_date_;
 
   std::shared_ptr<spdlog::logger> logger_;
 
