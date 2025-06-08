@@ -34,7 +34,7 @@ OUTFILE := CollectorApp
 
 CFG_INC := -I./src -isystem$(BOOSTDIR) 
 
-RPATH_LIB := -Wl,-rpath,$(GCCDIR)/lib64 -Wl,-rpath,$(BOOSTDIR)/lib -Wl,-rpath,/usr/local/lib
+RPATH_LIB := -Wl,-rpath,$(GCCDIR)/lib64 -Wl,-rpath,$(BOOSTDIR)/lib
 
 SDIR1 := .
 SRCS1 := $(SDIR1)/Main.cpp
@@ -67,9 +67,7 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-x64 \
-		-lboost_process-mt-x64 \
-		-L/usr/local/lib \
-		-ldate-tz 
+		-lboost_process-mt-x64 
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -77,7 +75,7 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
 
-COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++26 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++26 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -g -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	DEBUG configuration
@@ -99,9 +97,7 @@ CFG_LIB := -lpthread \
 		-lboost_iostreams-mt-d-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-d-x64 \
-		-lboost_process-mt-x64 \
-		-L/usr/local/lib \
-		-ldate-tz 
+		-lboost_process-mt-x64
 
 OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
 OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
@@ -111,7 +107,7 @@ DEPS=$(OBJS:.o=.d)
 
 # need to figure out cert handling better. Until then, turn off the SSL Cert testing.
 
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
