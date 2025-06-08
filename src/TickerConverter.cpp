@@ -87,10 +87,13 @@ TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name) {
 
   TickerConverter::TickerCIKMap result;
 
+  size_t tickers_to_convert = 0;
+
   while (tickers_file) {
     std::string next_ticker;
     tickers_file >> next_ticker;
     if (!next_ticker.empty()) {
+      ++tickers_to_convert;
       auto pos = ticker_to_CIK_.find(next_ticker);
       if (pos != ticker_to_CIK_.end()) {
         result.insert_or_assign(pos->first, pos->second);
@@ -100,9 +103,9 @@ TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name) {
 
   tickers_file.close();
 
-  spdlog::debug(
-      std::format("T: Did Ticker lookup for: {} tickers from file: {}.",
-                  ticker_to_CIK_.size(), ticker_file_name));
+  spdlog::debug(std::format(
+      "T: Did Ticker lookup for: {} tickers from file: {}. Found {}.",
+      tickers_to_convert, ticker_file_name, result.size()));
 
   return result;
 } // -----  end of method TickerConverter::ConvertFileOfTickersToCIKs  -----

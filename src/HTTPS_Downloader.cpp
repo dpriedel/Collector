@@ -221,7 +221,7 @@ void HTTPS_Downloader::DownloadFile(const fs::path &remote_file_name,
   http::request<http::string_body> req{http::verb::get,
                                        remote_file_name.c_str(), version_};
   req.set(http::field::host, server_name_);
-  req.set(http::field::user_agent, "dpriedel@cox.net");
+  req.set(http::field::user_agent, "driedel@cox.net");
 
   http::write(stream, req);
 

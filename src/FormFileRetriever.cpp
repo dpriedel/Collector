@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <set>
 #include <thread>
@@ -73,18 +74,17 @@ FormFileRetriever::FormFileRetriever(const std::string &host,
 {} // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)
    // -----
 
-auto FormFileRetriever::ExtractFileName(int &found_a_form) {
-  return [&found_a_form](const auto &e) {
-    found_a_form += 1;
-    auto pos = e.find("edgar/data");
+fs::path FormFileRetriever::ExtractFileName(std::string_view index_line) {
+  {
+    auto pos = index_line.find("edgar/data");
     BOOST_ASSERT_MSG(pos != std::string::npos,
                      "Badly formed index file record.\n");
 
-    auto f_name{e.substr(pos)};
+    auto f_name{index_line.substr(pos)};
     f_name.remove_suffix(f_name.size() - f_name.find_last_not_of(" \r\t") - 1);
     fs::path f_path{"/Archives"};
     f_path /= f_name;
-    return std::move(f_path);
+    return f_path;
   };
 }
 
@@ -94,7 +94,8 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
     const TickerConverter::TickerCIKMap &ticker_map) {
   //	Form types can have '/A' suffix to indicate ammended forms.
   //	For now, assume there is space in the file after form name such that I
-  //can 	safely add a trailing space to the form name while doing matching.
+  // can 	safely add a trailing space to the form name while doing
+  // matching.
 
   //	The form index file is sorted by form type in ascending sequence.
   //	The form type is at the beginning of each line.
@@ -123,6 +124,9 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
 
   auto index_data_lines = split_string(index_file_data, '\n');
 
+  spdlog::debug(catenate("F: Index file: ", local_index_file_name.string(),
+                         "has: ", index_data_lines.size(), " lines."));
+
   std::vector<std::string> forms_list{the_form_types};
   std::sort(forms_list.begin(), forms_list.end());
 
@@ -135,10 +139,10 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
 
   //	We may have been given a list of symbols to filter against.  If so,
   //	we need to translate the symbol to its CIK.  We have a table with this
-  //mapping.
+  // mapping.
 
   //	CIKs can have leading zeroes in the table but the leading zeroes are not
-  //in the CIK field 	in the index file.
+  // in the CIK field 	in the index file.
 
   std::vector<COL::sview> cik_list;
   if (!ticker_map.empty()) {
@@ -149,6 +153,9 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
                      return x;
                    });
   }
+  // for (int i = 0; i < 5; ++i) {
+  //   std::cout << cik_list[i] << '\n';
+  // };
 
   auto itor{std::begin(index_data_lines)};
   auto itor_end{std::end(index_data_lines)};
@@ -210,16 +217,28 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
       // found no lines in index file for our form type.
 
       spdlog::debug(
-          catenate("F: Found ", found_a_form, " files for form: ", the_form));
+          catenate("F: Found no files in index file for form: ", the_form));
       continue;
     }
 
+    spdlog::debug(catenate("F: Index file: ", local_index_file_name.string(),
+                           "contains: ", list_end - list_begin,
+                           " form entries for form: ", the_form));
+
     // collect list of files to download for our form type
 
-    transform_if(
-        list_begin, list_end, std::back_inserter(found_files),
-        [&](const auto &e) { return CIK_is_in_CIK_list(e); },
-        ExtractFileName(found_a_form));
+    // transform_if(
+    //     list_begin, list_end, std::back_inserter(found_files),
+    //     [&](const auto &e) { return CIK_is_in_CIK_list(e); },
+    //     ExtractFileName(e);
+
+    for (const auto &list_line = *list_begin; list_begin != list_end;
+         ++list_begin) {
+      if (CIK_is_in_CIK_list(list_line)) {
+        ++found_a_form;
+        found_files.push_back(ExtractFileName(list_line));
+      }
+    }
 
     if (found_a_form != 0) {
       spdlog::debug(
@@ -362,7 +381,7 @@ auto FormFileRetriever::AddToCopyList(const std::string &form_name,
                                       const fs::path &local_form_directory,
                                       bool replace_files) {
   //	construct our lambda function here so it doesn't clutter up our code
-  //below.
+  // below.
 
   return [this, &form_name, &local_form_directory,
           replace_files](const auto &remote_file_name) {
@@ -412,6 +431,10 @@ void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles(
                  AddToCopyList(form_name, local_form_directory, replace_files));
   // now, we expect some magic to happen here...
 
+  std::cout << std::format(
+      "# files to download: {}\n",
+      std::count_if(concurrent_copy_list.begin(), concurrent_copy_list.end(),
+                    [](const auto &x) { return x.first.has_value(); }));
   HTTPS_Downloader the_server(host_, port_);
   auto [success_counter, error_counter] =
       the_server.DownloadFilesConcurrently(concurrent_copy_list, max_at_a_time);

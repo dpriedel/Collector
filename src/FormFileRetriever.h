@@ -105,14 +105,14 @@ protected:
   // ====================  DATA MEMBERS  =======================================
 
 private:
-  auto ExtractFileName(int &found_a_form);
+  fs::path ExtractFileName(std::string_view index_line);
 
   auto AddToCopyList(const std::string &form_name,
                      const fs::path &local_form_directory, bool replace_files);
 
   // ====================  DATA MEMBERS  =======================================
 
-  static constexpr std::string::size_type k_index_CIK_offset = 74;
+  static constexpr std::string::size_type k_index_CIK_offset = 79;
 
   std::string host_;
   std::string port_;
