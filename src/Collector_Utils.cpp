@@ -31,6 +31,7 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <fstream>
 #include <sstream>
 
 #include "Collector_Utils.h"
@@ -68,6 +69,27 @@ Collector::TimeOutException::TimeOutException(const std::string &text)
     : std::runtime_error(text) {
 } /* -----  end of method TimeOutException::TimeOutException  (constructor)
      ----- */
+
+/*
+ * ===  FUNCTION
+ * ====================================================================== Name:
+ * LoadDataFileForUse Description:
+ * =====================================================================================
+ */
+std::string LoadDataFileForUse(const fs::path &file_name) {
+  std::string file_content; // make room for trailing null
+  file_content.reserve(fs::file_size(file_name) + 1);
+  std::ifstream input_file{file_name,
+                           std::ios_base::in | std::ios_base::binary};
+  BOOST_ASSERT_MSG(input_file.is_open(),
+                   std::format("Can't open data file: {}.", file_name).c_str());
+  //    input_file.read(&file_content[0], file_content.size());
+  file_content.assign(std::istreambuf_iterator<char>(input_file),
+                      std::istreambuf_iterator<char>());
+  input_file.close();
+
+  return file_content;
+} /* -----  end of function LoadDataFileForUse  ----- */
 
 std::chrono::year_month_day StringToDateYMD(const std::string &input_format,
                                             const std::string &the_date) {
