@@ -105,7 +105,9 @@ protected:
   // ====================  DATA MEMBERS  =======================================
 
 private:
-  fs::path ExtractFileName(std::string_view index_line);
+  bool CIK_is_in_CIKList(const std::vector<std::string_view> &cik_list,
+                         std::string_view cik_from_index_file);
+  fs::path ExtractFileName(std::string_view index_file_name);
 
   auto AddToCopyList(const std::string &form_name,
                      const fs::path &local_form_directory, bool replace_files);

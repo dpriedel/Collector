@@ -31,17 +31,22 @@
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <algorithm>
-#include <fstream>
 #include <iostream>
 #include <iterator>
+#include <ranges>
 #include <set>
-#include <thread>
 
 #include <spdlog/spdlog.h>
 
 #include "Collector_Utils.h"
 #include "FormFileRetriever.h"
 #include "HTTPS_Downloader.h"
+
+// use these values to index into our index record fields.
+
+constexpr size_t K_CIK_FLD = 0;
+constexpr size_t K_FORM_FLD = 2;
+constexpr size_t K_FILE_FLD = 4;
 
 // define our own 'transform_if' for now.
 // don't use the one from boost because it pulls in a
@@ -74,16 +79,22 @@ FormFileRetriever::FormFileRetriever(const std::string &host,
 {} // -----  end of method FormFileRetriever::FormFileRetriever  (constructor)
    // -----
 
-fs::path FormFileRetriever::ExtractFileName(std::string_view index_line) {
-  {
-    auto pos = index_line.find("edgar/data");
-    BOOST_ASSERT_MSG(pos != std::string::npos,
-                     "Badly formed index file record.\n");
+bool FormFileRetriever::CIK_is_in_CIKList(
+    const std::vector<std::string_view> &cik_list,
+    std::string_view cik_from_index_file) {
+  if (cik_list.empty()) {
+    return true; //	no filter so pass everything
+  }
 
-    auto f_name{index_line.substr(pos)};
-    f_name.remove_suffix(f_name.size() - f_name.find_last_not_of(" \r\t") - 1);
+  return std::ranges::find(cik_list, cik_from_index_file) != cik_list.end();
+};
+
+fs::path FormFileRetriever::ExtractFileName(std::string_view index_file_name) {
+  {
+    index_file_name.remove_suffix(
+        index_file_name.size() - index_file_name.find_last_not_of(" \r\t") - 1);
     fs::path f_path{"/Archives"};
-    f_path /= f_name;
+    f_path /= index_file_name;
     return f_path;
   };
 }
@@ -92,17 +103,10 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
     const std::vector<std::string> &the_form_types,
     const fs::path &local_index_file_name,
     const TickerConverter::TickerCIKMap &ticker_map) {
-  //	Form types can have '/A' suffix to indicate ammended forms.
-  //	For now, assume there is space in the file after form name such that I
-  // can 	safely add a trailing space to the form name while doing
-  // matching.
 
-  //	The form index file is sorted by form type in ascending sequence.
-  //	The form type is at the beginning of each line.
-  //	The last field of each line is the path to the associated data file.
-
-  //	the list of forms to search for needs to be sorted as well to match
-  //	the sequence of forms in the index file.
+  // The master.idx file is in order by CIK.
+  // CIK is the first field in each data line.
+  // Data lines are delimited by '|' characters.
 
   spdlog::debug(
       catenate("F: Searching index file: ", local_index_file_name.string()));
@@ -110,19 +114,12 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
   // we load our file into memory so we have more flexibility in how we search
   // it.
 
-  std::string index_file_data(fs::file_size(local_index_file_name), '\0');
-  std::ifstream index_file{local_index_file_name,
-                           std::ios_base::in | std::ios_base::binary};
-  BOOST_ASSERT_MSG(index_file, catenate("Unable to open index file: ",
-                                        local_index_file_name.string())
-                                   .c_str());
-  index_file.read(&index_file_data[0], index_file_data.size());
-  index_file.close();
+  const std::string index_file_data = LoadDataFileForUse(local_index_file_name);
 
   // split into lines
   // if there is a '\r' at the end of a line, it will be stripped out later.
 
-  auto index_data_lines = split_string(index_file_data, '\n');
+  auto index_data_lines = split_string<std::string_view>(index_file_data, "\n");
 
   spdlog::debug(catenate("F: Index file: ", local_index_file_name.string(),
                          "has: ", index_data_lines.size(), " lines."));
@@ -135,14 +132,12 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
   forms_list.erase(std::unique(forms_list.begin(), forms_list.end()),
                    forms_list.end());
 
-  FormsAndFilesList results;
-
-  //	We may have been given a list of symbols to filter against.  If so,
-  //	we need to translate the symbol to its CIK.  We have a table with this
+  // We may have been given a list of symbols to filter against.  If so,
+  // we need to translate the symbol to its CIK.  We have a table with this
   // mapping.
 
-  //	CIKs can have leading zeroes in the table but the leading zeroes are not
-  // in the CIK field 	in the index file.
+  // CIKs can have leading zeroes in the table but the leading zeroes are not
+  // in the CIK field in the index file.
 
   std::vector<COL::sview> cik_list;
   if (!ticker_map.empty()) {
@@ -156,6 +151,8 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
   // for (int i = 0; i < 5; ++i) {
   //   std::cout << cik_list[i] << '\n';
   // };
+
+  std::sort(std::begin(cik_list), std::end(cik_list));
 
   auto itor{std::begin(index_data_lines)};
   auto itor_end{std::end(index_data_lines)};
@@ -171,83 +168,36 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
                             local_index_file_name.string())
                        .c_str());
 
+  // point to first data line.
+
+  // for each data line in the index file,
+  // - extract the form name
+  // - see if the form is one we are looking for.
+  // -- if so,
+  // -- check if the CIK is in our list of CIKs to process
+  // -- if so
+  // --- add the filename to the list for that form.
+
+  // point to the first data record in the master index file
+  //
   ++form_itor;
 
-  // some functions to use in our processing.
+  FormsAndFilesList results;
+  for (const auto &the_form : forms_list) {
+    results[the_form] = std::vector<fs::path>{};
+  }
 
-  auto find_CIK_in_line = [&](const auto &next_line) {
-    auto pos1 = next_line.find_first_of(' ', k_index_CIK_offset);
-    auto cik_from_index_file =
-        next_line.substr(k_index_CIK_offset, pos1 - k_index_CIK_offset);
-    return cik_from_index_file;
-  };
+  auto data_lines = std::ranges::subrange(form_itor, itor_end);
 
-  auto CIK_is_in_CIK_list = [&](const auto &next_line) {
-    if (cik_list.empty()) {
-      return true; //	no filter so pass everything
+  for (const auto data_line : data_lines) {
+    const auto line_flds = split_string<std::string_view>(data_line, "|");
+    const auto frm = line_flds[K_FORM_FLD];
+    const std::string form{frm.begin(), frm.end()};
+
+    if (std::ranges::find(forms_list, form) != forms_list.end() &&
+        CIK_is_in_CIKList(cik_list, line_flds[K_CIK_FLD])) {
+      results[{form}].push_back(ExtractFileName(line_flds[K_FILE_FLD]));
     }
-
-    auto cik_from_index_file = find_CIK_in_line(next_line);
-    auto pos = std::find(std::begin(cik_list), std::end(cik_list),
-                         cik_from_index_file);
-    return (pos != cik_list.end());
-  };
-
-  for (auto &the_form : forms_list) {
-    the_form += ' ';
-    int found_a_form{0};
-    std::vector<fs::path> found_files;
-
-    // first, find the entries, if any, for our form.
-
-    auto list_begin = std::lower_bound(
-        form_itor, itor_end, the_form,
-        [](const auto &the_line, const auto &the_form) {
-          return the_line.compare(0, the_form.size(), the_form.data(),
-                                  the_form.size()) < 0;
-        });
-    auto list_end = std::upper_bound(
-        list_begin, itor_end, the_form,
-        [](const auto &the_form, const auto &the_line) {
-          return the_form.compare(0, the_form.size(), the_line.data(),
-                                  the_form.size()) < 0;
-        });
-
-    if (list_begin == list_end) {
-      // found no lines in index file for our form type.
-
-      spdlog::debug(
-          catenate("F: Found no files in index file for form: ", the_form));
-      continue;
-    }
-
-    spdlog::debug(catenate("F: Index file: ", local_index_file_name.string(),
-                           "contains: ", list_end - list_begin,
-                           " form entries for form: ", the_form));
-
-    // collect list of files to download for our form type
-
-    // transform_if(
-    //     list_begin, list_end, std::back_inserter(found_files),
-    //     [&](const auto &e) { return CIK_is_in_CIK_list(e); },
-    //     ExtractFileName(e);
-
-    for (const auto &list_line = *list_begin; list_begin != list_end;
-         ++list_begin) {
-      if (CIK_is_in_CIK_list(list_line)) {
-        ++found_a_form;
-        found_files.push_back(ExtractFileName(list_line));
-      }
-    }
-
-    if (found_a_form != 0) {
-      spdlog::debug(
-          catenate("F: Found ", found_a_form, " files for form: ", the_form));
-      the_form.pop_back(); //	remove trailing space we added at top of loop
-      results[the_form] = found_files;
-    }
-
-    form_itor = list_end;
   }
 
   int grand_total{0};
@@ -256,7 +206,7 @@ FormFileRetriever::FormsAndFilesList FormFileRetriever::FindFilesForForms(
   }
 
   spdlog::debug(catenate("F: Found a total of ", grand_total,
-                         " files for specified forms."));
+                         " files for specified forms: ", forms_list));
   return results;
 } // -----  end of method FormFileRetriever::FindFilesForForms  -----
 

@@ -97,7 +97,7 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
       this->GetRemoteIndexList(remote_diretory_name);
 
   std::string looking_for =
-      catenate("form.", std::format("{:%Y%m%d}", input_date_), ".idx");
+      catenate("master.", std::format("{:%Y%m%d}", input_date_), ".idx");
 
   // index files may or may not be gzipped, so we need to exclude possible file
   // name suffix from comparisons
@@ -112,7 +112,7 @@ fs::path DailyIndexFileRetriever::FindRemoteIndexFileNameNearestDate(
                             std::format("{:%F}", input_date_))
                        .c_str());
 
-  actual_file_date_ = StringToDateYMD("%Y%m%d", (*pos).substr(5, 8));
+  actual_file_date_ = StringToDateYMD("%Y%m%d", (*pos).substr(7, 8));
 
   spdlog::debug(catenate("D: Found Daily Index File for date: ",
                          std::format("{:%F}", actual_file_date_)));
@@ -135,9 +135,9 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
                " to: ", std::format("{:%F}", end_date_)));
 
   auto looking_for_start =
-      std::string{"form."} + std::format("{:%Y%m%d}", start_date_) + ".idx";
+      std::string{"master."} + std::format("{:%Y%m%d}", start_date_) + ".idx";
   auto looking_for_end =
-      std::string{"form."} + std::format("{:%Y%m%d}", end_date_) + ".idx";
+      std::string{"master."} + std::format("{:%Y%m%d}", end_date_) + ".idx";
 
   auto remote_directory_list =
       MakeIndexFileNamesForDateRange(begin_date, end_date);
@@ -178,11 +178,11 @@ DailyIndexFileRetriever::FindRemoteIndexFileNamesForDateRange(
 
   actual_start_date_ = StringToDateYMD(
       "%Y%m%d",
-      remote_daily_index_file_name_list.back().filename().string().substr(5,
+      remote_daily_index_file_name_list.back().filename().string().substr(7,
                                                                           8));
   actual_end_date_ = StringToDateYMD(
       "%Y%m%d",
-      remote_daily_index_file_name_list.front().filename().string().substr(5,
+      remote_daily_index_file_name_list.front().filename().string().substr(7,
                                                                            8));
 
   spdlog::debug(catenate("D: Found ", remote_daily_index_file_name_list.size(),
@@ -221,7 +221,7 @@ DailyIndexFileRetriever::GetRemoteIndexList(const fs::path &remote_directory) {
 
   auto not_form =
       std::partition(directory_list.begin(), directory_list.end(),
-                     [](std::string &x) { return x.starts_with("form"); });
+                     [](std::string &x) { return x.starts_with("master"); });
   directory_list.erase(not_form, directory_list.end());
 
   std::sort(directory_list.begin(), directory_list.end());

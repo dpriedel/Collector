@@ -72,7 +72,7 @@ fs::path QuarterlyIndexFileRetriever::MakeQuarterlyIndexPathName(
 
   auto remote_quarterly_index_file_name =
       GeneratePath(remote_directory_prefix_, day_in_quarter);
-  remote_quarterly_index_file_name /= "form.zip"; // we know this.
+  remote_quarterly_index_file_name /= "master.zip"; // we know this.
 
   return remote_quarterly_index_file_name;
 
@@ -148,7 +148,7 @@ QuarterlyIndexFileRetriever::MakeIndexFileNamesForDateRange(
                  std::back_inserter(results), [this](const auto &qtr_begin) {
                    auto remote_file_name =
                        GeneratePath(this->remote_directory_prefix_, qtr_begin);
-                   return (std::move(remote_file_name /= "form.zip"));
+                   return (std::move(remote_file_name /= "master.zip"));
                  });
 
   return results;
