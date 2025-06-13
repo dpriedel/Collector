@@ -55,156 +55,152 @@
 
 // constexpr const char* TickerConverter::NotFound;
 
-std::string TickerConverter::ConvertTickerToCIK(const std::string &ticker,
-                                                int pause) {
-  //	we have a cache of our already looked up tickers so let's check that
-  // first
+std::string TickerConverter::ConvertTickerToCIK(const std::string &ticker, int pause)
+{
+    //	we have a cache of our already looked up tickers so let's check that
+    // first
 
-  spdlog::debug(catenate("T: Doing CIK lookup for ticker: ", ticker));
+    spdlog::debug(catenate("T: Doing CIK lookup for ticker: ", ticker));
 
-  decltype(auto) pos = ticker_to_CIK_.find(ticker);
-  if (pos != ticker_to_CIK_.end()) {
-    spdlog::debug(catenate("T: Found CIK: ", pos->second, " in cache."));
-    return pos->second;
-  }
+    decltype(auto) pos = ticker_to_CIK_.find(ticker);
+    if (pos != ticker_to_CIK_.end())
+    {
+        spdlog::debug(catenate("T: Found CIK: ", pos->second, " in cache."));
+        return pos->second;
+    }
 
-  auto cik = NotFound;
-  spdlog::debug(std::format("T: Unable to find CIK for ticker: {}.", ticker));
+    auto cik = NotFound;
+    spdlog::debug(std::format("T: Unable to find CIK for ticker: {}.", ticker));
 
-  return cik;
+    return cik;
 } // -----  end of method TickerConverter::ConvertTickerToCIK  -----
 
-TickerConverter::TickerCIKMap
-TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name) {
-  BOOST_ASSERT_MSG(!ticker_to_CIK_.empty(),
-                   "Must load ticker cache file data before doing lookups.");
+TickerConverter::TickerCIKMap TickerConverter::ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name)
+{
+    BOOST_ASSERT_MSG(!ticker_to_CIK_.empty(), "Must load ticker cache file data before doing lookups.");
 
-  std::ifstream tickers_file{ticker_file_name};
-  BOOST_ASSERT_MSG(
-      tickers_file.is_open(),
-      std::format("Unable to open tickers list file: {}", ticker_file_name)
-          .c_str());
+    std::ifstream tickers_file{ticker_file_name};
+    BOOST_ASSERT_MSG(tickers_file.is_open(),
+                     std::format("Unable to open tickers list file: {}", ticker_file_name).c_str());
 
-  TickerConverter::TickerCIKMap result;
+    TickerConverter::TickerCIKMap result;
 
-  size_t tickers_to_convert = 0;
+    size_t tickers_to_convert = 0;
 
-  while (tickers_file) {
-    std::string next_ticker;
-    tickers_file >> next_ticker;
-    if (!next_ticker.empty()) {
-      ++tickers_to_convert;
-      auto pos = ticker_to_CIK_.find(next_ticker);
-      if (pos != ticker_to_CIK_.end()) {
-        result.insert_or_assign(pos->first, pos->second);
-      }
+    while (tickers_file)
+    {
+        std::string next_ticker;
+        tickers_file >> next_ticker;
+        if (!next_ticker.empty())
+        {
+            ++tickers_to_convert;
+            auto pos = ticker_to_CIK_.find(next_ticker);
+            if (pos != ticker_to_CIK_.end())
+            {
+                result.insert_or_assign(pos->first, pos->second);
+            }
+        }
     }
-  }
 
-  tickers_file.close();
+    tickers_file.close();
 
-  spdlog::debug(std::format(
-      "T: Did Ticker lookup for: {} tickers from file: {}. Found {}.",
-      tickers_to_convert, ticker_file_name, result.size()));
+    spdlog::debug(std::format("T: Did Ticker lookup for: {} tickers from file: {}. Found {}.", tickers_to_convert,
+                              ticker_file_name, result.size()));
 
-  return result;
+    return result;
 } // -----  end of method TickerConverter::ConvertFileOfTickersToCIKs  -----
 
 int TickerConverter::DownloadTickerToCIKFile(const fs::path &ticker_file_name,
                                              const std::string &server_name,
-                                             const std::string &port) {
-  spdlog::debug(
-      std::format("T: Downloading tickers file to: {} .", ticker_file_name));
+                                             const std::string &port)
+{
+    spdlog::debug(std::format("T: Downloading tickers file to: {} .", ticker_file_name));
 
-  std::string uri = "/files/company_tickers.json";
+    std::string uri = "/files/company_tickers.json";
 
-  HTTPS_Downloader edgar_server(server_name, port);
+    HTTPS_Downloader edgar_server(server_name, port);
 
-  std::string ticker_to_CIK_data = edgar_server.RetrieveDataFromServer(uri);
-  BOOST_ASSERT_MSG(!ticker_to_CIK_data.empty(),
-                   "Unable to download ticker-to-CIK data.");
+    std::string ticker_to_CIK_data = edgar_server.RetrieveDataFromServer(uri);
+    BOOST_ASSERT_MSG(!ticker_to_CIK_data.empty(), "Unable to download ticker-to-CIK data.");
 
-  //  ticker data is in json format.  we will store as tab-delimited file.
+    //  ticker data is in json format.  we will store as tab-delimited file.
 
-  const auto json_listing = boost::json::parse(ticker_to_CIK_data);
+    const auto json_listing = boost::json::parse(ticker_to_CIK_data);
 
-  std::string extracted_data;
-  int ticker_count = 0;
+    std::string extracted_data;
+    int ticker_count = 0;
 
-  for (const auto &[k, v] : json_listing.as_object()) {
-    extracted_data.append(std::format(
-        "{}\t{:0>10d}\n", v.as_object().at("ticker").as_string().c_str(),
-        v.as_object().at("cik_str").as_int64()));
-    ++ticker_count;
-  }
-  std::ofstream tickers_file{ticker_file_name,
-                             std::ios::out | std::ios::binary};
-  BOOST_ASSERT_MSG(
-      tickers_file.is_open(),
-      std::format("Unable to open ticker_CIK file: {}", ticker_file_name)
-          .c_str());
-  tickers_file.write(extracted_data.data(), extracted_data.size());
-  tickers_file.close();
+    for (const auto &[k, v] : json_listing.as_object())
+    {
+        extracted_data.append(std::format("{}\t{:0>10d}\n", v.as_object().at("ticker").as_string().c_str(),
+                                          v.as_object().at("cik_str").as_int64()));
+        ++ticker_count;
+    }
+    std::ofstream tickers_file{ticker_file_name, std::ios::out | std::ios::binary};
+    BOOST_ASSERT_MSG(tickers_file.is_open(),
+                     std::format("Unable to open ticker_CIK file: {}", ticker_file_name).c_str());
+    tickers_file.write(extracted_data.data(), extracted_data.size());
+    tickers_file.close();
 
-  spdlog::debug(std::format("T: Did Ticker download for: {} ticker symbols.",
-                            ticker_count));
+    spdlog::debug(std::format("T: Did Ticker download for: {} ticker symbols.", ticker_count));
 
-  return ticker_count;
+    return ticker_count;
 } // -----  end of method TickerConverter::ConvertTickerFileToCIKs  -----
 
-std::string SEC_CIK_Lookup(COL::sview ticker, int pause) {
-  // let's use our HTTPS_Downloader class since it knows how to do what we want
-  // to do.
+std::string SEC_CIK_Lookup(COL::sview ticker, int pause)
+{
+    // let's use our HTTPS_Downloader class since it knows how to do what we want
+    // to do.
 
-  std::chrono::seconds pause_time{pause};
+    std::chrono::seconds pause_time{pause};
 
-  std::string uri = catenate("/cgi-bin/browse-edgar?CIK=", ticker,
-                             "&Find=Search&owner=exclude&action=getcompany");
+    std::string uri = catenate("/cgi-bin/browse-edgar?CIK=", ticker, "&Find=Search&owner=exclude&action=getcompany");
 
-  HTTPS_Downloader edgar_server("www.sec.gov", "443");
+    HTTPS_Downloader edgar_server("www.sec.gov", "443");
 
-  std::string the_html = edgar_server.RetrieveDataFromServer(uri);
+    std::string the_html = edgar_server.RetrieveDataFromServer(uri);
 
-  boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
+    boost::regex ex{R"***(name="CIK"\s*value="(\d+)")***"};
 
-  boost::smatch cik;
-  bool found = boost::regex_search(the_html, cik, ex);
+    boost::smatch cik;
+    bool found = boost::regex_search(the_html, cik, ex);
 
-  std::this_thread::sleep_for(pause_time);
+    std::this_thread::sleep_for(pause_time);
 
-  if (found) {
-    return cik[1].str();
-  }
-  return {};
+    if (found)
+    {
+        return cik[1].str();
+    }
+    return {};
 } // -----  end of method ConvertTickerToCIK  -----
 
-int TickerConverter::UseCacheFile(const fs::path &cache_file_name) {
-  BOOST_ASSERT_MSG(
-      fs::exists(cache_file_name),
-      std::format("Unable to find ticker_CIK file: {}", cache_file_name)
-          .c_str());
-  ticker_to_CIK_.clear();
-  cache_file_name_ = cache_file_name;
+int TickerConverter::UseCacheFile(const fs::path &cache_file_name)
+{
+    BOOST_ASSERT_MSG(fs::exists(cache_file_name),
+                     std::format("Unable to find ticker_CIK file: {}", cache_file_name).c_str());
+    ticker_to_CIK_.clear();
+    cache_file_name_ = cache_file_name;
 
-  std::ifstream ticker_cache_file{cache_file_name_};
+    std::ifstream ticker_cache_file{cache_file_name_};
 
-  while (ticker_cache_file) {
-    std::string ticker;
-    std::string cik;
+    while (ticker_cache_file)
+    {
+        std::string ticker;
+        std::string cik;
 
-    ticker_cache_file >> ticker >> cik;
-    if (ticker.empty() || cik.empty()) {
-      continue;
+        ticker_cache_file >> ticker >> cik;
+        if (ticker.empty() || cik.empty())
+        {
+            continue;
+        }
+
+        ticker_to_CIK_[ticker] = cik;
     }
 
-    ticker_to_CIK_[ticker] = cik;
-  }
+    ticker_count_start_ = ticker_to_CIK_.size();
+    spdlog::debug(catenate("T: Loaded ", ticker_count_start_, " tickers from file: ", cache_file_name.string()));
 
-  ticker_count_start_ = ticker_to_CIK_.size();
-  spdlog::debug(catenate("T: Loaded ", ticker_count_start_,
-                         " tickers from file: ", cache_file_name.string()));
-
-  return ticker_count_start_;
+    return ticker_count_start_;
 
 } // -----  end of method TickerConverter::UseTickerFile  -----
 

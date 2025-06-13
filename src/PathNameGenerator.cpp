@@ -41,18 +41,17 @@
  *--------------------------------------------------------------------------------------
  */
 
-DateRange::DateRange(std::chrono::year_month_day start_date,
-                     std::chrono::year_month_day end_date)
+DateRange::DateRange(std::chrono::year_month_day start_date, std::chrono::year_month_day end_date)
     : start_date_{start_date}, end_date_{end_date}
 
 {
-  //	auto working_date1 = std::chrono::year_month_day(start_date.year(),
-  //(start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2,
-  // 1); 	auto working_date2 =
-  // std::chrono::year_month_day(end_date.year(), (end_date.month() / 3 +
-  //(end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
+    //	auto working_date1 = std::chrono::year_month_day(start_date.year(),
+    //(start_date.month() / 3 + (start_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2,
+    // 1); 	auto working_date2 =
+    // std::chrono::year_month_day(end_date.year(), (end_date.month() / 3 +
+    //(end_date.month() % 3 == 0 ? 0 : 1)) * 3 - 2, 1);
 
-  end_date_ = *(++QuarterlyIterator{end_date});
+    end_date_ = *(++QuarterlyIterator{end_date});
 } /* -----  end of method DateRange::DateRange  (constructor)  ----- */
 
 /*
@@ -64,32 +63,30 @@ DateRange::DateRange(std::chrono::year_month_day start_date,
  */
 
 QuarterlyIterator::QuarterlyIterator(std::chrono::year_month_day start_date)
-    : start_date_{start_date}, start_year_{start_date.year()},
-      working_year_{start_date.year()}, start_month_{start_date.month()},
-      working_month_{start_date.month()}
+    : start_date_{start_date}, start_year_{start_date.year()}, working_year_{start_date.year()},
+      start_month_{start_date.month()}, working_month_{start_date.month()}
 
 {
-  // compute the first day of the quarter and use that as the base of
-  // calculations
+    // compute the first day of the quarter and use that as the base of
+    // calculations
 
-  working_date_ = std::chrono::year_month_day{
-      start_date.year(),
-      std::chrono::month{
-          (start_date.month().operator unsigned int() / 3 +
-           (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)) *
-              3 -
-          2},
-      std::chrono::day{1}};
-  working_month_ = working_date_.month();
+    working_date_ =
+        std::chrono::year_month_day{start_date.year(),
+                                    std::chrono::month{(start_date.month().operator unsigned int() / 3 +
+                                                        (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)) *
+                                                           3 -
+                                                       2},
+                                    std::chrono::day{1}};
+    working_month_ = working_date_.month();
 } /* -----  end of method QuarterlyIterator::QuarterlyIterator  (constructor)
      ----- */
 
 QuarterlyIterator &QuarterlyIterator::operator++()
 
 {
-  working_date_ += a_quarter;
+    working_date_ += a_quarter;
 
-  return *this;
+    return *this;
 } /* -----  end of method QuarterlyIterator::operator++  ----- */
 
 /*
@@ -98,19 +95,16 @@ QuarterlyIterator &QuarterlyIterator::operator++()
  * GeneratePath Description:
  * =====================================================================================
  */
-fs::path GeneratePath(const fs::path &prefix,
-                      std::chrono::year_month_day quarter_begin)
+fs::path GeneratePath(const fs::path &prefix, std::chrono::year_month_day quarter_begin)
 
 {
-  auto working_year = quarter_begin.year();
-  auto working_month = quarter_begin.month();
+    auto working_year = quarter_begin.year();
+    auto working_month = quarter_begin.month();
 
-  auto SEC_path = prefix;
-  SEC_path /= std::to_string(working_year.operator int());
-  SEC_path /=
-      "QTR" +
-      std::to_string(working_month.operator unsigned int() / 3 +
-                     (working_month.operator unsigned int() % 3 == 0 ? 0 : 1));
+    auto SEC_path = prefix;
+    SEC_path /= std::to_string(working_year.operator int());
+    SEC_path /= "QTR" + std::to_string(working_month.operator unsigned int() / 3 +
+                                       (working_month.operator unsigned int() % 3 == 0 ? 0 : 1));
 
-  return SEC_path;
+    return SEC_path;
 } /* -----  end of function GeneratePath  ----- */
