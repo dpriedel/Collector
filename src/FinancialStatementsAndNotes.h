@@ -33,79 +33,84 @@ namespace fs = std::filesystem;
 
 using namespace std::chrono_literals;
 
-class FinancialStatementsAndNotes_gen {
+class FinancialStatementsAndNotes_gen
+{
 public:
-  using iterator_category = std::forward_iterator_tag;
-  using value_type =
-      std::pair<std::string, std::string>; // file name, directory name
-  using difference_type = ptrdiff_t;
-  using const_pointer = value_type const *;
-  using const_reference = value_type const &;
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::pair<std::string, std::string>; // file name, directory name
+    using difference_type = ptrdiff_t;
+    using const_pointer = value_type const *;
+    using const_reference = value_type const &;
 
 public:
-  // ====================  LIFECYCLE     =======================================
+    // ====================  LIFECYCLE     =======================================
 
-  FinancialStatementsAndNotes_gen() = default; // constructor
-  FinancialStatementsAndNotes_gen(
-      std::chrono::year_month_day start_date,
-      std::chrono::year_month_day end_date); // constructor
+    FinancialStatementsAndNotes_gen() = default; // constructor
+    FinancialStatementsAndNotes_gen(std::chrono::year_month_day start_date,
+                                    std::chrono::year_month_day end_date); // constructor
 
-  // ====================  ACCESSORS     =======================================
+    // ====================  ACCESSORS     =======================================
 
-  std::string next_file_name() const;
+    std::string next_file_name() const;
 
-  // ====================  MUTATORS      =======================================
+    // ====================  MUTATORS      =======================================
 
-  FinancialStatementsAndNotes_gen &operator++();
-  FinancialStatementsAndNotes_gen operator++(int) {
-    FinancialStatementsAndNotes_gen retval = *this;
-    ++(*this);
-    return retval;
-  }
+    FinancialStatementsAndNotes_gen &operator++();
+    FinancialStatementsAndNotes_gen operator++(int)
+    {
+        FinancialStatementsAndNotes_gen retval = *this;
+        ++(*this);
+        return retval;
+    }
 
-  // ====================  OPERATORS     =======================================
+    // ====================  OPERATORS     =======================================
 
-  const_reference operator*() const { return current_value_; }
-  const_pointer operator->() const { return &current_value_; }
+    const_reference operator*() const
+    {
+        return current_value_;
+    }
+    const_pointer operator->() const
+    {
+        return &current_value_;
+    }
 
-  bool operator==(const FinancialStatementsAndNotes_gen &rhs) const {
-    return current_date_ == rhs.current_date_;
-  }
-  bool operator!=(const FinancialStatementsAndNotes_gen &rhs) const {
-    return !(*this == rhs);
-  }
+    bool operator==(const FinancialStatementsAndNotes_gen &rhs) const
+    {
+        return current_date_ == rhs.current_date_;
+    }
+    bool operator!=(const FinancialStatementsAndNotes_gen &rhs) const
+    {
+        return !(*this == rhs);
+    }
 
 protected:
-  // ====================  METHODS       =======================================
+    // ====================  METHODS       =======================================
 
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
 private:
-  // ====================  METHODS       =======================================
+    // ====================  METHODS       =======================================
 
-  void format_current_value(void);
+    void format_current_value(void);
 
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
-  inline static constexpr std::chrono::months a_month{1};
-  inline static constexpr std::chrono::years a_year{1};
+    inline static constexpr std::chrono::months a_month{1};
+    inline static constexpr std::chrono::years a_year{1};
 
-  inline static constexpr std::chrono::year_month first_quarterly_ =
-      2009y / std::chrono::January;
-  inline static constexpr std::chrono::year_month last_quarterly_ =
-      2023y / std::chrono::December;
-  inline static constexpr std::chrono::year_month last_quarterly_qtr =
-      2023y / std::chrono::October; // using months for quarters
-  inline static constexpr std::chrono::year_month first_monthly_ =
-      2024y / std::chrono::January;
+    inline static constexpr std::chrono::year_month first_quarterly_ = 2009y / std::chrono::January;
+    inline static constexpr std::chrono::year_month last_quarterly_ = 2023y / std::chrono::December;
+    inline static constexpr std::chrono::year_month last_quarterly_qtr =
+        2023y / std::chrono::October; // using months for quarters
+    inline static constexpr std::chrono::year_month first_monthly_ = 2024y / std::chrono::January;
 
-  std::chrono::year_month start_date_;
-  std::chrono::year_month end_date_;
+    std::chrono::year_month start_date_;
+    std::chrono::year_month end_date_;
 
-  std::chrono::year_month current_date_;
+    std::chrono::year_month current_date_;
 
-  value_type current_value_;
-  bool monthly_mode_ = false;
+    value_type current_value_;
+    bool monthly_mode_ = false;
 
 }; // -----  end of class FinancialStatementsAndNotes_gen  -----
 
@@ -113,48 +118,50 @@ private:
 //        Class:  FinancialStatementsAndNotes
 //  Description:  generator for financial statement and notes file names
 // =====================================================================================
-class FinancialStatementsAndNotes {
+class FinancialStatementsAndNotes
+{
 public:
-  using const_iterator = FinancialStatementsAndNotes_gen;
+    using const_iterator = FinancialStatementsAndNotes_gen;
 
 public:
-  // ====================  LIFECYCLE     =======================================
+    // ====================  LIFECYCLE     =======================================
 
-  FinancialStatementsAndNotes(
-      std::chrono::year_month_day start_date,
-      std::chrono::year_month_day end_date); // constructor
+    FinancialStatementsAndNotes(std::chrono::year_month_day start_date,
+                                std::chrono::year_month_day end_date); // constructor
 
-  // ====================  ACCESSORS     =======================================
+    // ====================  ACCESSORS     =======================================
 
-  const_iterator begin() const {
-    return FinancialStatementsAndNotes_gen{start_date_, end_date_};
-  }
-  const_iterator end() const { return FinancialStatementsAndNotes_gen(); }
+    const_iterator begin() const
+    {
+        return FinancialStatementsAndNotes_gen{start_date_, end_date_};
+    }
+    const_iterator end() const
+    {
+        return FinancialStatementsAndNotes_gen();
+    }
 
-  // ====================  MUTATORS      =======================================
+    // ====================  MUTATORS      =======================================
 
-  void download_files(const std::string &server_name, const std::string &port,
-                      const fs::path &download_destination_zips,
-                      const fs::path &download_destination_files,
-                      bool replace_files);
+    void download_files(const std::string &server_name, const std::string &port,
+                        const fs::path &download_destination_zips, const fs::path &download_destination_files,
+                        bool replace_files);
 
-  // ====================  OPERATORS     =======================================
+    // ====================  OPERATORS     =======================================
 
 protected:
-  // ====================  METHODS       =======================================
+    // ====================  METHODS       =======================================
 
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
 private:
-  // ====================  METHODS       =======================================
+    // ====================  METHODS       =======================================
 
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
-  inline static const fs::path source_directory =
-      "/files/dera/data/financial-statement-notes-data-sets";
+    inline static const fs::path source_directory = "/files/dera/data/financial-statement-notes-data-sets";
 
-  std::chrono::year_month_day start_date_;
-  std::chrono::year_month_day end_date_;
+    std::chrono::year_month_day start_date_;
+    std::chrono::year_month_day end_date_;
 
 }; // -----  end of class FinancialStatementsAndNotes  -----
 

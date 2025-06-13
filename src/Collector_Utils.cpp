@@ -31,10 +31,10 @@
 /* You should have received a copy of the GNU General Public License */
 /* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "Collector_Utils.h"
+
 #include <fstream>
 #include <sstream>
-
-#include "Collector_Utils.h"
 
 /*
  *--------------------------------------------------------------------------------------
@@ -43,13 +43,13 @@
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-Collector::AssertionException::AssertionException(const char *text)
-    : std::invalid_argument(text) {
+Collector::AssertionException::AssertionException(const char *text) : std::invalid_argument(text)
+{
 } /* -----  end of method AssertionException::AssertionException  (constructor)
      ----- */
 
-Collector::AssertionException::AssertionException(const std::string &text)
-    : std::invalid_argument(text) {
+Collector::AssertionException::AssertionException(const std::string &text) : std::invalid_argument(text)
+{
 } /* -----  end of method AssertionException::AssertionException  (constructor)
      ----- */
 
@@ -60,13 +60,13 @@ Collector::AssertionException::AssertionException(const std::string &text)
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-Collector::TimeOutException::TimeOutException(const char *text)
-    : std::runtime_error(text) {
+Collector::TimeOutException::TimeOutException(const char *text) : std::runtime_error(text)
+{
 } /* -----  end of method TimeOutException::TimeOutException  (constructor)
      ----- */
 
-Collector::TimeOutException::TimeOutException(const std::string &text)
-    : std::runtime_error(text) {
+Collector::TimeOutException::TimeOutException(const std::string &text) : std::runtime_error(text)
+{
 } /* -----  end of method TimeOutException::TimeOutException  (constructor)
      ----- */
 
@@ -76,57 +76,54 @@ Collector::TimeOutException::TimeOutException(const std::string &text)
  * LoadDataFileForUse Description:
  * =====================================================================================
  */
-std::string LoadDataFileForUse(const fs::path &file_name) {
-  std::string file_content; // make room for trailing null
-  file_content.reserve(fs::file_size(file_name) + 1);
-  std::ifstream input_file{file_name,
-                           std::ios_base::in | std::ios_base::binary};
-  BOOST_ASSERT_MSG(input_file.is_open(),
-                   std::format("Can't open data file: {}.", file_name).c_str());
-  //    input_file.read(&file_content[0], file_content.size());
-  file_content.assign(std::istreambuf_iterator<char>(input_file),
-                      std::istreambuf_iterator<char>());
-  input_file.close();
+std::string LoadDataFileForUse(const fs::path &file_name)
+{
+    std::string file_content; // make room for trailing null
+    file_content.reserve(fs::file_size(file_name) + 1);
+    std::ifstream input_file{file_name, std::ios_base::in | std::ios_base::binary};
+    BOOST_ASSERT_MSG(input_file.is_open(), std::format("Can't open data file: {}.", file_name).c_str());
+    //    input_file.read(&file_content[0], file_content.size());
+    file_content.assign(std::istreambuf_iterator<char>(input_file), std::istreambuf_iterator<char>());
+    input_file.close();
 
-  return file_content;
+    return file_content;
 } /* -----  end of function LoadDataFileForUse  ----- */
 
-std::chrono::year_month_day StringToDateYMD(const std::string &input_format,
-                                            const std::string &the_date) {
-  std::istringstream in{the_date};
-  std::chrono::sys_days tp;
-  std::chrono::from_stream(in, input_format.c_str(), tp);
-  BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
-                   catenate("Unable to parse given date: ", the_date,
-                            " using format: ", input_format)
-                       .c_str());
-  std::chrono::year_month_day result = tp;
-  BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
-  return result;
+std::chrono::year_month_day StringToDateYMD(const std::string &input_format, const std::string &the_date)
+{
+    std::istringstream in{the_date};
+    std::chrono::sys_days tp;
+    std::chrono::from_stream(in, input_format.c_str(), tp);
+    BOOST_ASSERT_MSG(!in.fail() && !in.bad(),
+                     catenate("Unable to parse given date: ", the_date, " using format: ", input_format).c_str());
+    std::chrono::year_month_day result = tp;
+    BOOST_ASSERT_MSG(result.ok(), catenate("Invalid date: ", the_date).c_str());
+    return result;
 
-  // TODO: take a list of formats to try
-  //
-  //    if (! start_date_.empty())
-  //    {
-  //        std::istringstream in{start_date_};
-  //        std::chrono::sys_days tp;
-  //        in >> std::chrono::parse("%F", tp);
-  //        if (in.fail())
-  //        {
-  //            // try an alternate representation
-  //
-  //            in.clear();
-  //            in.rdbuf()->pubseekpos(0);
-  //            in >> std::chrono::parse("%Y-%b-%d", tp);
-  //        }
-  //        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to
-  //        parse begin date: ", start_date_).c_str()); begin_date_ = tp;
-  //        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ",
-  //        start_date_).c_str());
-  //    }
+    // TODO: take a list of formats to try
+    //
+    //    if (! start_date_.empty())
+    //    {
+    //        std::istringstream in{start_date_};
+    //        std::chrono::sys_days tp;
+    //        in >> std::chrono::parse("%F", tp);
+    //        if (in.fail())
+    //        {
+    //            // try an alternate representation
+    //
+    //            in.clear();
+    //            in.rdbuf()->pubseekpos(0);
+    //            in >> std::chrono::parse("%Y-%b-%d", tp);
+    //        }
+    //        BOOST_ASSERT_MSG(! in.fail() && ! in.bad(), catenate("Unable to
+    //        parse begin date: ", start_date_).c_str()); begin_date_ = tp;
+    //        BOOST_ASSERT_MSG(begin_date_.ok(), catenate("Invalid begin date: ",
+    //        start_date_).c_str());
+    //    }
 } // -----  end of method tringToDateYMD  -----
 
-namespace boost {
+namespace boost
+{
 // these functions are declared in the library headers but left to the user to
 // define. so here they are...
 //
@@ -138,11 +135,10 @@ namespace boost {
  * =====================================================================================
  */
 
-void assertion_failed_msg(char const *expr, char const *msg,
-                          char const *function, char const *file, long line) {
-  throw Collector::AssertionException(catenate(
-      "\n*** Assertion failed *** test: ", expr, " in function: ", function,
-      " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
+void assertion_failed_msg(char const *expr, char const *msg, char const *function, char const *file, long line)
+{
+    throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
+                                                 " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
 } /* -----  end of function assertion_failed_mgs  ----- */
 
 /*
@@ -151,11 +147,10 @@ void assertion_failed_msg(char const *expr, char const *msg,
  * assertion_failed Description:
  * =====================================================================================
  */
-void assertion_failed(char const *expr, char const *function, char const *file,
-                      long line) {
-  throw Collector::AssertionException(catenate(
-      "\n*** Assertion failed *** test: ", expr, " in function: ", function,
-      " from file: ", file, " at line: ", line));
+void assertion_failed(char const *expr, char const *function, char const *file, long line)
+{
+    throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
+                                                 " from file: ", file, " at line: ", line));
 } /* -----  end of function assertion_failed  ----- */
 
 } // namespace boost

@@ -55,68 +55,65 @@ namespace beast = boost::beast; // from <boost/beast.hpp>
 //        Class:  HTTPS_Downloader
 //  Description:  provides read-only access to an HTTPS server
 // =====================================================================================
-class HTTPS_Downloader {
+class HTTPS_Downloader
+{
 public:
-  using copy_file_names = std::pair<std::optional<fs::path>, fs::path>;
-  using remote_local_list = std::vector<copy_file_names>;
+    using copy_file_names = std::pair<std::optional<fs::path>, fs::path>;
+    using remote_local_list = std::vector<copy_file_names>;
 
-  // ====================  LIFECYCLE     =======================================
-  HTTPS_Downloader() = delete;                            // constructor
-  HTTPS_Downloader(const HTTPS_Downloader &rhs) = delete; // constructor
-  HTTPS_Downloader(HTTPS_Downloader &&rhs) = delete;      // constructor
-  HTTPS_Downloader(const std::string &server_name, const std::string &port);
-  ~HTTPS_Downloader() = default;
+    // ====================  LIFECYCLE     =======================================
+    HTTPS_Downloader() = delete;                            // constructor
+    HTTPS_Downloader(const HTTPS_Downloader &rhs) = delete; // constructor
+    HTTPS_Downloader(HTTPS_Downloader &&rhs) = delete;      // constructor
+    HTTPS_Downloader(const std::string &server_name, const std::string &port);
+    ~HTTPS_Downloader() = default;
 
-  // ====================  ACCESSORS     =======================================
+    // ====================  ACCESSORS     =======================================
 
-  // request must be a full path name for what is to be retrieved.
+    // request must be a full path name for what is to be retrieved.
 
-  std::string RetrieveDataFromServer(const fs::path &request);
+    std::string RetrieveDataFromServer(const fs::path &request);
 
-  std::vector<std::string>
-  ListDirectoryContents(const fs::path &directory_name);
+    std::vector<std::string> ListDirectoryContents(const fs::path &directory_name);
 
-  // download a file at a time
+    // download a file at a time
 
-  void DownloadFile(const fs::path &remote_file_name,
-                    const fs::path &local_file_name);
+    void DownloadFile(const fs::path &remote_file_name, const fs::path &local_file_name);
 
-  // download multiple files at a time, up to specified limit.
-  // this version returns the number of errors encountered.
-  // Errors are trapped and logged by the downloader.
+    // download multiple files at a time, up to specified limit.
+    // this version returns the number of errors encountered.
+    // Errors are trapped and logged by the downloader.
 
-  std::pair<int, int>
-  DownloadFilesConcurrently(const remote_local_list &file_list,
-                            int max_at_a_time);
+    std::pair<int, int> DownloadFilesConcurrently(const remote_local_list &file_list, int max_at_a_time);
 
-  // ====================  MUTATORS      =======================================
+    // ====================  MUTATORS      =======================================
 
-  HTTPS_Downloader &operator=(const HTTPS_Downloader &rhs) = delete;
-  HTTPS_Downloader &operator=(HTTPS_Downloader &&rhs) = delete;
+    HTTPS_Downloader &operator=(const HTTPS_Downloader &rhs) = delete;
+    HTTPS_Downloader &operator=(HTTPS_Downloader &&rhs) = delete;
 
-  // ====================  OPERATORS     =======================================
+    // ====================  OPERATORS     =======================================
 
 protected:
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
 private:
-  // we use a timer to stay within usage restrictions of SEC web site.
+    // we use a timer to stay within usage restrictions of SEC web site.
 
-  void Timer();
-  static void HandleSignal(int signal);
+    void Timer();
+    static void HandleSignal(int signal);
 
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
-  std::string server_name_;
-  std::string port_ = "443"; // default for SSL
-  int version_ = 11;
+    std::string server_name_;
+    std::string port_ = "443"; // default for SSL
+    int version_ = 11;
 
-  fs::path path_;
+    fs::path path_;
 
-  boost::asio::io_context ioc;
-  boost::asio::ssl::context ctx;
+    boost::asio::io_context ioc;
+    boost::asio::ssl::context ctx;
 
-  static bool had_signal_;
+    static bool had_signal_;
 }; // -----  end of class HTTPS_Downloader  -----
 
 void DownloadTextFile(const fs::path &local_file_name,

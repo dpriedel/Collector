@@ -46,41 +46,42 @@ namespace fs = std::filesystem;
 //        Class:  TickerConverter
 //  Description:
 // =====================================================================================
-class TickerConverter {
+class TickerConverter
+{
 public:
-  using TickerCIKMap = std::map<std::string, std::string>;
+    using TickerCIKMap = std::map<std::string, std::string>;
 
-  // ====================  LIFECYCLE     =======================================
+    // ====================  LIFECYCLE     =======================================
 
-  // ====================  ACCESSORS     =======================================
+    // ====================  ACCESSORS     =======================================
 
-  // ====================  MUTATORS      =======================================
+    // ====================  MUTATORS      =======================================
 
-  int UseCacheFile(const fs::path &cache_file_name);
-  std::string ConvertTickerToCIK(const std::string &ticker, int pause = 1);
-  int DownloadTickerToCIKFile(const fs::path &ticker_file_name,
-                              const std::string &server_name = "www.sec.gov",
-                              const std::string &port = "443");
-  //		void SaveCIKDataToFile();
-  TickerCIKMap ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name);
+    int UseCacheFile(const fs::path &cache_file_name);
+    std::string ConvertTickerToCIK(const std::string &ticker, int pause = 1);
+    int DownloadTickerToCIKFile(const fs::path &ticker_file_name,
+                                const std::string &server_name = "www.sec.gov",
+                                const std::string &port = "443");
+    //		void SaveCIKDataToFile();
+    TickerCIKMap ConvertFileOfTickersToCIKs(const fs::path &ticker_file_name);
 
-  inline static constexpr const char *NotFound = "**no_CIK_found**";
+    inline static constexpr const char *NotFound = "**no_CIK_found**";
 
-  // ====================  OPERATORS     =======================================
+    // ====================  OPERATORS     =======================================
 
 protected:
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
 private:
-  // ====================  DATA MEMBERS  =======================================
+    // ====================  DATA MEMBERS  =======================================
 
-  TickerCIKMap ticker_to_CIK_;
+    TickerCIKMap ticker_to_CIK_;
 
-  fs::path cache_file_name_;
-  fs::path ticker_file_name_;
+    fs::path cache_file_name_;
+    fs::path ticker_file_name_;
 
-  std::size_t ticker_count_start_ = 0;
-  std::size_t ticker_count_end_ = 0;
+    std::size_t ticker_count_start_ = 0;
+    std::size_t ticker_count_end_ = 0;
 
 }; // -----  end of class TickerConverter  -----
 

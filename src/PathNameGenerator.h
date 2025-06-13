@@ -51,77 +51,83 @@ namespace fs = std::filesystem;
  *  Description:  really a generator for dates in a range.
  * =====================================================================================
  */
-class QuarterlyIterator {
+class QuarterlyIterator
+{
 public:
-  // Type aliases required for a custom iterator
-  using iterator_category = std::forward_iterator_tag;
-  using value_type = std::chrono::year_month_day;
-  using difference_type = std::ptrdiff_t;
-  using pointer = value_type *;
-  using reference = value_type &;
+    // Type aliases required for a custom iterator
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::chrono::year_month_day;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type *;
+    using reference = value_type &;
 
-  /* ====================  LIFECYCLE     =======================================
-   */
+    /* ====================  LIFECYCLE     =======================================
+     */
 
-  QuarterlyIterator() = default; /* constructor */
-  explicit QuarterlyIterator(std::chrono::year_month_day start_date);
+    QuarterlyIterator() = default; /* constructor */
+    explicit QuarterlyIterator(std::chrono::year_month_day start_date);
 
-  QuarterlyIterator(const QuarterlyIterator &rhs) = default;
-  QuarterlyIterator(QuarterlyIterator &&rhs) = default;
+    QuarterlyIterator(const QuarterlyIterator &rhs) = default;
+    QuarterlyIterator(QuarterlyIterator &&rhs) = default;
 
-  ~QuarterlyIterator() = default;
+    ~QuarterlyIterator() = default;
 
-  /* ====================  ACCESSORS     =======================================
-   */
+    /* ====================  ACCESSORS     =======================================
+     */
 
-  std::chrono::year_month_day operator*() const { return working_date_; }
+    std::chrono::year_month_day operator*() const
+    {
+        return working_date_;
+    }
 
-  /* ====================  MUTATORS      =======================================
-   */
+    /* ====================  MUTATORS      =======================================
+     */
 
-  QuarterlyIterator &operator++();
+    QuarterlyIterator &operator++();
 
-  /* ====================  OPERATORS     =======================================
-   */
+    /* ====================  OPERATORS     =======================================
+     */
 
-  QuarterlyIterator &operator=(const QuarterlyIterator &rhs) = default;
-  QuarterlyIterator &operator=(QuarterlyIterator &&rhs) = default;
+    QuarterlyIterator &operator=(const QuarterlyIterator &rhs) = default;
+    QuarterlyIterator &operator=(QuarterlyIterator &&rhs) = default;
 
-  bool operator!=(const QuarterlyIterator &other) const {
-    return working_date_ != other.working_date_;
-  }
-  bool operator<=(const QuarterlyIterator &other) const {
-    return working_date_ <= other.working_date_;
-  }
+    bool operator!=(const QuarterlyIterator &other) const
+    {
+        return working_date_ != other.working_date_;
+    }
+    bool operator<=(const QuarterlyIterator &other) const
+    {
+        return working_date_ <= other.working_date_;
+    }
 
 protected:
-  /* ====================  METHODS       =======================================
-   */
+    /* ====================  METHODS       =======================================
+     */
 
-  /* ====================  DATA MEMBERS  =======================================
-   */
+    /* ====================  DATA MEMBERS  =======================================
+     */
 
 private:
-  /* ====================  METHODS       =======================================
-   */
+    /* ====================  METHODS       =======================================
+     */
 
-  /* ====================  DATA MEMBERS  =======================================
-   */
+    /* ====================  DATA MEMBERS  =======================================
+     */
 
-  inline static constexpr std::chrono::months a_quarter{3};
+    inline static constexpr std::chrono::months a_quarter{3};
 
-  std::chrono::year_month_day start_date_;
-  std::chrono::year_month_day working_date_;
-  std::chrono::year start_year_;
-  std::chrono::year working_year_;
-  std::chrono::month start_month_;
-  std::chrono::month working_month_;
+    std::chrono::year_month_day start_date_;
+    std::chrono::year_month_day working_date_;
+    std::chrono::year start_year_;
+    std::chrono::year working_year_;
+    std::chrono::month start_month_;
+    std::chrono::month working_month_;
 
 }; /* -----  end of class QuarterlyIterator  ----- */
 
-inline bool operator<(const QuarterlyIterator &lhs,
-                      const QuarterlyIterator &rhs) {
-  return *lhs < *rhs;
+inline bool operator<(const QuarterlyIterator &lhs, const QuarterlyIterator &rhs)
+{
+    return *lhs < *rhs;
 }
 
 // we want to have a half open range of at least 1 quarter
@@ -135,49 +141,50 @@ inline bool operator<(const QuarterlyIterator &lhs,
  *  Description:  provide a half-open interval at least 1 quarter.
  * =====================================================================================
  */
-class DateRange {
+class DateRange
+{
 public:
-  /* ====================  LIFECYCLE     =======================================
-   */
+    /* ====================  LIFECYCLE     =======================================
+     */
 
-  DateRange(std::chrono::year_month_day start_date,
-            std::chrono::year_month_day end_date);
+    DateRange(std::chrono::year_month_day start_date, std::chrono::year_month_day end_date);
 
-  /* ====================  ACCESSORS     =======================================
-   */
+    /* ====================  ACCESSORS     =======================================
+     */
 
-  [[nodiscard]] QuarterlyIterator begin() const {
-    return QuarterlyIterator{start_date_};
-  }
-  [[nodiscard]] QuarterlyIterator end() const {
-    return QuarterlyIterator{end_date_};
-  }
-  /* ====================  MUTATORS      =======================================
-   */
+    [[nodiscard]] QuarterlyIterator begin() const
+    {
+        return QuarterlyIterator{start_date_};
+    }
+    [[nodiscard]] QuarterlyIterator end() const
+    {
+        return QuarterlyIterator{end_date_};
+    }
+    /* ====================  MUTATORS      =======================================
+     */
 
-  /* ====================  OPERATORS     =======================================
-   */
+    /* ====================  OPERATORS     =======================================
+     */
 
 protected:
-  /* ====================  METHODS       =======================================
-   */
+    /* ====================  METHODS       =======================================
+     */
 
-  /* ====================  DATA MEMBERS  =======================================
-   */
+    /* ====================  DATA MEMBERS  =======================================
+     */
 
 private:
-  /* ====================  METHODS       =======================================
-   */
+    /* ====================  METHODS       =======================================
+     */
 
-  /* ====================  DATA MEMBERS  =======================================
-   */
+    /* ====================  DATA MEMBERS  =======================================
+     */
 
-  std::chrono::year_month_day start_date_;
-  std::chrono::year_month_day end_date_;
+    std::chrono::year_month_day start_date_;
+    std::chrono::year_month_day end_date_;
 
 }; /* -----  end of class DateRange  ----- */
 
-fs::path GeneratePath(const fs::path &prefix,
-                      std::chrono::year_month_day quarter_begin);
+fs::path GeneratePath(const fs::path &prefix, std::chrono::year_month_day quarter_begin);
 
 #endif /* PATHNAMEGENERATOR_H_ */
