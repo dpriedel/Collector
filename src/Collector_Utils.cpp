@@ -34,7 +34,9 @@
 #include "Collector_Utils.h"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
+#include <stacktrace>
 
 /*
  *--------------------------------------------------------------------------------------
@@ -137,6 +139,7 @@ namespace boost
 
 void assertion_failed_msg(char const *expr, char const *msg, char const *function, char const *file, long line)
 {
+    std::cout << std::stacktrace::current() << std::endl;
     throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                                                  " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
 } /* -----  end of function assertion_failed_mgs  ----- */
@@ -149,6 +152,7 @@ void assertion_failed_msg(char const *expr, char const *msg, char const *functio
  */
 void assertion_failed(char const *expr, char const *function, char const *file, long line)
 {
+    std::cout << std::stacktrace::current() << std::endl;
     throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                                                  " from file: ", file, " at line: ", line));
 } /* -----  end of function assertion_failed  ----- */
