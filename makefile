@@ -64,6 +64,8 @@ CFG_LIB := -lpthread \
 		-lz \
 		-L$(GCCDIR)/lib64 \
 		-L$(BOOSTDIR)/lib \
+		-lstdc++ \
+		-lstdc++exp \
 		-lboost_iostreams-mt-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-x64 \
@@ -94,6 +96,8 @@ CFG_LIB := -lpthread \
 		-lz \
 		-L$(GCCDIR)/lib64 \
 		-L$(BOOSTDIR)/lib \
+		-lstdc++ \
+		-lstdc++exp \
 		-lboost_iostreams-mt-d-x64 \
 		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-d-x64 \
