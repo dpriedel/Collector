@@ -59,7 +59,7 @@ std::chrono::year_month_day QuarterlyIndexFileRetriever::CheckDate(std::chrono::
     //	we can only work with past data.
 
     auto today = std::chrono::year_month_day{floor<std::chrono::days>(std::chrono::system_clock::now())};
-    BOOST_ASSERT_MSG(day_in_quarter < today, catenate("Date must be less than ", std::format(":%F", today)).c_str());
+    BOOST_ASSERT_MSG(day_in_quarter < today, catenate("Date must be less than ", std::format("{:%F}", today)).c_str());
 
     return day_in_quarter;
 } // -----  end of method QuarterlyIndexFileRetriever::CheckDate  -----
