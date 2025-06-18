@@ -139,7 +139,9 @@ namespace boost
 
 void assertion_failed_msg(char const *expr, char const *msg, char const *function, char const *file, long line)
 {
+#ifdef SHOW_STRACE
     std::cout << std::stacktrace::current() << std::endl;
+#endif
     throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                                                  " from file: ", file, " at line: ", line, ".\nassertion msg: ", msg));
 } /* -----  end of function assertion_failed_mgs  ----- */
@@ -152,7 +154,9 @@ void assertion_failed_msg(char const *expr, char const *msg, char const *functio
  */
 void assertion_failed(char const *expr, char const *function, char const *file, long line)
 {
+#ifdef SHOW_STRACE
     std::cout << std::stacktrace::current() << std::endl;
+#endif
     throw Collector::AssertionException(catenate("\n*** Assertion failed *** test: ", expr, " in function: ", function,
                                                  " from file: ", file, " at line: ", line));
 } /* -----  end of function assertion_failed  ----- */
