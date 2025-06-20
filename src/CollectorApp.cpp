@@ -41,6 +41,8 @@
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include "CollectorApp.h"
 
@@ -59,6 +61,7 @@
  */
 CollectorApp::CollectorApp(int argc, char *argv[]) : mArgc{argc}, mArgv{argv}
 {
+    original_logger_ = spdlog::default_logger();
 } /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
 
 /*
@@ -70,32 +73,57 @@ CollectorApp::CollectorApp(int argc, char *argv[]) : mArgc{argc}, mArgv{argv}
  */
 CollectorApp::CollectorApp(const std::vector<std::string> &tokens) : tokens_{tokens}
 {
+    original_logger_ = spdlog::default_logger();
+} /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
+
+CollectorApp::~CollectorApp()
+{
+    if (spdlog::get("Collector_logger"))
+    {
+        spdlog::drop("Collector_logger");
+    }
+    if (original_logger_)
+    {
+        spdlog::set_default_logger(original_logger_);
+    }
 } /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
 
 void CollectorApp::ConfigureLogging()
 {
+    // this logging code comes from gemini
 
-    // we need to set log level if specified and also log file.
+    spdlog::init_thread_pool(8192, 1);
 
     if (!log_file_path_name_.empty())
     {
-        // if we are running inside our test harness, logging may already by
-        // running so we don't want to clobber it.
-        // different tests may use different names.
-
-        auto logger_name = log_file_path_name_.filename();
-        logger_ = spdlog::get(logger_name);
-        if (!logger_)
+        fs::path log_dir = log_file_path_name_.parent_path();
+        if (!fs::exists(log_dir))
         {
-            fs::path log_dir = log_file_path_name_.parent_path();
-            if (!fs::exists(log_dir))
-            {
-                fs::create_directories(log_dir);
-            }
-
-            logger_ = spdlog::basic_logger_mt<spdlog::async_factory>(logger_name, log_file_path_name_.c_str());
-            spdlog::set_default_logger(logger_);
+            fs::create_directories(log_dir);
         }
+
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file_path_name_, true);
+
+        auto async_logger = std::make_shared<spdlog::async_logger>(
+            "Collector_logger",
+            spdlog::sinks_init_list{file_sink},
+            spdlog::thread_pool(),
+            spdlog::async_overflow_policy::block // Or spdlog::async_overflow_policy::discard_log_msg
+        );
+
+        spdlog::set_default_logger(async_logger);
+    }
+    else
+    {
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
+        // 3. Create an asynchronous logger using the console sink.
+        auto async_logger = std::make_shared<spdlog::async_logger>("Collector_logger", // Name for the console logger
+                                                                   spdlog::sinks_init_list{console_sink},
+                                                                   spdlog::thread_pool(),
+                                                                   spdlog::async_overflow_policy::block);
+
+        spdlog::set_default_logger(async_logger);
     }
 
     // we are running before 'CheckArgs' so we need to do a little editiing
@@ -110,6 +138,10 @@ void CollectorApp::ConfigureLogging()
     if (which_level != levels.end())
     {
         spdlog::set_level(which_level->second);
+    }
+    else
+    {
+        spdlog::set_level(spdlog::level::info);
     }
 
 } /* -----  end of method CollectorApp::ConfigureLogging  ----- */
@@ -534,4 +566,9 @@ void CollectorApp::Do_TickerMap_Setup()
 void CollectorApp::Shutdown()
 {
     spdlog::info(catenate("\n\n*** End run ", LocalDateTimeAsString(std::chrono::system_clock::now()), " ***\n"));
+
+    std::this_thread::sleep_for(std::chrono::seconds(2)); // Give time for async processing
+
+    // spdlog::shutdown(); // Ensure all messages are flushed
+
 } // -----  end of method CollectorApp::Do_Quit  -----

@@ -64,7 +64,7 @@ public:
     CollectorApp(const CollectorApp &rhs) = delete;
     CollectorApp(CollectorApp &&rhs) = delete;
 
-    ~CollectorApp() = default;
+    ~CollectorApp();
 
     CollectorApp &operator=(const CollectorApp &rhs) = delete;
     CollectorApp &operator=(CollectorApp &&rhs) = delete;
@@ -97,6 +97,8 @@ protected:
 
 private:
     // ====================  DATA MEMBERS  =======================================
+
+    std::shared_ptr<spdlog::logger> original_logger_;
 
     po::positional_options_description mPositional;       //	old style options
     std::unique_ptr<po::options_description> mNewOptions; //	new style options (with identifiers)
