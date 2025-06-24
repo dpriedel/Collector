@@ -86,7 +86,7 @@ CollectorApp::~CollectorApp()
     {
         spdlog::set_default_logger(original_logger_);
     }
-} /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
+} /* -----  end of method CollectorApp::~CollectorApp  (destructor)  ----- */
 
 void CollectorApp::ConfigureLogging()
 {
@@ -184,56 +184,33 @@ bool CollectorApp::Startup()
     return result;
 } /* -----  end of method CollectorApp::Startup  ----- */
 
+// clang-format off
 void CollectorApp::SetupProgramOptions()
 {
     mNewOptions = std::make_unique<po::options_description>();
 
-    mNewOptions->add_options()("help,h", "produce help message")("begin-date",
-                                                                 po::value<std::string>(&this->start_date_),
-                                                                 "retrieve files with dates greater than or equal to.")(
-        "end-date", po::value<std::string>(&this->stop_date_), "retrieve files with dates less than or equal to.")(
-        "index-dir", po::value<fs::path>(&this->local_index_file_directory_),
-        "directory index files are downloaded to.")("form-dir", po::value<fs::path>(&this->local_form_file_directory_),
-                                                    "directory form files are downloaded to.")(
-        "host",
-        po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"),
-        "web site we download from. Default is 'www.sec.gov'.")(
-        "port", po::value<std::string>(&this->HTTPS_port_)->default_value("443"),
-        "Port number to use for web site. Default is '443' for SSL.")(
-        "mode", po::value<std::string>(&this->mode_)->default_value("daily"),
-        "'daily' or 'quarterly' for index files, 'ticker-only' or 'notes'. "
-        "Default is 'daily'.")("form", po::value<std::string>(&this->form_)->default_value("10-Q"),
-                               "name of form type[s] we are downloading. Default is '10-Q'.")(
-        "ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")(
-        "log-path", po::value<fs::path>(&this->log_file_path_name_), "path name for log file")(
-        "ticker-cache", po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")(
-        "notes-directory",
-        po::value<fs::path>(&this->financial_notes_directory_name_),
-        "top level path name for financial statements and notes files "
-        "downloads.")("ticker-file", po::value<fs::path>(&this->ticker_list_file_name_),
-                      "path name for file with list of ticker symbols to convert to CIKs.")(
-        "replace-index-files",
-        po::value<bool>(&this->replace_index_files_)->implicit_value(true),
-        "over write local index files if specified. Default is 'false'.")(
-        "replace-form-files",
-        po::value<bool>(&this->replace_form_files_)->implicit_value(true),
-        "over write local form files if specified. Default is 'false'.")(
-        "replace-notes-files",
-        po::value<bool>(&this->replace_notes_files_)->implicit_value(true),
-        "over write local financial notes files if specified. Default is "
-        "'false'.")("index-only",
-                    po::value<bool>(&this->index_only_)->implicit_value(true),
-                    "do not download form files. Default is 'false'.")(
-        "pause,p", po::value<int>(&this->pause_)->default_value(1),
-        "how long to wait between downloads. Default: 1 second.")(
-        "max", po::value<int>(&this->max_forms_to_download_)->default_value(-1),
-        "Maximun number of forms to download -- mainly for testing. Default of "
-        "-1 means no limit.")("log-level,l",
-                              po::value<std::string>(&this->logging_level_)->default_value("information"),
-                              "logging level. Must be 'none|error|information|debug'. Default is "
-                              "'information'.")("concurrent,k",
-                                                po::value<int>(&this->max_at_a_time_)->default_value(10),
-                                                "Maximun number of concurrent downloads. Default of 10.")
+    mNewOptions->add_options()
+        ("help,h", "produce help message")("begin-date", po::value<std::string>(&this->start_date_), "retrieve files with dates greater than or equal to.")
+        ( "end-date", po::value<std::string>(&this->stop_date_), "retrieve files with dates less than or equal to.")
+        ( "index-dir", po::value<fs::path>(&this->local_index_file_directory_), "directory index files are downloaded to.")
+        ("form-dir", po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded to.")
+        ( "host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we download from. Default is 'www.sec.gov'.")
+        ( "port", po::value<std::string>(&this->HTTPS_port_)->default_value("443"), "Port number to use for web site. Default is '443' for SSL.")
+        ( "mode", po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only' or 'notes'. Default is 'daily'.")
+        ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are downloading. Default is '10-Q'.")
+        ( "ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")
+        ( "log-path", po::value<fs::path>(&this->log_file_path_name_), "path name for log file")
+        ( "ticker-cache", po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")
+        ( "notes-directory", po::value<fs::path>(&this->financial_notes_directory_name_), "top level path name for financial statements and notes files downloads.")
+        ("ticker-file", po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker symbols to convert to CIKs.")
+        ( "replace-index-files", po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if specified. Default is 'false'.")
+        ( "replace-form-files", po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified. Default is 'false'.")
+        ( "replace-notes-files", po::value<bool>(&this->replace_notes_files_)->implicit_value(true), "over write local financial notes files if specified. Default is 'false'.")
+        ("index-only", po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files. Default is 'false'.")
+        ( "pause,p", po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
+        ( "max", po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
+        ("log-level,l", po::value<std::string>(&this->logging_level_)->default_value("information"), "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
+        ("concurrent,k", po::value<int>(&this->max_at_a_time_)->default_value(10), "Maximun number of concurrent downloads. Default of 10.")
         /* ("file,f",    po::value<std::string>(), "name of file containing data
            for ticker. Default is stdin") */
         /* ("mode,m",    po::value<std::string>(), "mode: either 'load' new data
@@ -241,6 +218,7 @@ void CollectorApp::SetupProgramOptions()
         ;
 
 } // -----  end of method CollectorApp::Do_SetupProgramOptions  -----
+// clang-format on
 
 void CollectorApp::ParseProgramOptions()
 {
