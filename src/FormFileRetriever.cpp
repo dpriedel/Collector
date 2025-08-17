@@ -256,7 +256,8 @@ void FormFileRetriever::RetrieveSpecifiedFiles(const FormsAndFilesList &form_lis
 }
 
 void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles(const FormsAndFilesList &form_list,
-                                                           const fs::path &local_form_directory, int max_at_a_time,
+                                                           const fs::path &local_form_directory,
+                                                           int max_at_a_time,
                                                            bool replace_files)
 {
     for (const auto &[form_type, form_files] : form_list)
@@ -358,7 +359,8 @@ auto FormFileRetriever::AddToCopyList(const std::string &form_name,
 
 void FormFileRetriever::ConcurrentlyRetrieveSpecifiedFiles(const std::vector<fs::path> &remote_file_names,
                                                            const std::string &form_type,
-                                                           const fs::path &local_form_directory, int max_at_a_time,
+                                                           const fs::path &local_form_directory,
+                                                           int max_at_a_time,
                                                            bool replace_files)
 {
     if (remote_file_names.size() < max_at_a_time)
