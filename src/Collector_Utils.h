@@ -48,6 +48,8 @@ namespace fs = std::filesystem;
 
 using namespace std::string_literals;
 
+const std::string DOWNLOADS_LOGGER_NAME = "downloads_logger";
+
 namespace Collector
 {
 class AssertionException : public std::invalid_argument
@@ -84,16 +86,19 @@ concept has_string = requires(T t) { t.string(); };
 
 // custom fmtlib formatter for filesytem paths
 
-template <> struct std::formatter<std::filesystem::path> : std::formatter<std::string>
+template <>
+struct std::formatter<std::filesystem::path> : std::formatter<std::string>
 {
     // parse is inherited from formatter<string_view>.
-    template <typename FormatContext> auto format(const std::filesystem::path &p, FormatContext &ctx) const
+    template <typename FormatContext>
+    auto format(const std::filesystem::path &p, FormatContext &ctx) const
     {
         return std::format_to(ctx.out(), "{}", p.string());
     }
 };
 
-template <typename... Ts> inline std::string catenate(Ts &&...ts)
+template <typename... Ts>
+inline std::string catenate(Ts &&...ts)
 {
 
     constexpr auto N = sizeof...(Ts);

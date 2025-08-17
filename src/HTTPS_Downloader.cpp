@@ -73,7 +73,8 @@ bool HTTPS_Downloader::had_signal_ = false;
 
 // code from "The C++ Programming Language" 4th Edition. p. 1243.
 
-template <typename T> int wait_for_any(std::vector<std::future<T>> &vf, std::chrono::steady_clock::duration d)
+template <typename T>
+int wait_for_any(std::vector<std::future<T>> &vf, std::chrono::steady_clock::duration d)
 // return index of ready future
 // if no future is ready, wait for d before trying again
 {
@@ -85,14 +86,14 @@ template <typename T> int wait_for_any(std::vector<std::future<T>> &vf, std::chr
                 continue;
             switch (vf[i].wait_for(0s))
             {
-            case std::future_status::ready:
-                return i;
+                case std::future_status::ready:
+                    return i;
 
-            case std::future_status::timeout:
-                break;
+                case std::future_status::timeout:
+                    break;
 
-            case std::future_status::deferred:
-                throw std::runtime_error("wait_for_all(): deferred future");
+                case std::future_status::deferred:
+                    throw std::runtime_error("wait_for_all(): deferred future");
             }
         }
         std::this_thread::sleep_for(d);
@@ -459,6 +460,14 @@ void DownloadTextFile(const fs::path &local_file_name,
         throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name.string(),
                                               " to local file: ", local_file_name.string())};
     }
+
+    // we may have a downloads logger so let's use it if we do.
+
+    auto downloads_logger = spdlog::get(DOWNLOADS_LOGGER_NAME);
+    if (downloads_logger)
+    {
+        downloads_logger->info(local_file_name);
+    }
 }
 
 void DownloadGZipFile(const fs::path &local_file_name,
@@ -494,6 +503,14 @@ void DownloadGZipFile(const fs::path &local_file_name,
         std::error_code err{errno, std::system_category()};
         throw std::system_error{err, catenate("Unable to complete download of remote file: ", remote_file_name.string(),
                                               " to local file: ", local_file_name.string())};
+    }
+
+    // we may have a downloads logger so let's use it if we do.
+
+    auto downloads_logger = spdlog::get(DOWNLOADS_LOGGER_NAME);
+    if (downloads_logger)
+    {
+        downloads_logger->info(local_file_name);
     }
 }
 
@@ -582,4 +599,12 @@ void DownloadZipFile(const fs::path &local_file_name,
     zip_fclose(downloaded_zip_file);
     zip_source_close(downloaded_raw_zip_data);
     zip_error_fini(&err);
+
+    // we may have a downloads logger so let's use it if we do.
+
+    auto downloads_logger = spdlog::get(DOWNLOADS_LOGGER_NAME);
+    if (downloads_logger)
+    {
+        downloads_logger->info(local_file_name);
+    }
 }
