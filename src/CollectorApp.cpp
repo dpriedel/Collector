@@ -39,7 +39,6 @@
 #include <iostream>
 #include <random> //	just for initial development.  used in Quarterly form retrievals
 
-#include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -92,8 +91,6 @@ void CollectorApp::ConfigureLogging()
 {
     // this logging code comes from gemini
 
-    spdlog::init_thread_pool(8192, 1);
-
     if (!log_file_path_name_.empty())
     {
         fs::path log_dir = log_file_path_name_.parent_path();
@@ -104,26 +101,18 @@ void CollectorApp::ConfigureLogging()
 
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file_path_name_, true);
 
-        auto async_logger = std::make_shared<spdlog::async_logger>(
-            "Collector_logger",
-            spdlog::sinks_init_list{file_sink},
-            spdlog::thread_pool(),
-            spdlog::async_overflow_policy::block // Or spdlog::async_overflow_policy::discard_log_msg
-        );
+        auto app_logger = std::make_shared<spdlog::logger>("Collector_logger", file_sink);
 
-        spdlog::set_default_logger(async_logger);
+        spdlog::set_default_logger(app_logger);
     }
     else
     {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
-        // 3. Create an asynchronous logger using the console sink.
-        auto async_logger = std::make_shared<spdlog::async_logger>("Collector_logger", // Name for the console logger
-                                                                   spdlog::sinks_init_list{console_sink},
-                                                                   spdlog::thread_pool(),
-                                                                   spdlog::async_overflow_policy::block);
+        auto app_logger =
+            std::make_shared<spdlog::logger>("Collector_logger", console_sink); // Name for the console logger
 
-        spdlog::set_default_logger(async_logger);
+        spdlog::set_default_logger(app_logger);
     }
 
     // we are running before 'CheckArgs' so we need to do a little editiing
@@ -202,10 +191,12 @@ void CollectorApp::SetupProgramOptions()
         ( "log-path", po::value<fs::path>(&this->log_file_path_name_), "path name for log file")
         ( "ticker-cache", po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")
         ( "notes-directory", po::value<fs::path>(&this->financial_notes_directory_name_), "top level path name for financial statements and notes files downloads.")
+        ( "new-files-logs-directory", po::value<fs::path>(&this->new_forms_log_directory_name_), "name of directory to write new forms file name logs to.")
         ("ticker-file", po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker symbols to convert to CIKs.")
         ( "replace-index-files", po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if specified. Default is 'false'.")
         ( "replace-form-files", po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified. Default is 'false'.")
         ( "replace-notes-files", po::value<bool>(&this->replace_notes_files_)->implicit_value(true), "over write local financial notes files if specified. Default is 'false'.")
+        ( "log-new-form-files", po::value<bool>(&this->log_new_form_files_)->implicit_value(true), "log path names of newly downloaded forms files. Default is 'false'.")
         ("index-only", po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files. Default is 'false'.")
         ( "pause,p", po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
         ( "max", po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
@@ -327,6 +318,12 @@ bool CollectorApp::CheckArgs()
         return true;
     }
 
+    if (log_new_form_files_)
+    {
+        BOOST_ASSERT_MSG(!new_forms_log_directory_name_.empty(),
+                         "You must specify 'new-files-logs-directory' when logging download of new forms files.");
+    }
+
     BOOST_ASSERT_MSG(!local_index_file_directory_.empty(),
                      "Must specify 'index-dir' when downloading index and/or forms.");
     BOOST_ASSERT_MSG(index_only_ || !local_form_file_directory_.empty(),
@@ -346,6 +343,22 @@ bool CollectorApp::CheckArgs()
 
 void CollectorApp::Run()
 {
+    if (log_new_form_files_)
+    {
+        if (!fs::exists(new_forms_log_directory_name_))
+        {
+            fs::create_directories(new_forms_log_directory_name_);
+        }
+        const std::string log_name = std::format("new_forms_{:%Y-%m-%d_%H:%M:%S}", std::chrono::system_clock::now());
+        new_forms_log_file_name_ = new_forms_log_directory_name_ / log_name;
+
+        auto downloads_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(new_forms_log_file_name_, true);
+        auto downloads_logger = std::make_shared<spdlog::logger>(DOWNLOADS_LOGGER_NAME, downloads_sink);
+        downloads_logger->set_pattern("%v");
+        downloads_logger->set_level(spdlog::level::info);
+        spdlog::register_logger(downloads_logger);
+    }
+
     if (!ticker_cache_file_name_.empty() && mode_ != "ticker-only")
     {
         ticker_converter_.UseCacheFile(ticker_cache_file_name_);
@@ -545,8 +558,6 @@ void CollectorApp::Shutdown()
 {
     spdlog::info(catenate("\n\n*** End run ", LocalDateTimeAsString(std::chrono::system_clock::now()), " ***\n"));
 
-    std::this_thread::sleep_for(std::chrono::seconds(2)); // Give time for async processing
-
-    // spdlog::shutdown(); // Ensure all messages are flushed
+    spdlog::shutdown(); // Ensure all messages are flushed
 
 } // -----  end of method CollectorApp::Do_Quit  -----

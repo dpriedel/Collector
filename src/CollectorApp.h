@@ -137,6 +137,8 @@ private:
     fs::path ticker_cache_file_name_;
     fs::path ticker_list_file_name_;
     fs::path financial_notes_directory_name_;
+    fs::path new_forms_log_directory_name_;
+    fs::path new_forms_log_file_name_;
 
     int pause_{0};
     int max_forms_to_download_{-1}; // mainly for testing
@@ -147,6 +149,7 @@ private:
     bool replace_notes_files_{false};
     bool index_only_{false}; //	do no download any form files
     bool help_requested_{false};
+    bool log_new_form_files_{false};
 
 }; // -----  end of class CollectorApp  -----
 
