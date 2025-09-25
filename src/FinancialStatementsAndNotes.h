@@ -99,10 +99,13 @@ private:
     inline static constexpr std::chrono::years a_year{1};
 
     inline static constexpr std::chrono::year_month first_quarterly_ = 2009y / std::chrono::January;
-    inline static constexpr std::chrono::year_month last_quarterly_ = 2023y / std::chrono::December;
+    inline static constexpr std::chrono::year_month last_quarterly_ = 2024y / std::chrono::June;
+
+    // NOTE:  the field below is counting quarters using month names...be careful
+
     inline static constexpr std::chrono::year_month last_quarterly_qtr =
-        2023y / std::chrono::October; // using months for quarters
-    inline static constexpr std::chrono::year_month first_monthly_ = 2024y / std::chrono::January;
+        2024y / std::chrono::February; // using months for quarters
+    inline static constexpr std::chrono::year_month first_monthly_ = 2024y / std::chrono::July;
 
     std::chrono::year_month start_date_;
     std::chrono::year_month end_date_;
