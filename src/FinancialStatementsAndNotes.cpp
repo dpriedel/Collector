@@ -43,6 +43,8 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(std::chrono::ye
     // value between 1 and 4. maybe there's a better way to do this. Nonetheless,
     // it keeps the code conistent.
 
+    spdlog::debug("Input date range: {} to {}.", start_date, end_date);
+
     std::chrono::year_month temp_s{start_date.year(), start_date.month()};
     if (temp_s > last_quarterly_)
     {
@@ -71,6 +73,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(std::chrono::ye
     }
     current_date_ = start_date_;
 
+    spdlog::debug("Processing date range: {} to {}.", start_date_, end_date_);
     format_current_value();
 
 } // -----  end of method
@@ -80,6 +83,8 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(std::chrono::ye
 FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++()
 {
     // see if we're done
+
+    spdlog::debug("Testing for done (current_date_ is zeros): Current date: {}.", current_date_);
 
     if (current_date_ == std::chrono::year_month{})
     {
@@ -105,6 +110,8 @@ FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++()
     {
         current_date_ += a_month;
     }
+
+    spdlog::debug("Updated current_date: {}", current_date_);
 
     if (current_date_ >= end_date_)
     {
