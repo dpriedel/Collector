@@ -39,6 +39,14 @@
 #include <iostream>
 #include <random> //	just for initial development.  used in Quarterly form retrievals
 
+#include <ranges>
+
+using namespace std::string_literals;
+// using namespace std::chrono_literals;
+using namespace std::string_view_literals;
+
+namespace rng = std::ranges;
+
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -142,14 +150,7 @@ bool CollectorApp::Startup()
     try
     {
         SetupProgramOptions();
-        if (tokens_.empty())
-        {
-            ParseProgramOptions();
-        }
-        else
-        {
-            ParseProgramOptions(tokens_);
-        }
+        ParseProgramOptions(tokens_);
         ConfigureLogging();
         result = CheckArgs();
     }
@@ -173,67 +174,161 @@ bool CollectorApp::Startup()
     return result;
 } /* -----  end of method CollectorApp::Startup  ----- */
 
-// clang-format off
+// // clang-format off
+// void CollectorApp::SetupProgramOptions()
+// {
+//     mNewOptions = std::make_unique<po::options_description>();
+//
+//     mNewOptions->add_options()
+//         ("help,h", "produce help message")("begin-date", po::value<std::string>(&this->start_date_), "retrieve files
+//         with dates greater than or equal to.") ( "end-date", po::value<std::string>(&this->stop_date_), "retrieve
+//         files with dates less than or equal to.") ( "index-dir",
+//         po::value<fs::path>(&this->local_index_file_directory_), "directory index files are downloaded to.")
+//         ("form-dir", po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded
+//         to.") ( "host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we
+//         download from. Default is 'www.sec.gov'.") ( "port",
+//         po::value<std::string>(&this->HTTPS_port_)->default_value("443"), "Port number to use for web site. Default
+//         is '443' for SSL.") ( "mode", po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or
+//         'quarterly' for index files, 'ticker-only' or 'notes'. Default is 'daily'.")
+//         ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are
+//         downloading. Default is '10-Q'.") ( "ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup
+//         and filter form downloads.") ( "log-path", po::value<fs::path>(&this->log_file_path_name_), "path name for
+//         log file") ( "ticker-cache", po::value<fs::path>(&this->ticker_cache_file_name_), "path name for
+//         ticker-to-CIK cache file.") ( "notes-directory", po::value<fs::path>(&this->financial_notes_directory_name_),
+//         "top level path name for financial statements and notes files downloads.") ( "new-files-logs-directory",
+//         po::value<fs::path>(&this->new_forms_log_directory_name_), "name of directory to write new forms file name
+//         logs to.")
+//         ("ticker-file", po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker
+//         symbols to convert to CIKs.") ( "replace-index-files",
+//         po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if
+//         specified. Default is 'false'.") ( "replace-form-files",
+//         po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified.
+//         Default is 'false'.") ( "replace-notes-files",
+//         po::value<bool>(&this->replace_notes_files_)->implicit_value(true), "over write local financial notes files
+//         if specified. Default is 'false'.") ( "log-new-form-files",
+//         po::value<bool>(&this->log_new_form_files_)->implicit_value(true), "log path names of newly downloaded forms
+//         files. Default is 'false'.")
+//         ("index-only", po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files.
+//         Default is 'false'.") ( "pause,p", po::value<int>(&this->pause_)->default_value(1), "how long to wait between
+//         downloads. Default: 1 second.") ( "max", po::value<int>(&this->max_forms_to_download_)->default_value(-1),
+//         "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
+//         ("log-level,l", po::value<std::string>(&this->logging_level_)->default_value("information"), "logging level.
+//         Must be 'none|error|information|debug'. Default is 'information'.")
+//         ("concurrent,k", po::value<int>(&this->max_at_a_time_)->default_value(10), "Maximun number of concurrent
+//         downloads. Default of 10.")
+//         /* ("file,f",    po::value<std::string>(), "name of file containing data
+//            for ticker. Default is stdin") */
+//         /* ("mode,m",    po::value<std::string>(), "mode: either 'load' new data
+//            or 'update' existing data. Default is 'load'") */
+//         ;
+//
+// } // -----  end of method CollectorApp::Do_SetupProgramOptions  -----
+// // clang-format on
+
+#/*
+ * ===  FUNCTION  ======================================================================
+ * Name:  ClassName::member_function_name
+ * Description:  brief description
+ * =====================================================================================
+ */
 void CollectorApp::SetupProgramOptions()
 {
-    mNewOptions = std::make_unique<po::options_description>();
+    // Set a failure message for when an option is needed but not provided
+    app.failure_message(CLI::FailureMessage::help);
 
-    mNewOptions->add_options()
-        ("help,h", "produce help message")("begin-date", po::value<std::string>(&this->start_date_), "retrieve files with dates greater than or equal to.")
-        ( "end-date", po::value<std::string>(&this->stop_date_), "retrieve files with dates less than or equal to.")
-        ( "index-dir", po::value<fs::path>(&this->local_index_file_directory_), "directory index files are downloaded to.")
-        ("form-dir", po::value<fs::path>(&this->local_form_file_directory_), "directory form files are downloaded to.")
-        ( "host", po::value<std::string>(&this->HTTPS_host_)->default_value("www.sec.gov"), "web site we download from. Default is 'www.sec.gov'.")
-        ( "port", po::value<std::string>(&this->HTTPS_port_)->default_value("443"), "Port number to use for web site. Default is '443' for SSL.")
-        ( "mode", po::value<std::string>(&this->mode_)->default_value("daily"), "'daily' or 'quarterly' for index files, 'ticker-only' or 'notes'. Default is 'daily'.")
-        ("form", po::value<std::string>(&this->form_)->default_value("10-Q"), "name of form type[s] we are downloading. Default is '10-Q'.")
-        ( "ticker", po::value<std::string>(&this->ticker_), "ticker[s] to lookup and filter form downloads.")
-        ( "log-path", po::value<fs::path>(&this->log_file_path_name_), "path name for log file")
-        ( "ticker-cache", po::value<fs::path>(&this->ticker_cache_file_name_), "path name for ticker-to-CIK cache file.")
-        ( "notes-directory", po::value<fs::path>(&this->financial_notes_directory_name_), "top level path name for financial statements and notes files downloads.")
-        ( "new-files-logs-directory", po::value<fs::path>(&this->new_forms_log_directory_name_), "name of directory to write new forms file name logs to.")
-        ("ticker-file", po::value<fs::path>(&this->ticker_list_file_name_), "path name for file with list of ticker symbols to convert to CIKs.")
-        ( "replace-index-files", po::value<bool>(&this->replace_index_files_)->implicit_value(true), "over write local index files if specified. Default is 'false'.")
-        ( "replace-form-files", po::value<bool>(&this->replace_form_files_)->implicit_value(true), "over write local form files if specified. Default is 'false'.")
-        ( "replace-notes-files", po::value<bool>(&this->replace_notes_files_)->implicit_value(true), "over write local financial notes files if specified. Default is 'false'.")
-        ( "log-new-form-files", po::value<bool>(&this->log_new_form_files_)->implicit_value(true), "log path names of newly downloaded forms files. Default is 'false'.")
-        ("index-only", po::value<bool>(&this->index_only_)->implicit_value(true), "do not download form files. Default is 'false'.")
-        ( "pause,p", po::value<int>(&this->pause_)->default_value(1), "how long to wait between downloads. Default: 1 second.")
-        ( "max", po::value<int>(&this->max_forms_to_download_)->default_value(-1), "Maximun number of forms to download -- mainly for testing. Default of -1 means no limit.")
-        ("log-level,l", po::value<std::string>(&this->logging_level_)->default_value("information"), "logging level. Must be 'none|error|information|debug'. Default is 'information'.")
-        ("concurrent,k", po::value<int>(&this->max_at_a_time_)->default_value(10), "Maximun number of concurrent downloads. Default of 10.")
-        /* ("file,f",    po::value<std::string>(), "name of file containing data
-           for ticker. Default is stdin") */
-        /* ("mode,m",    po::value<std::string>(), "mode: either 'load' new data
-           or 'update' existing data. Default is 'load'") */
-        ;
+    // Add options and flags, binding them directly to your member variables.
+    // CLI11 automatically deduces the type from the bound variable.
+    app.add_option("--begin-date", this->start_date_, "Retrieve files with dates greater than or equal to.");
+    app.add_option("--end-date", this->stop_date_, "Retrieve files with dates less than or equal to.");
+    app.add_option("--index-dir", this->local_index_file_directory_, "Directory index files are downloaded to.");
+    app.add_option("--form-dir", this->local_form_file_directory_, "Directory form files are downloaded to.");
+    app.add_option("--host", this->HTTPS_host_, "Web site to download from.")->default_val("www.sec.gov");
+    app.add_option("--port", this->HTTPS_port_, "Port number for the web site.")->default_val("443");
+    app.add_option("--mode", this->mode_, "'daily' or 'quarterly' index files, 'ticker-only' or 'notes'.")
+        ->default_val("daily");
+    app.add_option("--form", this->form_, "Name of form type(s) to download.")->default_val("10-Q");
+    app.add_option("--ticker", this->ticker_, "Ticker(s) to lookup and filter form downloads.");
+    app.add_option("--log-path", this->log_file_path_name_, "Path name for the log file.");
+    app.add_option("--ticker-cache", this->ticker_cache_file_name_, "Path for the ticker-to-CIK cache file.");
+    app.add_option("--notes-directory", this->financial_notes_directory_name_,
+                   "Top-level path for financial statements and notes files.");
+    app.add_option("--new-files-logs-directory", this->new_forms_log_directory_name_,
+                   "Directory to write new forms file name logs to.");
+    app.add_option("--ticker-file", this->ticker_list_file_name_, "Path for file with a list of ticker symbols.");
 
-} // -----  end of method CollectorApp::Do_SetupProgramOptions  -----
-// clang-format on
+    // Boolean flags: In Boost, these were bools with an implicit_value.
+    // In CLI11, add_flag is the idiomatic way to handle this.
+    // The flag being present on the command line sets the bound variable to true.
+    app.add_flag("--replace-index-files", this->replace_index_files_, "Overwrite local index files if specified.");
+    app.add_flag("--replace-form-files", this->replace_form_files_, "Overwrite local form files if specified.");
+    app.add_flag("--replace-notes-files", this->replace_notes_files_,
+                 "Overwrite local financial notes files if specified.");
+    app.add_flag("--log-new-form-files", this->log_new_form_files_, "Log path names of newly downloaded form files.");
+    app.add_flag("--index-only", this->index_only_, "Only download index files; do not download form files.");
 
-void CollectorApp::ParseProgramOptions()
-{
-    auto options = po::parse_command_line(mArgc, mArgv, *mNewOptions);
-    po::store(options, mVariableMap);
-    if (this->mArgc == 1 || mVariableMap.count("help") == 1)
-    {
-        std::cout << *mNewOptions << "\n";
-        throw std::runtime_error("\nExiting after 'help'.");
-    }
-    po::notify(mVariableMap);
+    // Options with short names
+    app.add_option("-p,--pause", this->pause_, "Time to wait between downloads (seconds).")->default_val(1);
+    app.add_option("--max", this->max_forms_to_download_, "Maximum number of forms to download (-1 for no limit).")
+        ->default_val(-1);
+    app.add_option("-l,--log-level", this->logging_level_, "Logging level: 'none|error|information|debug'.")
+        ->default_val("information");
+    app.add_option("-k,--concurrent", this->max_at_a_time_, "Maximum number of concurrent downloads.")->default_val(10);
 
-} /* -----  end of method CollectorApp::ParseProgramOptions  ----- */
+    // CLI11 automatically adds a -h,--help flag, so you don't need to add it manually.
+}
+
+// void CollectorApp::ParseProgramOptions()
+// {
+//     auto options = po::parse_command_line(mArgc, mArgv, *mNewOptions);
+//     po::store(options, mVariableMap);
+//     if (this->mArgc == 1 || mVariableMap.count("help") == 1)
+//     {
+//         std::cout << *mNewOptions << "\n";
+//         throw std::runtime_error("\nExiting after 'help'.");
+//     }
+//     po::notify(mVariableMap);
+//
+// } /* -----  end of method CollectorApp::ParseProgramOptions  ----- */
 
 void CollectorApp::ParseProgramOptions(const std::vector<std::string> &tokens)
 {
-    auto options = po::command_line_parser(tokens).options(*mNewOptions).run();
-    po::store(options, mVariableMap);
-    if (mVariableMap.count("help") == 1)
+    try
     {
-        std::cout << *mNewOptions << "\n";
-        throw std::runtime_error("\nExiting after 'help'.");
+        if (tokens.empty())
+        {
+            // If the token vector is empty, parse the original argc/argv.
+            // This is the standard execution path.
+            app.parse(mArgc, mArgv);
+        }
+        else
+        {
+            // Note: CLI11's vector parse does NOT expect the program name.
+            // NOTE: I don't understand how to setup the call for using
+            // the tokens vector directly (it doesn't seem to work with the obvious call
+            // as I get parse errors that I shouldn't)
+            // so I'll join them into a comand line and use that.
+            auto cmd_line_vw = rng::views::join_with(rng::views::drop(tokens, 1), " "sv);
+
+            std::string cmd_line = rng::to<std::string>(cmd_line_vw);
+            app.parse(cmd_line);
+        }
     }
-    po::notify(mVariableMap);
+    catch (const CLI::CallForHelp &e)
+    {
+        // CLI11 automatically prints the help message when it sees -h or --help.
+        // It then throws CLI::CallForHelp.
+        // All we need to do is exit gracefully. Re-throwing is a clean way
+        // to signal the caller that execution should stop.
+        app.exit(e);
+    }
+    catch (const CLI::ParseError &e)
+    {
+        // For any other parsing error (missing required option, bad value, etc.),
+        // CLI11 throws a ParseError. We can format a clean message and throw.
+        // The app.exit(e) call is often used in main() to get an exit code,
+        // but re-throwing is better for a class member function.
+        throw std::runtime_error(std::format("Command line parse error: {}", e.what()));
+    }
 } /* -----  end of method CollectorApp::ParseProgramOptions  ----- */
 
 bool CollectorApp::CheckArgs()

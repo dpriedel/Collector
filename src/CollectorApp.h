@@ -43,10 +43,12 @@
 #include <map>
 #include <memory>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+
+// #include <boost/program_options.hpp>
 
 namespace fs = std::filesystem;
-namespace po = boost::program_options;
+// namespace po = boost::program_options;
 
 #include <spdlog/spdlog.h>
 
@@ -100,9 +102,11 @@ private:
 
     std::shared_ptr<spdlog::logger> original_logger_;
 
-    po::positional_options_description mPositional;       //	old style options
-    std::unique_ptr<po::options_description> mNewOptions; //	new style options (with identifiers)
-    po::variables_map mVariableMap;
+    // po::positional_options_description mPositional;       //	old style options
+    // std::unique_ptr<po::options_description> mNewOptions; //	new style options (with identifiers)
+    // po::variables_map mVariableMap;
+
+    CLI::App app{"A program to identify and download desired SEC EDGAR filings"};
 
     int mArgc = 0;
     char **mArgv = nullptr;
