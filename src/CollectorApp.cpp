@@ -145,7 +145,7 @@ void CollectorApp::ConfigureLogging()
 
 bool CollectorApp::Startup()
 {
-    spdlog::info(catenate("\n\n*** Begin run ", std::chrono::system_clock::now(), " ***\n"));
+    spdlog::info(catenate("\n\n*** Begin run ", LocalDateTimeAsString(std::chrono::system_clock::now()), " ***\n"));
     bool result{true};
     try
     {
