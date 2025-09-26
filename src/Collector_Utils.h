@@ -192,6 +192,14 @@ std::string LoadDataFileForUse(const fs::path &file_name);
 
 // replace boost gregorian with new date library.
 
+// need to convert a month to quarter for SEC file names
+
+inline unsigned int get_quarter(std::chrono::month m)
+{
+    // The month value is 1-based.
+    unsigned int month_val = m.operator unsigned int();
+    return (month_val / 3 + (month_val % 3 == 0 ? 0 : 1));
+}
 // utility to convert a std::chrono::year_month_day to a string
 // based on code from "The C++ Standard Library 2nd Edition"
 // by Nicolai Josuttis p. 158

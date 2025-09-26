@@ -54,9 +54,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(std::chrono::ye
     else
     {
         // convert to our faux quarterly value
-        start_date_ = std::chrono::year_month{
-            start_date.year(), std::chrono::month{start_date.month().operator unsigned int() / 3 +
-                                                  (start_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
+        start_date_ = std::chrono::year_month{start_date.year(), std::chrono::month{get_quarter(start_date.month())}};
     }
 
     std::chrono::year_month temp_e{end_date.year(), end_date.month()};
@@ -67,9 +65,7 @@ FinancialStatementsAndNotes_gen::FinancialStatementsAndNotes_gen(std::chrono::ye
     else
     {
         // convert to our faux quarterly value
-        end_date_ = std::chrono::year_month{
-            end_date.year(), std::chrono::month{end_date.month().operator unsigned int() / 3 +
-                                                (end_date.month().operator unsigned int() % 3 == 0 ? 0 : 1)}};
+        end_date_ = std::chrono::year_month{end_date.year(), std::chrono::month{get_quarter(end_date.month())}};
     }
     current_date_ = start_date_;
 
@@ -127,6 +123,9 @@ FinancialStatementsAndNotes_gen &FinancialStatementsAndNotes_gen::operator++()
 
 void FinancialStatementsAndNotes_gen::format_current_value()
 {
+    // quarterly files have name format: <yyyy>q<quarter number 1 thru 4>_notes.zip
+    // monthly files have name format: <yyyy>_<mm>_notes.zip
+
     if (!monthly_mode_)
     {
         current_value_.first = std::format("{}q{}_notes.zip", current_date_.year().operator int(),
