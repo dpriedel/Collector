@@ -19,7 +19,7 @@
 #
 MAKE=gmake
 
-BOOSTDIR := /extra/boost/boost-1.88_gcc-15
+BOOSTDIR := /extra/boost/boost-1.89_gcc-15
 GCCDIR := /extra/gcc/gcc-15
 CPP := $(GCCDIR)/bin/g++
 
@@ -51,13 +51,6 @@ SRCS := $(SRCS1) $(SRCS2)
 
 VPATH := $(SDIR1):$(SDIR2)
 
-#
-# Configuration: DEBUG
-#
-ifeq "$(CFG)" "Debug"
-
-OUTDIR=Debug
-
 CFG_LIB := -lpthread \
 		-lssl -lcrypto \
 		-lzip \
@@ -65,9 +58,10 @@ CFG_LIB := -lpthread \
 		-L$(GCCDIR)/lib64 \
 		-lstdc++ \
 		-lstdc++exp \
+		-L/usr/local/lib \
+		-lspdlog \
 		-L$(BOOSTDIR)/lib \
 		-lboost_iostreams-mt-x64 \
-		-lboost_program_options-mt-x64 \
 		-lboost_json-mt-x64 \
 		-lboost_process-mt-x64 
 
@@ -76,6 +70,13 @@ OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
 
 OBJS=$(OBJS1) $(OBJS2)
 DEPS=$(OBJS:.o=.d)
+
+#
+# Configuration: DEBUG
+#
+ifeq "$(CFG)" "Debug"
+
+OUTDIR=Debug
 
 # COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++26 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -DSHOW_STRACE -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 COMPILE=$(CPP) -c  -x c++  -O0  -g3 -std=c++26 -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
@@ -91,29 +92,10 @@ ifeq "$(CFG)" "Release"
 
 OUTDIR=Release
 
-CFG_LIB := -lpthread \
-		-lssl -lcrypto \
-		-lzip \
-		-lz \
-		-L$(GCCDIR)/lib64 \
-		-lstdc++ \
-		-lstdc++exp \
-		-L$(BOOSTDIR)/lib \
-		-lboost_iostreams-mt-d-x64 \
-		-lboost_program_options-mt-x64 \
-		-lboost_json-mt-d-x64 \
-		-lboost_process-mt-x64
-
-OBJS1=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS1)))))
-OBJS2=$(addprefix $(OUTDIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS2)))))
-
-OBJS=$(OBJS1) $(OBJS2)
-DEPS=$(OBJS:.o=.d)
-
 # need to figure out cert handling better. Until then, turn off the SSL Cert testing.
 
 # COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
-COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -D_DEBUG -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -DSHOW_STRACE -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
+COMPILE=$(CPP) -c  -x c++  -O3  -std=c++26 -flto -DNOCERTTEST -DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_REGEX_STANDALONE -DSPDLOG_USE_STD_FORMAT -DUSE_OS_TZDB -DSHOW_STRACE -fPIC -o $@ $(CFG_INC) $< -march=native -MMD -MP
 LINK := $(CPP)  -o $(OUTFILE) $(OBJS) $(CFG_LIB) -Wl,-E $(RPATH_LIB)
 
 endif #	RELEASE configuration
