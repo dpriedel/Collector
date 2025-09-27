@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
     std::ios_base::sync_with_stdio(false);
 
-    auto my_default_logger = spdlog::stdout_color_mt("ExtractorApp_logger");
+    auto my_default_logger = spdlog::stdout_color_mt("CollectorApp_logger");
     spdlog::set_default_logger(my_default_logger);
 
     int result = 0;
