@@ -15,39 +15,42 @@
 //
 // =====================================================================================
 
-	/* This file is part of Collector. */
+/* This file is part of Collector. */
 
-	/* Collector is free software: you can redistribute it and/or modify */
-	/* it under the terms of the GNU General Public License as published by */
-	/* the Free Software Foundation, either version 3 of the License, or */
-	/* (at your option) any later version. */
+/* Collector is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
 
-	/* Collector is distributed in the hope that it will be useful, */
-	/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
-	/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
-	/* GNU General Public License for more details. */
+/* Collector is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
 
-	/* You should have received a copy of the GNU General Public License */
-	/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
-
+/* You should have received a copy of the GNU General Public License */
+/* along with Collector.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <iostream>
 
 #include "spdlog/spdlog.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "CollectorApp.h"
 #include "Collector_Utils.h"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-	//	help to optimize c++ stream I/O (may screw up threaded I/O though)
+    //	help to optimize c++ stream I/O (may screw up threaded I/O though)
 
-	std::ios_base::sync_with_stdio(false);
+    std::ios_base::sync_with_stdio(false);
 
-	int result = 0;
-	try
-	{
-		CollectorApp myApp(argc, argv);
+    auto my_default_logger = spdlog::stdout_color_mt("ExtractorApp_logger");
+    spdlog::set_default_logger(my_default_logger);
+
+    int result = 0;
+    try
+    {
+        CollectorApp myApp(argc, argv);
         bool startup_OK = myApp.Startup();
         if (startup_OK)
         {
@@ -56,20 +59,21 @@ int main(int argc, char** argv)
         }
         else
         {
+            result = 5;
             std::cout << "Problems starting program.  No processing done.\n";
         }
-	}
+    }
 
-	catch (const std::exception& theProblem)
-	{
+    catch (const std::exception &theProblem)
+    {
         spdlog::error(catenate("Something fundamental went wrong: ", theProblem.what()));
-		result = 7;
-	}
-	catch (...)
-	{
+        result = 7;
+    }
+    catch (...)
+    {
         spdlog::error("Something totally unexpected happened.");
-		result = 9;
-	}
+        result = 9;
+    }
 
-	return result;
+    return result;
 }
