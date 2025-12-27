@@ -45,8 +45,6 @@
 
 #include <CLI/CLI.hpp>
 
-// #include <boost/program_options.hpp>
-
 namespace fs = std::filesystem;
 // namespace po = boost::program_options;
 
@@ -104,8 +102,8 @@ private:
 
     CLI::App app{"A program to identify and download desired SEC EDGAR filings"};
 
-    int mArgc = 0;
-    char **mArgv = nullptr;
+    int argc_ = 0;
+    char **argv_ = nullptr;
     const std::vector<std::string> tokens_;
 
     TickerConverter ticker_converter_;

@@ -66,7 +66,7 @@ namespace rng = std::ranges;
  * Description:  constructor
  *--------------------------------------------------------------------------------------
  */
-CollectorApp::CollectorApp(int argc, char *argv[]) : mArgc{argc}, mArgv{argv}
+CollectorApp::CollectorApp(int argc, char *argv[]) : argc_{argc}, argv_{argv}
 {
     original_logger_ = spdlog::default_logger();
 } /* -----  end of method CollectorApp::CollectorApp  (constructor)  ----- */
@@ -182,6 +182,13 @@ bool CollectorApp::Startup()
  */
 void CollectorApp::SetupProgramOptions()
 {
+    // Add a preparse callback to check for no arguments
+    app.preparse_callback([](size_t argCount) {
+        if (argCount == 0)
+        {
+            throw(CLI::CallForHelp());
+        }
+    });
     // Set a failure message for when an option is needed but not provided
     app.failure_message(CLI::FailureMessage::help);
 
@@ -234,7 +241,12 @@ void CollectorApp::ParseProgramOptions(const std::vector<std::string> &tokens)
         {
             // If the token vector is empty, parse the original argc/argv.
             // This is the standard execution path.
-            app.parse(mArgc, mArgv);
+            auto args = std::views::counted(argv_, argc_) |
+                        std::views::transform([](char *arg) { return std::string_view(arg); });
+            auto cmd_line_vw = rng::views::join_with(rng::views::drop(args, 1), " "sv);
+            std::string cmd_line = rng::to<std::string>(cmd_line_vw);
+            spdlog::info("cmd line: {}", cmd_line);
+            app.parse(argc_, argv_);
         }
         else
         {
@@ -246,6 +258,7 @@ void CollectorApp::ParseProgramOptions(const std::vector<std::string> &tokens)
             auto cmd_line_vw = rng::views::join_with(rng::views::drop(tokens, 1), " "sv);
 
             std::string cmd_line = rng::to<std::string>(cmd_line_vw);
+            spdlog::info("tokens: {}", cmd_line);
             app.parse(cmd_line);
         }
     }
@@ -269,6 +282,13 @@ void CollectorApp::ParseProgramOptions(const std::vector<std::string> &tokens)
 
 bool CollectorApp::CheckArgs()
 {
+    // don't do any checking if there is nothing to check
+    // or help was asked for.
+
+    if (app.count_all() == 1 || app.get_option("--help")->count() == 1)
+    {
+        return false;
+    }
     BOOST_ASSERT_MSG(mode_ == "daily" || mode_ == "quarterly" || mode_ == "ticker-only" || mode_ == "notes",
                      catenate("Mode must be either 'daily','quarterly', 'notes', "
                               "or 'ticker-only' ==> ",
