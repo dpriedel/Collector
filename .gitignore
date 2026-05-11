@@ -17,3 +17,13 @@ Collector
 tag*
 .tags
 .vscode
+
+.cache
+*.dat
+
+company_tickers*
+
+dir.list
+src_beast
+src_httplib
+
